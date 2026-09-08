@@ -1,0 +1,12 @@
+flowchart TD
+  start([Start])
+  check{Valid?}
+  ok[Accept]
+  no[Reject]
+  done([End])
+
+  start --> check
+  check -->|yes| ok
+  check -->|no| no
+  ok --> done
+  no --> done

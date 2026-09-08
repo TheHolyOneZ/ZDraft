@@ -1,0 +1,32 @@
+[package]
+name = "zdraft-io"
+description = "Filesystem, sidecar and rasterisation support for ZDraft"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }
+toml_edit = { workspace = true }
+ts-rs = { workspace = true }
+gix = { workspace = true }
+ureq = { version = "3.4.1", default-features = false, features = ["rustls", "gzip"] }
+svg2pdf.workspace = true
+usvg.workspace = true
+fontdb.workspace = true
+
+[dev-dependencies]
+temp-env = "0.3.6"
+tempfile = { workspace = true }

@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant U as User
+  participant A as API
+  participant D as Postgres
+
+  U->>A: POST /orders
+  activate A
+  A->>D: INSERT
+  D-->>A: id
+  A-->>U: 201 Created
+  deactivate A

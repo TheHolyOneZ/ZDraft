@@ -1,0 +1,8 @@
+@startuml
+[*] --> Idle
+Idle --> Loading : open
+Loading --> Ready : parsed
+Loading --> Failed : error
+Failed --> Loading : retry
+Ready --> [*]
+@enduml

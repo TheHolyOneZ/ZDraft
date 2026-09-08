@@ -1,0 +1,22 @@
+flowchart LR
+  subgraph edge["edge"]
+    cdn[CDN]
+    gateway{{API Gateway}}
+  end
+  subgraph core["services"]
+    api[API]
+    worker[Worker]
+  end
+  db[(Postgres)]
+  cache[(Redis)]
+  queue[/Queue/]
+  decide{cache hit?}
+
+  cdn -->|miss| gateway
+  gateway -->|HTTP| api
+  api --> decide
+  decide -->|no| db
+  decide -->|yes| cache
+  api -.->|publish| queue
+  queue ==>|consume| worker
+  worker --> db

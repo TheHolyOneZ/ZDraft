@@ -1,0 +1,43 @@
+{
+  "name": "@zdraft/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Render ZDraft diagrams from the command line, layout pins and all",
+  "author": "TheHolyOneZ",
+  "homepage": "https://zsync.eu/zdraft/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheHolyOneZ/ZDraft.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/TheHolyOneZ/ZDraft/issues"
+  },
+  "keywords": [
+    "diagram",
+    "diagrams-as-code",
+    "mermaid",
+    "graphviz",
+    "d2",
+    "plantuml",
+    "cli",
+    "svg",
+    "render"
+  ],
+  "license": "GPL-3.0-or-later",
+  "type": "module",
+  "bin": {
+    "zdraft": "./dist/zdraft.js"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs && node dist/zdraft.js"
+  },
+  "dependencies": {
+    "@hpcc-js/wasm-graphviz": "^1",
+    "@terrastruct/d2": "0.1.33",
+    "jsdom": "^25",
+    "mermaid": "^11.16.0",
+    "smol-toml": "^1"
+  }
+}

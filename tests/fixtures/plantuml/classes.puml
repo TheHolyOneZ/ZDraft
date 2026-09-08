@@ -1,0 +1,18 @@
+@startuml
+class Document {
+  +String path
+  +String engine
+  +open()
+  +save()
+}
+
+class Layout <<sidecar>> {
+  +Map pins
+  +apply()
+}
+
+interface Adapter
+
+Document *-- Layout
+Document ..|> Adapter
+@enduml

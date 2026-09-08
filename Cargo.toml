@@ -1,0 +1,59 @@
+[workspace]
+members = ["crates/zdraft-io", "src-tauri"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "GPL-3.0-or-later"
+authors = ["TheHolyOneZ"]
+repository = "https://github.com/TheHolyOneZ/ZDraft"
+homepage = "https://zsync.eu/zdraft/"
+documentation = "https://github.com/TheHolyOneZ/ZDraft#readme"
+readme = "README.md"
+keywords = ["diagram", "mermaid", "graphviz", "layout", "documentation"]
+categories = ["development-tools", "visualization"]
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+toml = "0.8"
+toml_edit = "0.22"
+directories = "6"
+ts-rs = "12"
+tempfile = "3"
+
+# PDF export. `svg2pdf` pins the `usvg` it converts from, so both track it
+# rather than ZConvert's older pair — two `usvg` versions in one binary is 1.5 MB
+# of duplicate parser for no gain. PNG is rasterised in the webview, so no
+# `resvg`: the canvas already has the SVG, the fonts and the exact colours.
+svg2pdf = "0.13"
+usvg = "0.45"
+fontdb = "0.23"
+
+# Folder watching (phase 2) and git blob reads for the diff view (phase 12).
+notify = "8"
+notify-debouncer-full = "0.7"
+
+# The diff view reads one blob out of HEAD and never writes, so the default
+# feature set — which carries the whole network and worktree stack — is far
+# more than is wanted. `max-performance-safe` keeps the fast zlib and drops
+# everything else.
+gix = { version = "0.87", default-features = false, features = ["max-performance-safe", "sha1"] }
+
+# Debug builds carry line tables only; full debuginfo across webkit2gtk costs
+# gigabytes, and the disk on this machine has none to spare.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

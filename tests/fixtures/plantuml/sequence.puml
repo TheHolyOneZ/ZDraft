@@ -1,0 +1,10 @@
+@startuml
+participant Client
+participant API
+participant DB
+
+Client -> API : GET /thing
+API -> DB : select
+DB --> API : row
+API --> Client : 200 OK
+@enduml

@@ -1,0 +1,15 @@
+@startuml
+rectangle "API Gateway" as gw
+component "Worker" as w
+database "Postgres" as db
+
+package "core" {
+  queue "Events" as q
+  actor "On-call" as ops
+}
+
+gw --> w : dispatch
+w --> db : write
+q -up-> w
+ops ..> q : watches
+@enduml

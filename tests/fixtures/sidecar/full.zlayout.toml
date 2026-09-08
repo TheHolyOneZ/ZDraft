@@ -1,0 +1,32 @@
+version = 1
+
+[pins.api]
+x = 412
+y = 288
+fingerprint = "box:API:0"
+auto = [120, 40]
+
+[pins.cache]
+x = 760
+y = 210
+
+[edges."gateway->api"]
+waypoints = [[500, 240], [520, 260]]
+label_offset = [4, -8]
+
+[annotations.a1]
+kind = "note"
+at = [631, 185]
+size = [190, 68]
+text = "why two writers?"
+color = "rose"
+anchor = "api"
+
+[sequence]
+lifeline_order = ["browser", "api"]
+
+[sequence.lifeline_gap]
+api = 40
+
+[theme]
+name = "Blueprint"

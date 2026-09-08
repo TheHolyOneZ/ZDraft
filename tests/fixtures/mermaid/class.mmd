@@ -1,0 +1,16 @@
+classDiagram
+  class Order {
+    +int id
+    +Money total
+    +place() bool
+    +cancel() void
+  }
+  class Customer {
+    +string name
+    +string email
+  }
+  class LineItem {
+    +int qty
+  }
+  Customer "1" --> "*" Order : places
+  Order "1" *-- "*" LineItem

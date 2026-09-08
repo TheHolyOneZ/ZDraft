@@ -1,0 +1,4 @@
+11.17.2
+
+Regenerate with `pnpm fixtures:mermaid`. A diff here after a
+Mermaid upgrade means the upgrade moved real diagrams — read it.

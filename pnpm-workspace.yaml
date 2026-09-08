@@ -1,0 +1,6 @@
+packages:
+  - "packages/*"
+
+# Moved here from package.json's "pnpm" field, which pnpm 10.33 stopped reading.
+onlyBuiltDependencies:
+  - esbuild
