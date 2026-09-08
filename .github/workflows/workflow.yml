@@ -1,0 +1,101 @@
+name: Windows installer
+
+# Run this by hand when a release is ready. It produces one zip: the NSIS
+# installer, its checksum, and a note saying where the files go. Unzip it into
+# `zdraft/releases/` and upload that folder to the site.
+#
+# Deliberately no GitHub release. ZDraft's installers live at zsync.eu/zdraft
+# and nowhere else — publishing binaries in two places is how one of them
+# quietly goes stale. GitHub carries the source, the issues and the history.
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build NSIS installer
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # `workspaces: .` because src-tauri is a member of the root workspace
+      # rather than its own; the default guess looks in the wrong place.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: '.'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Read rather than asked for. A version typed into a dispatch box is a
+      # version that can disagree with the one the installer was built from.
+      - name: Read the version
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          "value=$version" | Out-File -Append -Encoding ascii $env:GITHUB_OUTPUT
+          Write-Host "Building ZDraft $version"
+
+      - name: Build the installer
+        run: pnpm tauri build --bundles nsis
+
+      - name: Collect
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-windows | Out-Null
+          Copy-Item target\release\bundle\nsis\*.exe dist-windows\
+
+          Get-ChildItem dist-windows\*.exe | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -Append -Encoding ascii dist-windows\SHA256SUMS.sha256
+          }
+
+          # An array rather than a here-string: PowerShell requires a
+          # here-string's terminator to sit at column 0, which is not a thing a
+          # YAML block scalar can contain. Single quotes throughout, so the
+          # backticks in the note stay backticks.
+          $note = @(
+            "ZDraft $env:VERSION - Windows installer"
+            ""
+            "Built from $env:GITHUB_SHA by the Windows installer workflow."
+            ""
+            'Put both files in zdraft/releases/, next to the Linux bundles.'
+            'Append the checksum line to the SHA256SUMS.sha256 already there'
+            'rather than replacing it, so one file lists all four downloads.'
+            ""
+            'Then open zdraft/index.html, find the RELEASE object at the top of'
+            'the script and fill in the exe entry with this file name and its'
+            'size. Until you do, the Windows button on the download page reads'
+            '"coming soon" rather than pointing at nothing.'
+          )
+          $note | Out-File -Encoding utf8 dist-windows\WHERE-THIS-GOES.txt
+
+          Get-ChildItem dist-windows |
+            Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}} |
+            Format-Table -AutoSize
+          Get-Content dist-windows\SHA256SUMS.sha256
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: zdraft-${{ steps.version.outputs.value }}-windows
+          path: dist-windows/*
+          if-no-files-found: error
+          retention-days: 90
