@@ -1,7 +1,6 @@
 import type { NodeShape, SourceRange } from "../model/scene";
 import { spliceAll, type LayoutKnob, type LayoutTuner, type SemanticEditor } from "./types";
 
-
 const FORMS: Array<{ open: string; close: string; shape: NodeShape }> = [
   { open: "[[", close: "]]", shape: "subroutine" },
   { open: "[(", close: ")]", shape: "cylinder" },
@@ -16,7 +15,6 @@ const FORMS: Array<{ open: string; close: string; shape: NodeShape }> = [
 ];
 
 const SHAPES = FORMS.map((f) => f.shape);
-
 
 const KEYWORDS = new Set([
   "flowchart",
@@ -36,7 +34,6 @@ const KEYWORDS = new Set([
 ]);
 
 interface Declaration {
-
   id: SourceRange;
 
   whole?: SourceRange;
@@ -44,7 +41,6 @@ interface Declaration {
   label?: SourceRange;
   form?: (typeof FORMS)[number];
 }
-
 
 function masked(source: string): string {
   const out = source.split("");
@@ -67,7 +63,6 @@ function masked(source: string): string {
   return out.join("");
 }
 
-
 export function idOccurrences(source: string, id: string): SourceRange[] {
   if (id === "") return [];
 
@@ -87,7 +82,6 @@ export function idOccurrences(source: string, id: string): SourceRange[] {
   return out;
 }
 
-
 function insideLabel(text: string, at: number): boolean {
   const lineStart = text.lastIndexOf("\n", at - 1) + 1;
   const line = text.slice(lineStart, at);
@@ -100,7 +94,6 @@ function insideLabel(text: string, at: number): boolean {
   }
   return depth > 0;
 }
-
 
 function declarationOf(source: string, id: string): Declaration | null {
   const text = masked(source);
@@ -123,17 +116,14 @@ function declarationOf(source: string, id: string): Declaration | null {
     }
   }
 
-
   const first = idOccurrences(source, id)[0];
   return first ? { id: first } : null;
 }
-
 
 function asLabel(text: string): string {
   return /[[\](){}|"<>]/.test(text) ? `"${text.replace(/"/g, "#quot;")}"` : text;
 }
 
-/** A subgraph id not already taken. */
 function freeSubgraphName(source: string, title: string): string {
   const base = title.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_|_$/g, "") || "group";
   if (idOccurrences(source, base).length === 0) return base;
@@ -144,15 +134,6 @@ function freeSubgraphName(source: string, title: string): string {
   }
 }
 
-/**
- * Mermaid's layout parameters (§5's layout-tuning UI).
- *
- * Two different mechanisms behind one list, which is the point of the
- * abstraction. `direction` is a keyword on the diagram's own first line;
- * everything else lives in an `%%{init: …}%%` directive above it. Both are read
- * by Mermaid itself, so GitHub draws the diagram exactly as ZDraft does — which
- * is why these are source edits and not sidecar ones.
- */
 const MERMAID_KNOBS: readonly LayoutKnob[] = [
   {
     id: "direction",
@@ -203,23 +184,12 @@ const MERMAID_KNOBS: readonly LayoutKnob[] = [
   },
 ];
 
-/** Everything but `direction` lives inside the init directive. */
 const IN_INIT = new Set(["nodeSpacing", "rankSpacing", "curve"]);
 
-/** The diagram's opening keyword and the direction that follows it. */
 const HEADER = /^([ \t]*)(flowchart|graph)([ \t]+)(TB|TD|BT|RL|LR)?/m;
 
-/** Mermaid's config directive, which must sit above the diagram keyword. */
 const INIT = /^[ \t]*%%\{\s*init\s*:\s*(\{[\s\S]*?\})\s*\}%%[ \t]*\n?/m;
 
-/**
- * The flowchart config Mermaid is currently given.
- *
- * Parsed with `JSON.parse` after the unquoted keys and single quotes Mermaid
- * tolerates are normalised. A directive ZDraft cannot read is left strictly
- * alone rather than rewritten — someone's hand-tuned `theme` block is not
- * ZDraft's to reformat.
- */
 function readInit(source: string): { flowchart: Record<string, unknown>; whole: Record<string, unknown> } | null {
   const match = INIT.exec(source);
   if (!match) return null;
@@ -244,7 +214,6 @@ export const mermaidTuner: LayoutTuner = {
     const out: Record<string, string> = {};
 
     const header = HEADER.exec(source);
-    // `graph TD` and `flowchart TD` mean the same thing here.
     if (header?.[4]) out.direction = header[4] === "TB" ? "TD" : header[4];
 
     const init = readInit(source);
@@ -265,9 +234,6 @@ export const mermaidTuner: LayoutTuner = {
       const header = HEADER.exec(source);
       if (!header || header.index === undefined) return null;
 
-      /* The keyword needs *a* direction — dropping it entirely would leave
-         `flowchart` alone, which Mermaid rejects. So the default is written
-         out here, unlike the init keys below. */
       const from = header.index + header[1]!.length + header[2]!.length + header[3]!.length;
       const to = from + (header[4]?.length ?? 0);
 
@@ -280,7 +246,6 @@ export const mermaidTuner: LayoutTuner = {
     const existing = readInit(source);
     const match = INIT.exec(source);
 
-    // A directive ZDraft could not parse is not one it may rewrite.
     if (match && !existing) return null;
 
     const config = { ...(existing?.whole ?? {}) };
@@ -294,8 +259,6 @@ export const mermaidTuner: LayoutTuner = {
 
     const label = value === spec.fallback ? `Reset ${knob}` : `Set ${knob} to ${value}`;
 
-    /* Nothing left to say: the directive comes out entirely rather than being
-       left as an empty `%%{init: {}}%%`, which is noise in every diff. */
     if (Object.keys(config).length === 0) {
       if (!match) return { source, changed: [], label };
 
@@ -314,7 +277,6 @@ export const mermaidTuner: LayoutTuner = {
       return { source: out, changed, label };
     }
 
-    // Above the diagram keyword, which is the only place Mermaid reads it.
     const header = HEADER.exec(source);
     const at = header?.index ?? 0;
 
@@ -365,9 +327,6 @@ export const mermaidEditor: SemanticEditor = {
       return { source: out, changed, label: `Relabel ${id}` };
     }
 
-    /* No delimiters yet, so the node has never had a label. Giving it one means
-       giving it a shape too — a rectangle, which is what Mermaid draws for a
-       bare id anyway, so the picture does not change. */
     const { source: out, changed } = spliceAll(source, [
       { range: { from: declaration.id.to, to: declaration.id.to }, text: `[${asLabel(next)}]` },
     ]);
@@ -377,10 +336,6 @@ export const mermaidEditor: SemanticEditor = {
   group(source, ids, title) {
     if (ids.length === 0) return null;
 
-    /* Appended, because Mermaid claims a node by naming it inside the block —
-       the declarations stay exactly where they were written. The trailing
-       newline is only added when the file does not already end in one, so this
-       never introduces a blank line at the end of someone's file. */
     const name = freeSubgraphName(source, title);
     const lead = source.endsWith("\n") ? "" : "\n";
     const body = ids.map((id) => `    ${id}`).join("\n");
@@ -400,8 +355,6 @@ export const mermaidEditor: SemanticEditor = {
     const declaration = declarationOf(source, id);
     if (!declaration) return null;
 
-    // A node with no delimiters gets them, with its own id as the label —
-    // which is what Mermaid was already drawing.
     const label =
       declaration.label && declaration.whole
         ? source.slice(declaration.label.from, declaration.label.to)

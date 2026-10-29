@@ -2,7 +2,6 @@ import { parse as parseToml } from "smol-toml";
 
 import type { Annotation, EdgeHint, Layout, Pin, Sidecar } from "./types";
 
-
 export class SidecarError extends Error {
   constructor(
     message: string,
@@ -12,7 +11,6 @@ export class SidecarError extends Error {
     this.name = "SidecarError";
   }
 }
-
 
 const CONFLICT = /^<{7} |^={7}$|^>{7} /m;
 
@@ -60,7 +58,6 @@ function readTheme(value: unknown): Layout["theme"] {
   const name = str(asTable(value).name);
   return name ? { name } : null;
 }
-
 
 function readPin(value: unknown): Pin | null {
   const table = asTable(value);
@@ -122,7 +119,6 @@ function readAnnotation(value: unknown): Annotation | null {
   };
 }
 
-
 function asTable(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -130,7 +126,6 @@ function asTable(value: unknown): Record<string, unknown> {
 }
 
 function num(value: unknown): number | null {
-
   const parsed = typeof value === "bigint" ? Number(value) : value;
   return typeof parsed === "number" && Number.isFinite(parsed) ? parsed : null;
 }
@@ -159,7 +154,6 @@ function numbers(value: unknown): Record<string, number> {
   }
   return out;
 }
-
 
 function mapValues<T>(
   table: Record<string, unknown>,

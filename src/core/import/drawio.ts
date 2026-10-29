@@ -7,7 +7,6 @@ import {
   type ImportedNode,
 } from "./types";
 
-
 const SHAPES: Array<[string, NodeShape]> = [
   ["ellipse", "ellipse"],
   ["rhombus", "diamond"],
@@ -36,7 +35,6 @@ export async function parseDrawio(text: string): Promise<ImportedModel> {
 
   const model = emptyModel();
 
-
   const pages = [...doc.querySelectorAll("diagram")];
   const models: Element[] = [];
 
@@ -56,7 +54,6 @@ export async function parseDrawio(text: string): Promise<ImportedModel> {
         models.push(inner);
         continue;
       }
-
 
       const decoded = await inflatePage(page.textContent ?? "");
       if (!decoded) {
@@ -79,7 +76,6 @@ export async function parseDrawio(text: string): Promise<ImportedModel> {
     );
   }
 
-
   if (models.length > 1) {
     model.warnings.push(
       `Only the first of ${models.length} pages was imported. Import the others separately.`,
@@ -90,7 +86,6 @@ export async function parseDrawio(text: string): Promise<ImportedModel> {
   return model;
 }
 
-
 async function inflatePage(payload: string): Promise<string | null> {
   const trimmed = payload.trim();
   if (!trimmed) return null;
@@ -98,7 +93,6 @@ async function inflatePage(payload: string): Promise<string | null> {
   try {
     const binary = atob(trimmed);
     const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-
 
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
@@ -111,8 +105,6 @@ async function inflatePage(payload: string): Promise<string | null> {
 
     return decodeURIComponent(inflated);
   } catch {
-
-
     return null;
   }
 }
@@ -136,7 +128,6 @@ function readModel(graph: Element, model: ImportedModel): void {
     if (cell.getAttribute("edge") === "1") {
       const from = cell.getAttribute("source");
       const to = cell.getAttribute("target");
-
 
       if (!from || !to) {
         ignored += 1;
@@ -180,7 +171,6 @@ function readModel(graph: Element, model: ImportedModel): void {
     });
   }
 
-
   for (const { node } of pending) {
     let parent = node.parent;
     const seen = new Set<string>([node.id]);
@@ -195,7 +185,6 @@ function readModel(graph: Element, model: ImportedModel): void {
       parent = cells.find((c) => c.getAttribute("id") === parent)?.getAttribute("parent") ?? undefined;
     }
   }
-
 
   const containers = new Set(
     pending
@@ -215,8 +204,6 @@ function readModel(graph: Element, model: ImportedModel): void {
 
   const known = new Set(model.nodes.map((n) => n.id));
   for (const { edge } of edges) {
-
-
     if (!known.has(edge.from) || !known.has(edge.to)) {
       ignored += 1;
       continue;
@@ -240,7 +227,6 @@ function readModel(graph: Element, model: ImportedModel): void {
   }
 }
 
-
 function labelOf(cell: Element): string {
   const raw = cell.getAttribute("value") ?? "";
   if (!raw) return "";
@@ -262,7 +248,6 @@ function labelOf(cell: Element): string {
 
 function shapeFor(style: string): NodeShape {
   const lower = style.toLowerCase();
-
 
   for (const [key, shape] of SHAPES) {
     if (lower.includes(key)) return shape;

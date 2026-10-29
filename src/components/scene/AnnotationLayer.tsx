@@ -11,7 +11,6 @@ import type { Annotation } from "../../core/sidecar/types";
 import type { Scene } from "../../core/model/scene";
 import type { DiagramTheme } from "../../core/theme";
 
-
 export const AnnotationLayer = memo(function AnnotationLayer({
   annotations,
   scene,
@@ -141,7 +140,6 @@ export const AnnotationShape = memo(function AnnotationShape({
     </g>
   );
 });
-
 
 export const AnnotationSelection = memo(function AnnotationSelection({
   annotations,

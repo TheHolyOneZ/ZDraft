@@ -5,7 +5,6 @@ import type { GraphScene } from "../core/model/scene";
 import type { DiagramTheme } from "../core/theme";
 import { screenToWorld, type Viewport } from "../lib/viewport";
 
-
 const SIZE = { w: 168, h: 116 };
 const PAD = 6;
 
@@ -33,7 +32,6 @@ export function Minimap({
     return Math.min((SIZE.w - PAD * 2) / bounds.w, (SIZE.h - PAD * 2) / bounds.h);
   }, [bounds]);
 
-
   const view = useMemo<Rect>(() => {
     const topLeft = screenToWorld(viewport, { x: 0, y: 0 });
     const bottomRight = screenToWorld(viewport, { x: width, y: height });
@@ -44,7 +42,6 @@ export function Minimap({
       h: bottomRight.y - topLeft.y,
     };
   }, [viewport, width, height]);
-
 
   const covered = view.w >= bounds.w && view.h >= bounds.h;
   if (scale <= 0 || covered || scene.nodes.length < 8) return null;
@@ -106,7 +103,6 @@ export function Minimap({
             key={node.id}
             {...r}
             rx={1.5}
-
 
             fill={pins.has(node.id) ? "var(--pin)" : theme.nodeStroke}
             opacity={pins.has(node.id) ? 0.95 : 0.6}

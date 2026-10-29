@@ -3,15 +3,13 @@ import { memo } from "react";
 import { edgePathD, headArrow, pointAlong, tailArrow } from "../../core/render/edges";
 import { nodeTextColors, renderCluster, renderNode } from "../../core/render/node";
 import { shapeGeometry } from "../../core/render/shapes";
-import { measureText, type TextLine } from "../../core/render/text";
+import { labelBlock, type TextLine } from "../../core/render/text";
 import type { Rect } from "../../core/model/geometry";
 import type { GraphEdge, GraphNode, GraphScene } from "../../core/model/scene";
 import type { SceneDiff } from "../../core/diff";
 import type { DiagramTheme } from "../../core/theme";
 
-
 const ARROW_SIZE = 11;
-
 
 const GHOST_GRAB = 14;
 
@@ -34,7 +32,6 @@ function Lines({ lines, color, muted, family }: {
           fontWeight={line.weight}
           fontStyle={line.italic ? "italic" : undefined}
           fill={line.muted ? muted : color}
-
 
           style={{ pointerEvents: "none", whiteSpace: "pre" }}
         >
@@ -66,7 +63,6 @@ export const ClusterLayer = memo(function ClusterLayer({
           <g
             key={cluster.id}
 
-
             className="node-hit"
             data-cluster={cluster.id}
             data-dragging={draggingIds?.has(cluster.id) ? "true" : undefined}
@@ -79,9 +75,9 @@ export const ClusterLayer = memo(function ClusterLayer({
               strokeWidth={theme.strokeWidth * (active ? 1.8 : 1)}
               strokeDasharray="6 4"
             />
-            {r.label && (
+            {r.labels.length > 0 && (
               <Lines
-                lines={[r.label]}
+                lines={r.labels}
                 color={theme.clusterText}
                 muted={theme.clusterText}
                 family={theme.fontFamily}
@@ -181,24 +177,22 @@ function EdgeLabel({
   const y = label.at.y + (label.offset?.y ?? 0);
   const size = theme.fontSize - 1;
 
-
-  const width = measureText(label.text, size, 500) + 5;
-  const height = size + 4;
+  const { rows, box } = labelBlock(label.text, { x, y }, size, 500);
 
   return (
     <>
     <rect
-      x={x - width / 2}
-      y={y - height / 2}
-      width={width}
-      height={height}
+      x={box.x}
+      y={box.y}
+      width={box.w}
+      height={box.h}
       rx={3}
       fill={theme.edgeTextHalo}
       style={{ pointerEvents: "none" }}
     />
     <text
       x={x}
-      y={y + size * 0.34}
+      y={rows[0]!.y}
       textAnchor="middle"
       fontFamily={theme.fontFamily}
       fontSize={size}
@@ -206,17 +200,19 @@ function EdgeLabel({
       fill={color}
       stroke={theme.edgeTextHalo}
 
-
       strokeWidth={2}
       paintOrder="stroke"
       strokeLinejoin="round"
-
 
       className="node-hit"
       data-edge-label={edge.id}
       data-dragging={dragging ? "true" : undefined}
     >
-      {label.text}
+      {rows.map((row, i) => (
+        <tspan key={i} x={x} y={row.y}>
+          {row.text}
+        </tspan>
+      ))}
     </text>
     </>
   );
@@ -316,7 +312,6 @@ export const NodeShapeView = memo(function NodeShapeView({
   );
 });
 
-
 function PinBadge({ node }: { node: GraphNode }) {
   const { w } = node.rect;
 
@@ -368,7 +363,6 @@ export const NodeLayer = memo(function NodeLayer({
     </g>
   );
 });
-
 
 export const GhostLayer = memo(function GhostLayer({
   ghosts,
@@ -435,7 +429,6 @@ export const GhostLayer = memo(function GhostLayer({
     </g>
   );
 });
-
 
 export const SelectionLayer = memo(function SelectionLayer({
   scene,
@@ -515,7 +508,6 @@ function SelectionBounds({ rects }: { rects: Rect[] }) {
   );
 }
 
-
 export const WaypointLayer = memo(function WaypointLayer({
   edge,
   waypoints,
@@ -533,12 +525,8 @@ export const WaypointLayer = memo(function WaypointLayer({
   const candidates: Array<{ x: number; y: number; after: number }> = [];
 
   if (waypoints.length === 0) {
-
-
     candidates.push({ ...pointAlong(edge.route, 0.5), after: 0 });
   } else {
-
-
     for (let i = 1; i < points.length; i++) {
       const a = points[i - 1]!;
       const b = points[i]!;
@@ -581,7 +569,6 @@ export const WaypointLayer = memo(function WaypointLayer({
   );
 });
 
-
 export const EdgeSelection = memo(function EdgeSelection({ edge }: { edge: GraphEdge }) {
   return (
     <path
@@ -596,7 +583,6 @@ export const EdgeSelection = memo(function EdgeSelection({ edge }: { edge: Graph
     />
   );
 });
-
 
 export const DiffLayer = memo(function DiffLayer({
   diff,
@@ -687,10 +673,8 @@ export const DiffLayer = memo(function DiffLayer({
   );
 });
 
-
 const DIFF_ADDED = "#4ade80";
 const DIFF_REMOVED = "#f87171";
 const DIFF_CHANGED = "#c084fc";
-
 
 export const DIFF_MOVED = "#fbbf24";

@@ -12,7 +12,6 @@ import { parseSidecar } from "../../../src/core/sidecar/read";
 import type { Layout, Sidecar } from "../../../src/core/sidecar/types";
 import { themeByName } from "../../../src/core/theme";
 
-
 export interface RenderOptions {
   theme: string;
 
@@ -24,7 +23,6 @@ export interface RenderOptions {
 }
 
 export interface Rendered {
-
   source: string;
 
   name: string;
@@ -66,11 +64,9 @@ export function engineFor(path: string): EngineId | null {
   return dot < 0 ? null : (BY_EXTENSION[path.slice(dot).toLowerCase()] ?? null);
 }
 
-
 export function sidecarPathFor(path: string): string {
   return join(dirname(path), `${basename(path)}.zlayout.toml`);
 }
-
 
 export async function renderFile(path: string, options: RenderOptions): Promise<Rendered[]> {
   const text = await readFile(path, "utf8");
@@ -123,8 +119,6 @@ async function renderOne(
 ): Promise<Rendered> {
   const adapter = ADAPTERS[engine];
   if (!adapter) {
-
-
     throw new RenderError(
       `The CLI cannot render ${engine} yet.`,
       engine === "mermaid"
@@ -173,7 +167,6 @@ function apply(
     pinned: Object.keys(layout.pins ?? {}).length - applied.orphans.length,
   };
 }
-
 
 async function readSidecar(path: string): Promise<Sidecar | null> {
   let text: string;

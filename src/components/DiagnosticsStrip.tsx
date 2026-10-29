@@ -8,9 +8,7 @@ import { useDocumentStore } from "../store/useDocumentStore";
 import { useSettingsStore } from "../store/useSettingsStore";
 import { Splitter } from "./ui";
 
-
 const DEFAULT_HEIGHT = 96;
-
 
 export function DiagnosticsStrip({ onGoTo }: { onGoTo(range: { from: number; to: number }): void }) {
   const diagnostics = useDocumentStore((s) => s.diagnostics);
@@ -47,14 +45,12 @@ export function DiagnosticsStrip({ onGoTo }: { onGoTo(range: { from: number; to:
       case "separate-nodes": {
         if (!scene || !isGraph(scene)) return;
 
-
         pinAt(separateNodes(scene, fix.nodes), 0);
         select(fix.nodes, false);
         break;
       }
     }
   };
-
 
   if (stale) {
     return (
@@ -180,7 +176,6 @@ function Icon({ severity }: { severity: Diagnostic["severity"] }) {
       return <Info {...props} style={{ color: "var(--text-3)" }} />;
   }
 }
-
 
 export function centerOfSelection(): { x: number; y: number } | null {
   const { scene, selection } = useDocumentStore.getState();

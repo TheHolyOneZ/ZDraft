@@ -1,10 +1,4 @@
-/**
- * @vitest-environment node
- *
- * A directive, not a comment: D2's WASM wants a real worker and
- * `URL.createObjectURL`, and jsdom has neither. Do not let a tidy pass
- * take this out.
- */
+/** @vitest-environment node */
 import { describe, expect, it } from "vitest";
 
 import { rectCenter } from "../model/geometry";
@@ -58,7 +52,6 @@ describe("d2Adapter", () => {
     expect(shapeOf("d")).toBe("cloud");
     expect(shapeOf("e")).toBe("queue");
   }, 30000);
-
 
   it("reads a container as a cluster, not a node", async () => {
     const scene = await layout("core: {\n  api: API\n  worker: Worker\n}\n");
@@ -140,7 +133,6 @@ describe("d2Adapter", () => {
     expect(new Set(scene.edges.map((e) => e.id)).size).toBe(scene.edges.length);
   }, 30000);
 
-
   it("discards D2's theme keys but keeps a colour the source set", async () => {
     const scene = await layout("plain: Plain\npainted: P {style.fill: \"#ff0000\"}\n");
 
@@ -189,7 +181,6 @@ describe("d2Adapter", () => {
     expect(result.diagnostics.some((d) => d.severity === "info")).toBe(true);
   }, 30000);
 
-
   it("keeps a pin when an unrelated part of the source changes", async () => {
     const before = await layout("a -> b\n");
     const node = before.nodes.find((n) => n.id === "a")!;
@@ -234,7 +225,6 @@ describe("diagnosticsFromD2Error", () => {
     expect(d!.message).toBe("the worker died");
     expect(d!.range).toBeUndefined();
   });
-
 
   it("counts characters, not bytes", () => {
     const accented = "café: Café\nx -> \n";

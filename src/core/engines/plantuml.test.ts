@@ -10,7 +10,6 @@ import { themeByName } from "../theme";
 import { buildPlantUmlScene, plantumlAdapter, setPlantUmlRunner, skinparamsFor } from "./plantuml";
 import { isGraphDiagramType, readPlantUmlGeometry } from "./plantumlReadback";
 
-
 const DIR = resolve(__dirname, "../../../tests/fixtures/plantuml");
 
 function fixture(name: string): { source: string; svg: Element } {
@@ -93,7 +92,6 @@ describe("buildPlantUmlScene", () => {
     expect(nodeText(gw.body)).toBe("API Gateway");
   });
 
-
   it("takes shapes from the keyword the source used", () => {
     const graph = scene("components");
     const shapeOf = (id: string) => graph.nodes.find((n) => n.id === id)!.shape;
@@ -136,7 +134,6 @@ describe("buildPlantUmlScene", () => {
     const body = graph.nodes.find((n) => n.id === "Document")!.body;
     if (body.kind !== "compartments") throw new Error("expected compartments");
 
-
     expect(body.sections.length).toBe(2);
     expect(body.sections[0]!.items.every((i) => !i.includes("("))).toBe(true);
     expect(body.sections[1]!.items.every((i) => i.includes("("))).toBe(true);
@@ -150,7 +147,6 @@ describe("buildPlantUmlScene", () => {
     expect(body.title).toBe("Layout");
     expect(body.stereotype).toBe("sidecar");
   });
-
 
   it("takes arrowheads from the connector in the source", () => {
     const graph = scene("classes");
@@ -179,7 +175,6 @@ describe("buildPlantUmlScene", () => {
 
     expect(ids).toContain("Idle");
     expect(ids).toContain("Loading");
-
 
     expect(graph.edges.length).toBe(6);
   });
@@ -244,7 +239,6 @@ describe("plantumlAdapter", () => {
     setPlantUmlRunner(null);
   });
 
-
   it("falls back to passthrough for a diagram it cannot model", async () => {
     setPlantUmlRunner(runner("sequence"));
     const { source } = fixture("sequence");
@@ -260,7 +254,6 @@ describe("plantumlAdapter", () => {
     const result = await plantumlAdapter.layout(fixture("sequence").source);
 
     if (result.scene.family !== "passthrough") throw new Error("expected passthrough");
-
 
     expect(result.scene.svg).not.toContain("<svg");
     expect(result.scene.svg.length).toBeGreaterThan(100);
@@ -299,14 +292,11 @@ describe("skinparamsFor", () => {
     expect(params).toContain(`participantBackgroundColor=${theme.nodeFill}`);
   });
 
-
   it("sets a font colour the canvas can actually show", () => {
     expect(skinparamsFor(theme)).toContain(`defaultFontColor=${theme.nodeText}`);
   });
 
   it("leaves out values PlantUML has no equivalent for", () => {
-
-
     for (const param of skinparamsFor(theme)) {
       expect(param, param).not.toContain("rgba");
     }

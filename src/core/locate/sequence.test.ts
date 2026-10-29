@@ -66,7 +66,6 @@ describe("parseSequence — messages", () => {
   });
 
   it("prefers the longer arrow form", () => {
-
     const [m] = messages("sequenceDiagram\n  A-->>B: reply");
     expect(m).toMatchObject({ from: "A", to: "B", arrow: "reply", dashed: true });
   });

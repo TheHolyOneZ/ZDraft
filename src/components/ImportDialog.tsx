@@ -10,7 +10,6 @@ import { useToastStore } from "../store/useToastStore";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { Button, Modal, TextInput } from "./ui";
 
-
 export function ImportDialog({
   open,
   onClose,
@@ -63,10 +62,7 @@ export function ImportDialog({
     setReading(true);
     setFailure(null);
     try {
-
-
       const { text, name: base } = await api.readFile(chosen);
-
 
       const format = formatFor(base) ?? "drawio";
       const result = await importDiagram(text, format);
@@ -90,7 +86,10 @@ export function ImportDialog({
     setBusy(true);
     setFailure(null);
     try {
-      await createImported(target, fileName, source.result.source, source.result.layout);
+      if (!(await createImported(target, fileName, source.result.source, source.result.layout))) {
+        setBusy(false);
+        return;
+      }
       refresh();
       onClose();
       push({

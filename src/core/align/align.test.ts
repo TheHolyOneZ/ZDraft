@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { align, distribute, space, type Placed } from ".";
 
-
 function box(id: string, x: number, y: number, w = 100, h = 50): Placed {
   return { id, rect: { x, y, w, h } };
 }
@@ -33,7 +32,6 @@ describe("align", () => {
     }
   });
 
-
   it("puts every centre on the middle of the extent", () => {
     const moved = align(row, "center-x");
     for (const node of row) expect(moved.get(node.id)!.x).toBeCloseTo(220, 6);
@@ -57,7 +55,6 @@ describe("align", () => {
     for (const node of row) expect(middle.get(node.id)!.y).toBeCloseTo(50, 6);
   });
 
-
   it("gives the same answer whatever order the nodes arrive in", () => {
     const forwards = align(row, "left");
     const backwards = align([...row].reverse(), "left");
@@ -80,7 +77,6 @@ describe("distribute", () => {
     expect(moved.has("c")).toBe(false);
     expect(moved.has("b")).toBe(true);
   });
-
 
   it("makes the gaps equal, not the centres", () => {
     const nodes = [box("a", 0, 0, 100, 20), box("b", 150, 0, 20, 20), box("c", 400, 0, 100, 20)];
@@ -115,7 +111,6 @@ describe("distribute", () => {
     const shuffled = [row[2]!, row[0]!, row[1]!];
     expect(distribute(shuffled, "horizontal").has("b")).toBe(true);
   });
-
 
   it("does not fall over when the boxes already overlap", () => {
     const crowded = [box("a", 0, 0, 100, 20), box("b", 10, 0, 100, 20), box("c", 20, 0, 100, 20)];

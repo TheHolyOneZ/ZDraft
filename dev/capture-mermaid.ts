@@ -1,15 +1,3 @@
-/**
- * Fixture capture, run in a real browser.
- *
- * Mermaid measures text with `getBBox`, which jsdom does not implement — so its
- * geometry can only be produced by a real layout engine. That is why the corpus
- * exists at all: it freezes real output so the readback logic can be unit
- * tested without a browser, and so a Mermaid upgrade that shifts geometry fails
- * loudly instead of silently moving everyone's diagrams (§11).
- *
- * Driven by `scripts/capture-mermaid-fixtures.mjs`; not part of the app bundle.
- */
-
 import mermaid from "mermaid";
 
 import { MERMAID_CONFIG, MERMAID_VERSION } from "../src/core/engines/mermaidConfig";

@@ -28,7 +28,6 @@ export const useToastStore = create<ToastState>()((set, get) => ({
   push: (toast) => {
     const id = nextId++;
 
-
     const timeout = toast.timeout ?? (toast.kind === "error" ? 0 : 4200);
 
     set((s) => ({ toasts: [...s.toasts, { ...toast, id }] }));
@@ -41,7 +40,6 @@ export const useToastStore = create<ToastState>()((set, get) => ({
   dismiss: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
   clear: () => set({ toasts: [] }),
 }));
-
 
 export const toast = {
   info: (title: string, body?: string) => useToastStore.getState().push({ kind: "info", title, body }),

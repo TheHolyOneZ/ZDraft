@@ -5,7 +5,6 @@ import { adapterFor, useDocumentStore } from "../store/useDocumentStore";
 import { toast } from "../store/useToastStore";
 import { Button, Modal, TextInput } from "./ui";
 
-
 export function GroupDialog({
   open,
   onClose,

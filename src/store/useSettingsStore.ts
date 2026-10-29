@@ -12,7 +12,6 @@ export const APP_THEMES: Array<{ id: AppTheme; label: string; note: string }> = 
   { id: "contrast", label: "Contrast", note: "Maximum legibility." },
 ];
 
-
 export type SplitMode = "vertical" | "horizontal" | "canvas";
 
 interface SettingsState {
@@ -27,6 +26,8 @@ interface SettingsState {
   gridSnap: number;
   autoRender: boolean;
 
+  autoSaveLayout: boolean;
+
   animateLayout: boolean;
   showGrid: boolean;
   showMinimap: boolean;
@@ -35,9 +36,7 @@ interface SettingsState {
   editorWrap: boolean;
   lineNumbers: boolean;
 
-
   plantumlJar: string;
-
 
   diagnosticsHeight: number;
 
@@ -55,10 +54,10 @@ interface SettingsState {
   reset(): void;
 }
 
-
 type SettingsToggles = Pick<
   SettingsState,
   | "autoRender"
+  | "autoSaveLayout"
   | "animateLayout"
   | "showGrid"
   | "showMinimap"
@@ -69,7 +68,6 @@ type SettingsToggles = Pick<
 
 const SPLIT_ORDER: SplitMode[] = ["vertical", "horizontal", "canvas"];
 
-
 const DEFAULTS = {
   appTheme: "drafting",
   diagramTheme: DEFAULT_DIAGRAM_THEME,
@@ -79,6 +77,7 @@ const DEFAULTS = {
   splitRatio: 0.42,
   gridSnap: 8,
   autoRender: true,
+  autoSaveLayout: true,
   animateLayout: true,
   showGrid: true,
   showMinimap: true,
@@ -101,6 +100,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       gridSnap: 8,
       autoRender: true,
+      autoSaveLayout: true,
       animateLayout: true,
       showGrid: true,
       showMinimap: true,
@@ -112,7 +112,6 @@ export const useSettingsStore = create<SettingsState>()(
 
       setAppTheme: (appTheme) => set({ appTheme }),
       setPlantumlJar: (plantumlJar) => set({ plantumlJar }),
-
 
       setDiagnosticsHeight: (px) =>
         set({ diagnosticsHeight: Math.round(Math.min(520, Math.max(28, px))) }),

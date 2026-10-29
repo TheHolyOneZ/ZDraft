@@ -4,7 +4,6 @@ import { dotEditor, idOccurrences } from "./dot";
 import { mermaidEditor } from "./mermaid";
 import { spliceAll } from "./types";
 
-
 const SRC = `digraph arch {
   rankdir=LR;
   node [shape=box];
@@ -61,7 +60,6 @@ describe("dotEditor.rename", () => {
 
   it("leaves everything else byte-identical", () => {
     const out = dotEditor.rename(SRC, "cdn", "x")!;
-
 
     expect(out.source).toContain("  // the edge tier");
     expect(out.source).toContain("gateway [shape=hexagon, label=\"API Gateway\"];");
@@ -130,7 +128,6 @@ describe("dotEditor.setShape", () => {
     expect(out.source).toContain('cdn [label="CDN", shape=diamond]');
   });
 
-
   it("writes DOT's own word for the shape", () => {
     expect(dotEditor.setShape(SRC, "bare", "doc")!.source).toContain("shape=note");
     expect(dotEditor.setShape(SRC, "bare", "subroutine")!.source).toContain("shape=component");
@@ -187,7 +184,6 @@ describe("spliceAll", () => {
   });
 });
 
-
 const MMD = `flowchart TD
   %% cdn is the edge tier
   cdn[CDN] --> gateway{{API Gateway}}
@@ -240,7 +236,6 @@ describe("mermaidEditor.setLabel", () => {
     expect(out.source).toContain("bare[Bare]");
   });
 
-
   it("quotes a label holding something the delimiters would eat", () => {
     const out = mermaidEditor.setLabel(MMD, "cdn", "CDN [edge]")!;
     expect(out.source).toContain('cdn["CDN [edge]"]');
@@ -285,7 +280,6 @@ describe("mermaidEditor.idProblem", () => {
   });
 });
 
-
 describe("group", () => {
   it("adds a DOT cluster that claims the nodes by name", () => {
     const out = dotEditor.group!(SRC, ["cdn", "gateway"], "Edge tier")!;
@@ -295,7 +289,6 @@ describe("group", () => {
     expect(out.source).toContain("cdn;");
     expect(out.source).toContain("gateway;");
   });
-
 
   it("leaves the original declarations exactly where they were", () => {
     const out = dotEditor.group!(SRC, ["cdn"], "Edge")!;

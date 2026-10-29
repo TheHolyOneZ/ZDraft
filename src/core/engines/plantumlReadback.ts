@@ -2,9 +2,7 @@ import type { Point, Rect } from "../model/geometry";
 import { unionRects } from "../model/geometry";
 import { localBBox, pathPoints } from "./mermaidReadback";
 
-
 export interface ReadPumlEntity {
-
   id: string;
 
   ref: string;
@@ -14,12 +12,10 @@ export interface ReadPumlEntity {
 
   text?: string;
 
-
   marker?: "start" | "end";
 }
 
 export interface ReadPumlLink {
-
   fromRef: string;
   toRef: string;
   points: Point[];
@@ -40,7 +36,6 @@ export interface ReadPumlGeometry {
 
   diagramType: string;
 }
-
 
 const GRAPH_TYPES = new Set(["DESCRIPTION", "CLASS", "STATE", "OBJECT", "DEPLOYMENT", "USECASE"]);
 
@@ -114,7 +109,6 @@ export function readPlantUmlGeometry(svg: Element): ReadPumlGeometry {
   };
 }
 
-
 function routeOf(el: Element): Point[] {
   const path = el.querySelector("path");
   if (path) return pathPoints(path.getAttribute("d") ?? "");
@@ -138,7 +132,6 @@ function routeOf(el: Element): Point[] {
   return out;
 }
 
-
 function labelOf(el: Element): { text: string; at: Point } | undefined {
   const texts = Array.from(el.querySelectorAll("text"));
   if (texts.length === 0) return undefined;
@@ -154,7 +147,6 @@ function labelOf(el: Element): { text: string; at: Point } | undefined {
 
   return {
     text: parts.join(" ").trim(),
-
 
     at: { x: x + width / 2, y: y - size * 0.34 },
   };
@@ -178,7 +170,6 @@ function boundsOf(
   ];
   return rects.length > 0 ? unionRects(rects) : { x: 0, y: 0, w: 0, h: 0 };
 }
-
 
 function firstText(el: Element): string | undefined {
   for (const text of Array.from(el.querySelectorAll("text"))) {

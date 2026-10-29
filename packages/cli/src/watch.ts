@@ -4,12 +4,9 @@ import { join, resolve } from "node:path";
 
 import { engineFor, sidecarPathFor } from "./render";
 
-
 const EXTENSIONS = new Set([".dot", ".gv", ".d2", ".md", ".markdown"]);
 
-
 const SKIP = new Set(["node_modules", ".git", "target", "dist", "build", ".next"]);
-
 
 export async function expand(paths: readonly string[]): Promise<string[]> {
   const out = new Set<string>();
@@ -19,8 +16,6 @@ export async function expand(paths: readonly string[]): Promise<string[]> {
     if (!info) continue;
 
     if (info.isFile()) {
-
-
       out.add(path);
       continue;
     }
@@ -43,7 +38,6 @@ async function walk(dir: string): Promise<string[]> {
       continue;
     }
 
-
     if (path.endsWith(".zlayout.toml")) continue;
 
     const dot = entry.name.lastIndexOf(".");
@@ -53,7 +47,6 @@ async function walk(dir: string): Promise<string[]> {
   return out;
 }
 
-
 export async function watch(
   paths: readonly string[],
   onChange: (path: string) => Promise<void>,
@@ -61,7 +54,6 @@ export async function watch(
 ): Promise<void> {
   const files = await expand(paths);
   const roots = await watchRoots(paths);
-
 
   const owners = new Map<string, string>();
   for (const file of files) owners.set(resolve(sidecarPathFor(file)), file);
@@ -75,7 +67,6 @@ export async function watch(
       path,
       setTimeout(() => {
         pending.delete(path);
-
 
         running = running.then(() => onChange(path)).catch((e: Error) => {
           console.error(e.stack ?? e.message);
@@ -97,7 +88,6 @@ export async function watch(
     }),
   );
 
-
   await new Promise<void>((resolveWatch) => {
     const stop = () => {
       for (const watcher of watchers) watcher.close();
@@ -108,7 +98,6 @@ export async function watch(
     process.once("SIGTERM", stop);
   });
 }
-
 
 async function watchRoots(paths: readonly string[]): Promise<string[]> {
   const roots = new Set<string>();

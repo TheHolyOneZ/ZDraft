@@ -9,22 +9,17 @@ import type { EdgeRoute, GraphEdge, GraphNode } from "../model/scene";
 import { boundaryFor } from "../render/shapes";
 import { buildGrid, routeOrthogonal, setRectBlocked, type RouteGrid } from "./orthogonal";
 
-
 export interface RouteContext {
-
   nodes: ReadonlyMap<string, GraphNode>;
 
   moved: ReadonlySet<string>;
 
   waypoints?: ReadonlyMap<string, Point[]>;
 
-
   bounds?: Rect;
 }
 
-
 const SELF_LOOP_RADIUS = 34;
-
 
 export function directRoute(
   from: Rect,
@@ -36,7 +31,6 @@ export function directRoute(
   const fromCenter = { x: from.x + from.w / 2, y: from.y + from.h / 2 };
   const toCenter = { x: to.x + to.w / 2, y: to.y + to.h / 2 };
 
-
   const firstTarget = waypoints[0] ?? toCenter;
   const lastTarget = waypoints[waypoints.length - 1] ?? fromCenter;
 
@@ -47,7 +41,6 @@ export function directRoute(
 
   return { route: { kind: "poly", points }, arrowEnd: end, arrowStart: start };
 }
-
 
 export function selfLoopRoute(rect: Rect): { route: EdgeRoute; arrowEnd: Point; arrowStart: Point } {
   const r = SELF_LOOP_RADIUS;
@@ -69,15 +62,12 @@ export function selfLoopRoute(rect: Rect): { route: EdgeRoute; arrowEnd: Point; 
   };
 }
 
-
 export function rerouteEdges(edges: readonly GraphEdge[], ctx: RouteContext): GraphEdge[] {
   const obstacles = [...ctx.nodes.values()].map((n) => n.rect);
-
 
   const movedRects = [...ctx.moved]
     .map((id) => ctx.nodes.get(id)?.rect)
     .filter((r): r is Rect => r !== undefined);
-
 
   let grid: RouteGrid | null = null;
   const gridFor = (): RouteGrid | null => {
@@ -93,13 +83,11 @@ export function rerouteEdges(edges: readonly GraphEdge[], ctx: RouteContext): Gr
       ctx.moved.has(edge.to) ||
       manual !== undefined ||
 
-
       crossesAny(edge, movedRects, ctx.moved);
     if (!touched) return edge;
 
     const from = ctx.nodes.get(edge.from);
     const to = ctx.nodes.get(edge.to);
-
 
     if (!from || !to) return edge;
 
@@ -114,7 +102,6 @@ export function rerouteEdges(edges: readonly GraphEdge[], ctx: RouteContext): Gr
             manual ?? [],
           );
 
-
     if (edge.from !== edge.to && !manual?.length) {
       const blockers = [...ctx.nodes.values()].filter(
         (n) => n.id !== edge.from && n.id !== edge.to,
@@ -125,8 +112,6 @@ export function rerouteEdges(edges: readonly GraphEdge[], ctx: RouteContext): Gr
       if (blockers.some((n) => segmentIntersectsRect(start, end, n.rect))) {
         const g = gridFor();
         if (g) {
-
-
           setRectBlocked(g, from.rect, 0);
           setRectBlocked(g, to.rect, 0);
           const path = routeOrthogonal(g, start, end);
@@ -155,7 +140,6 @@ export function rerouteEdges(edges: readonly GraphEdge[], ctx: RouteContext): Gr
   });
 }
 
-
 export function labelAnchor(route: EdgeRoute): Point {
   const pts = route.points;
   if (pts.length === 0) return { x: 0, y: 0 };
@@ -182,7 +166,6 @@ export function labelAnchor(route: EdgeRoute): Point {
 
   return pts[pts.length - 1]!;
 }
-
 
 function crossesAny(
   edge: GraphEdge,

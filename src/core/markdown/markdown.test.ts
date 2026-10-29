@@ -56,7 +56,6 @@ describe("parseMarkdownBlocks", () => {
     expect(first!.marked).toBe(true);
   });
 
-
   it("falls back to engine and ordinal when there is no marker", () => {
     const blocks = parseMarkdownBlocks(DOC);
 
@@ -84,7 +83,6 @@ describe("parseMarkdownBlocks", () => {
     expect(blocks.some((b) => b.source.includes("echo"))).toBe(false);
   });
 
-
   it("does not read a fence inside another fence", () => {
     const src = "```bash\ncat <<EOF\n```mermaid\nflowchart TD\nEOF\n```\n";
     expect(parseMarkdownBlocks(src)).toHaveLength(0);
@@ -107,7 +105,6 @@ describe("parseMarkdownBlocks", () => {
     expect(blocks[0]!.engine).toBe("mermaid");
     expect(blocks[0]!.info).toBe("mermaid title=Auth");
   });
-
 
   it("treats an unclosed fence as running to the end", () => {
     const blocks = parseMarkdownBlocks("```mermaid\nflowchart TD\n  a --> b\n");
@@ -151,7 +148,6 @@ describe("withMarker", () => {
     expect(out.source).not.toContain("auth-flow");
     expect(out.source.split("<!-- zdraft:")).toHaveLength(2);
   });
-
 
   it("refuses a name another block already claims", () => {
     const blocks = parseMarkdownBlocks(DOC);

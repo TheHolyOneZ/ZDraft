@@ -6,7 +6,6 @@ import { createPortal } from "react-dom";
 import { IconButton } from "./index";
 import { useDismiss, usePrefersReducedMotion, useReturnFocus } from "./hooks";
 
-
 export function Modal({
   open,
   onClose,
@@ -33,7 +32,6 @@ export function Modal({
   useDismiss(open, onClose, useMemo(() => [panelRef], []));
   useReturnFocus(open);
 
-
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {
@@ -44,7 +42,6 @@ export function Modal({
     });
     return () => cancelAnimationFrame(frame);
   }, [open]);
-
 
   useEffect(() => {
     if (!open) return;

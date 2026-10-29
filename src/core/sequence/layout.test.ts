@@ -35,12 +35,10 @@ describe("orderLifelines", () => {
   });
 
   it("appends participants the hint does not mention", () => {
-
     expect(orderLifelines(people, ["c"]).map((p) => p.id)).toEqual(["c", "a", "b"]);
   });
 
   it("ignores ids in the hint that no longer exist", () => {
-
     expect(orderLifelines(people, ["gone", "b"]).map((p) => p.id)).toEqual(["b", "a", "c"]);
   });
 
@@ -168,7 +166,6 @@ describe("layoutSequence — activations and fragments", () => {
   });
 
   it("closes an activation left open at the end rather than dropping it", () => {
-
     const scene = lay("sequenceDiagram\n  activate A\n  A->>B: x");
     expect(scene.activations).toHaveLength(1);
     expect(scene.activations[0]!.bottom).toBeGreaterThan(scene.activations[0]!.top);
@@ -189,7 +186,6 @@ describe("layoutSequence — activations and fragments", () => {
     expect(fragment.sectionLabels).toEqual(["is not"]);
     expect(fragment.rect.h).toBeGreaterThan(0);
     expect(fragment.rect.w).toBeGreaterThan(0);
-
 
     for (const m of scene.messages) {
       expect(m.y).toBeGreaterThan(fragment.rect.y);
@@ -234,5 +230,18 @@ describe("layoutSequence — notes and bounds", () => {
     expect(scene.lifelines).toEqual([]);
     expect(scene.messages).toEqual([]);
     expect(Number.isFinite(scene.bounds.w)).toBe(true);
+  });
+});
+
+describe("multi-line message labels", () => {
+  it("moves the arrow down so the extra lines sit above it, not over the message before", () => {
+    const single = lay("sequenceDiagram\n  A->>B: one\n  A->>B: next");
+    const double = lay("sequenceDiagram\n  A->>B: one<br/>two\n  A->>B: next");
+
+    const step = double.messages[0]!.y - single.messages[0]!.y;
+    expect(step).toBeGreaterThan(10);
+    expect(double.messages[1]!.y - double.messages[0]!.y).toBe(
+      single.messages[1]!.y - single.messages[0]!.y,
+    );
   });
 });

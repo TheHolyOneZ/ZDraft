@@ -21,7 +21,6 @@ describe("reading Graphviz's layout parameters", () => {
     expect(tuner.read(GRAPH)).toEqual({ rankdir: "LR" });
   });
 
-
   it("does not mistake a node attribute for a graph one", () => {
     expect(tuner.read("digraph d { a [rankdir=LR]; }")).toEqual({});
   });
@@ -60,9 +59,7 @@ describe("writing them", () => {
     expect(edit.source).toBe("digraph d {\n  rankdir=LR;\n  a -> b;\n}");
   });
 
-
   it("takes the line out when the value goes back to the default", () => {
-
     const back = tuner.set(GRAPH, "rankdir", "TB")!;
 
     expect(back.source).not.toContain("rankdir");
@@ -73,7 +70,6 @@ describe("writing them", () => {
     const source = "digraph d { a -> b; }";
     expect(tuner.set(source, "rankdir", "TB")!.source).toBe(source);
   });
-
 
   it("takes the semicolon and the blank line with it", () => {
     const edit = tuner.set("digraph d {\n  ranksep=1.5;\n  a -> b;\n}", "ranksep", "0.5")!;
@@ -101,7 +97,6 @@ describe("writing them", () => {
     expect(tuner.set(GRAPH, "rankdir", "BT")!.label).toBe("Set rankdir to BT");
   });
 });
-
 
 describe("what the engine does with them", () => {
   async function layout(source: string) {
@@ -143,7 +138,6 @@ describe("what the engine does with them", () => {
   }, 30000);
 });
 
-
 describe("Mermaid's layout parameters", () => {
   const tuner = mermaidEditor.tuning!;
   const FLOW = "flowchart TD\n  a --> b\n";
@@ -153,7 +147,6 @@ describe("Mermaid's layout parameters", () => {
     expect(tuner.read("flowchart LR\n  a --> b\n").direction).toBe("LR");
   });
 
-
   it("reads the older keyword and spelling too", () => {
     expect(tuner.read("graph TB\n  a --> b\n").direction).toBe("TD");
   });
@@ -161,7 +154,6 @@ describe("Mermaid's layout parameters", () => {
   it("changes the direction in place", () => {
     expect(tuner.set(FLOW, "direction", "LR")!.source).toBe("flowchart LR\n  a --> b\n");
   });
-
 
   it("writes the default direction rather than leaving the keyword bare", () => {
     const back = tuner.set("flowchart LR\n  a --> b\n", "direction", "TD")!;
@@ -198,7 +190,6 @@ describe("Mermaid's layout parameters", () => {
     expect(edit.source).toContain('"theme":"forest"');
     expect(edit.source).toContain('"curve":"linear"');
   });
-
 
   it("refuses to touch a directive it cannot read", () => {
     const weird = "%%{init: {this is not json}}%%\nflowchart TD\n  a --> b\n";

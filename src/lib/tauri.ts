@@ -11,11 +11,9 @@ import type { Sidecar } from "./bindings/Sidecar";
 
 export type { Conflict, FolderEntry, GitStatus, Layout, Pin, PlantUmlProbe, Sidecar };
 
-
 export function isTauri(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
-
 
 export function appWindow(): ReturnType<typeof getCurrentWindow> | null {
   if (!isTauri()) return null;
@@ -25,7 +23,6 @@ export function appWindow(): ReturnType<typeof getCurrentWindow> | null {
     return null;
   }
 }
-
 
 export interface CommandError {
   code: string;
@@ -43,7 +40,6 @@ export function isCommandError(value: unknown): value is CommandError {
     "remedy" in value
   );
 }
-
 
 export function describeError(err: unknown): { message: string; remedy: string } {
   if (isCommandError(err)) return { message: err.message, remedy: err.remedy };
@@ -95,9 +91,7 @@ export const api = Object.freeze({
 
   writeBytes: (path: string, bytes: number[]) => call<void>("write_bytes", { path, bytes }),
 
-
   writePdf: (path: string, svg: string) => call<void>("write_pdf", { path, svg }),
-
 
   outlineSvg: (svg: string) => call<string>("outline_svg", { svg }),
 

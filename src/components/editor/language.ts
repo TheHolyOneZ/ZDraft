@@ -7,7 +7,6 @@ import {
 import { tags as t } from "@lezer/highlight";
 import type { Extension } from "@codemirror/state";
 
-
 const DOT_KEYWORDS = new Set(["digraph", "graph", "subgraph", "node", "edge", "strict"]);
 
 const DOT_ATTRS = new Set([
@@ -18,7 +17,6 @@ const DOT_ATTRS = new Set([
 ]);
 
 interface DotState {
-
   inAttrs: boolean;
 
   afterEquals: boolean;
@@ -32,7 +30,6 @@ export const dotSpec: StreamParser<DotState> = {
   token(stream, state) {
     if (stream.eatSpace()) return null;
 
-
     if (stream.match("//") || stream.match("#")) {
       stream.skipToEnd();
       return "comment";
@@ -44,7 +41,6 @@ export const dotSpec: StreamParser<DotState> = {
       }
       return "comment";
     }
-
 
     if (stream.peek() === '"') {
       stream.next();
@@ -61,7 +57,6 @@ export const dotSpec: StreamParser<DotState> = {
       state.afterEquals = false;
       return "string";
     }
-
 
     if (stream.match("->") || stream.match("--")) {
       return "operator";
@@ -94,7 +89,6 @@ export const dotSpec: StreamParser<DotState> = {
 
     const word = stream.match(/^([A-Za-z_-￿][A-Za-z0-9_-￿]*)/);
 
-
     if (word && word !== true) {
       const text = word[0].toLowerCase();
       const wasAfterEquals = state.afterEquals;
@@ -105,7 +99,6 @@ export const dotSpec: StreamParser<DotState> = {
       if (state.inAttrs && DOT_ATTRS.has(text)) return "propertyName";
       if (state.inAttrs) return "attributeName";
 
-
       return "variableName";
     }
 
@@ -115,7 +108,6 @@ export const dotSpec: StreamParser<DotState> = {
 };
 
 export const dotLanguage = StreamLanguage.define(dotSpec);
-
 
 export const zdraftHighlight = HighlightStyle.define([
   { tag: t.comment, color: "var(--text-3)", fontStyle: "italic" },
@@ -129,7 +121,6 @@ export const zdraftHighlight = HighlightStyle.define([
   { tag: t.bracket, color: "var(--text-3)" },
   { tag: t.punctuation, color: "var(--text-3)" },
 
-
   { tag: t.heading, color: "var(--text)", fontWeight: "600" },
   { tag: t.quote, color: "var(--text-2)", fontStyle: "italic" },
   { tag: t.list, color: "var(--accent)" },
@@ -139,7 +130,6 @@ export const zdraftHighlight = HighlightStyle.define([
   { tag: t.link, color: "var(--accent)" },
   { tag: t.meta, color: "var(--text-3)" },
 ]);
-
 
 const MERMAID_KEYWORDS = new Set([
   "flowchart", "graph", "subgraph", "end", "direction",
@@ -152,7 +142,6 @@ const MERMAID_KEYWORDS = new Set([
 ]);
 
 interface MermaidState {
-
   inLabel: boolean;
   closer: string;
 }
@@ -165,14 +154,12 @@ export const mermaidSpec: StreamParser<MermaidState> = {
   token(stream, state) {
     if (stream.eatSpace()) return null;
 
-
     if (stream.match("%%")) {
       stream.skipToEnd();
       return "comment";
     }
 
     if (state.inLabel) {
-
       if (stream.match(state.closer)) {
         state.inLabel = false;
         state.closer = "";
@@ -190,14 +177,11 @@ export const mermaidSpec: StreamParser<MermaidState> = {
       return "string";
     }
 
-
     if (stream.match(/^(?:<?(?:-{2,}|-\.+-|={2,}|~{3,})>?|<-{2,}>?|\|{1}|-->|\.->)/)) {
       return "operator";
     }
 
-
     if (stream.match(/^(?:->>|-->>|-\)|--\)|-x|--x|->|-->)/)) return "operator";
-
 
     for (const [open, close] of [
       ["[[", "]]"], ["[(", ")]"], ["[/", "/]"], ["[\\", "\\]"],
@@ -224,7 +208,6 @@ export const mermaidSpec: StreamParser<MermaidState> = {
 
 export const mermaidLanguage = StreamLanguage.define(mermaidSpec);
 
-
 const D2_KEYWORDS = new Set([
   "shape", "label", "icon", "style", "near", "direction", "constraint", "width",
   "height", "top", "left", "link", "tooltip", "class", "classes", "vars",
@@ -236,7 +219,6 @@ const D2_KEYWORDS = new Set([
 ]);
 
 interface D2State {
-
   block: string | null;
 
   inValue: boolean;
@@ -248,8 +230,6 @@ export const d2Spec: StreamParser<D2State> = {
   startState: () => ({ block: null, inValue: false }),
 
   token(stream, state) {
-
-
     if (state.block) {
       if (stream.match(state.block)) {
         state.block = null;
@@ -265,8 +245,6 @@ export const d2Spec: StreamParser<D2State> = {
     if (stream.match(/^(#|\/\/).*/)) return "comment";
 
     if (state.inValue) {
-
-
       if (stream.peek() === "{" || stream.peek() === "}") {
         state.inValue = false;
         stream.next();
@@ -290,7 +268,6 @@ export const d2Spec: StreamParser<D2State> = {
       }
       return "string";
     }
-
 
     if (stream.match(/^(?:<->|-->|->|<-|--)/)) return "operator";
 
@@ -320,7 +297,6 @@ export const d2Spec: StreamParser<D2State> = {
 
 export const d2Language = StreamLanguage.define(d2Spec);
 
-
 const FENCE_SPECS: Record<string, StreamParser<unknown>> = {
   dot: dotSpec as StreamParser<unknown>,
   graphviz: dotSpec as StreamParser<unknown>,
@@ -331,7 +307,6 @@ const FENCE_SPECS: Record<string, StreamParser<unknown>> = {
 };
 
 interface MarkdownState {
-
   fence: string | null;
 
   inner: { spec: StreamParser<unknown>; state: unknown } | null;
@@ -343,7 +318,6 @@ export const markdownLanguage = StreamLanguage.define<MarkdownState>({
   startState: () => ({ fence: null, inner: null }),
 
   token(stream, state) {
-
     if (state.fence !== null && stream.sol()) {
       const close = /^( {0,3})(`{3,}|~{3,})[ \t]*$/.exec(stream.string);
       if (close && close[2]![0] === state.fence[0] && close[2]!.length >= state.fence.length) {
@@ -356,8 +330,6 @@ export const markdownLanguage = StreamLanguage.define<MarkdownState>({
 
     if (state.fence !== null) {
       if (!state.inner) {
-
-
         stream.skipToEnd();
         return null;
       }

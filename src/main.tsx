@@ -5,7 +5,6 @@ import App from "./App";
 import { installPlantUmlRunner } from "./lib/plantumlRunner";
 import "./index.css";
 
-
 installPlantUmlRunner();
 
 createRoot(document.getElementById("root")!).render(

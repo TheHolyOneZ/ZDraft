@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 import type { Layout } from "../core/sidecar/types";
 
-
 export type HistoryEntry =
   | {
       kind: "source";
@@ -16,13 +15,11 @@ export type HistoryEntry =
       after: Layout;
     };
 
-
 const LIMIT = 200;
 
 interface HistoryState {
   past: HistoryEntry[];
   future: HistoryEntry[];
-
 
   applying: boolean;
 
@@ -82,7 +79,6 @@ export const useHistoryStore = create<HistoryState>()((set, get) => ({
       set({ applying: false });
     }
   },
-
 
   clear: () => set({ past: [], future: [], applying: false }),
 

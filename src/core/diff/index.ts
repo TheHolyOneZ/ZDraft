@@ -1,7 +1,6 @@
 import { rectCenter, type Point, type Rect } from "../model/geometry";
 import { isGraph, nodeText, type GraphScene, type Scene } from "../model/scene";
 
-
 export type NodeChange = "added" | "removed" | "moved" | "relabelled" | "reshaped";
 
 export interface DiffNode {
@@ -31,12 +30,9 @@ export interface SceneDiff {
   summary: string;
 }
 
-
 const MOVE_EPSILON = 0.5;
 
 export interface DiffOptions {
-
-
   pinnedBefore?: ReadonlySet<string>;
   pinnedAfter?: ReadonlySet<string>;
 }
@@ -47,7 +43,6 @@ export const EMPTY_DIFF: SceneDiff = {
   identical: true,
   summary: "No changes",
 };
-
 
 export function diffScenes(
   before: Scene | null,
@@ -83,7 +78,6 @@ function diffNodes(
       out.push({ id: node.id, change: "added", rect: node.rect, label: nodeText(node.body) });
       continue;
     }
-
 
     const label = nodeText(node.body);
     const wasLabel = nodeText(previous.body);
@@ -121,13 +115,11 @@ function diffNodes(
   return out;
 }
 
-
 function worthReporting(id: string, options: DiffOptions): boolean {
   const { pinnedBefore, pinnedAfter } = options;
   if (!pinnedBefore && !pinnedAfter) return true;
   return Boolean(pinnedBefore?.has(id) || pinnedAfter?.has(id));
 }
-
 
 function diffEdges(before: GraphScene, after: GraphScene): DiffEdge[] {
   const was = new Set(before.edges.map((e) => e.id));
@@ -167,7 +159,6 @@ function summarise(nodes: readonly DiffNode[], edges: readonly DiffEdge[]): stri
 
   return parts.length === 0 ? "No changes" : parts.join(", ");
 }
-
 
 export function isLayoutOnly(change: NodeChange): boolean {
   return change === "moved";

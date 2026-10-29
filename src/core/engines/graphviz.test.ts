@@ -23,8 +23,6 @@ describe("graphviz adapter", () => {
   });
 
   it("flips Graphviz's bottom-up axis so `a` is drawn above `b`", async () => {
-
-
     const scene = await layout("digraph { rankdir=TB; a -> b; }");
 
     const a = scene.nodes.find((n) => n.id === "a")!;
@@ -142,7 +140,6 @@ describe("graphviz adapter", () => {
     expect(result.diagnostics.some((d) => d.severity === "error")).toBe(true);
     expect(result.scene.family).toBe("graph");
 
-
     expect(isGraph(result.scene) && result.scene.nodes).toEqual([]);
   });
 
@@ -201,8 +198,6 @@ describe("parseRecordLabel", () => {
 });
 
 describe("contentAfterFirstGraph", () => {
-
-
   it("finds a second graph nobody will ever see rendered", () => {
     const src = "digraph a { x; }\ndigraph b { y; }\n";
     const stray = contentAfterFirstGraph(src)!;
@@ -221,7 +216,6 @@ describe("contentAfterFirstGraph", () => {
     expect(contentAfterFirstGraph("digraph a {\n  x -> y;\n}\n")).toBeNull();
   });
 
-
   it("says nothing about a trailing comment", () => {
     expect(contentAfterFirstGraph("digraph a { x; }\n// a note\n/* and another */\n")).toBeNull();
   });
@@ -232,7 +226,6 @@ describe("contentAfterFirstGraph", () => {
   });
 
   it("says nothing when the graph never closes", () => {
-
     expect(contentAfterFirstGraph("digraph a {\n  x;\n")).toBeNull();
   });
 

@@ -10,7 +10,6 @@ import {
 import type { NodeShape, SourceRange } from "../model/scene";
 import { spliceAll, type LayoutKnob, type LayoutTuner, type SemanticEditor } from "./types";
 
-
 const SHAPE_WORDS: Partial<Record<NodeShape, string>> = {
   rect: "rectangle",
   round: "state",
@@ -30,13 +29,10 @@ const SHAPE_WORDS: Partial<Record<NodeShape, string>> = {
   note: "annotation",
 };
 
-
 const DIRECTIVE =
   /^@(start|end)|^(skinparam|!|hide|show|scale|title|header|footer|legend|caption|note|end note|left to right|top to bottom|autonumber|allow_mixing|mainframe|together|newpage)\b/i;
 
-
 interface Statement {
-
   text: string;
 
   offset: number;
@@ -47,7 +43,6 @@ interface Statement {
 
   scope: string[];
 }
-
 
 function* statements(source: string): Generator<Statement> {
   const scope: string[] = [];
@@ -62,7 +57,6 @@ function* statements(source: string): Generator<Statement> {
     const lead = stripped.length - stripped.trimStart().length;
 
     if (inBody) {
-
       if (line.startsWith("}")) {
         bodyDepth -= 1;
         if (bodyDepth <= 0) inBody = false;
@@ -94,12 +88,10 @@ function* statements(source: string): Generator<Statement> {
   }
 }
 
-
 function rangeIn(text: string, offset: number, needle: string, from = 0): SourceRange | null {
   const at = text.indexOf(needle, from);
   return at < 0 ? null : { from: offset + at, to: offset + at + needle.length };
 }
-
 
 function occurrences(source: string, id: string): SourceRange[] {
   const out: SourceRange[] = [];
@@ -119,8 +111,6 @@ function occurrences(source: string, id: string): SourceRange[] {
     const declaration = matchDeclaration(line);
     if (declaration) {
       if (qualify(scope, declaration.name) === id) {
-
-
         const as = /\bas\s+/i.exec(line);
         const from = as ? lead + as.index + as[0].length : lead;
         const range = rangeIn(text, offset, declaration.name, from);
@@ -140,7 +130,6 @@ function occurrences(source: string, id: string): SourceRange[] {
 
         from = range.to - offset;
         if (qualify(scope, bare) === id) {
-
           const trim = token === bare ? 0 : 1;
           out.push({ from: range.from + trim, to: range.to - trim });
         }
@@ -151,11 +140,9 @@ function occurrences(source: string, id: string): SourceRange[] {
   return out;
 }
 
-
 function unwrap(token: string): string {
   return /^(\[.*\]|\(.*\)|:.*:|".*")$/.test(token) ? token.slice(1, -1) : token;
 }
-
 
 function declarationLine(source: string, id: string): Statement | null {
   for (const statement of statements(source)) {
@@ -164,7 +151,6 @@ function declarationLine(source: string, id: string): Statement | null {
   }
   return null;
 }
-
 
 const PUML_KNOBS: readonly LayoutKnob[] = [
   {
@@ -179,7 +165,6 @@ const PUML_KNOBS: readonly LayoutKnob[] = [
     ],
   },
 ];
-
 
 const DIRECTION_LINE = /^[ \t]*(left to right|top to bottom) direction[ \t]*$/im;
 
@@ -197,7 +182,6 @@ export const pumlTuner: LayoutTuner = {
     const spec = PUML_KNOBS[0]!;
     const found = DIRECTION_LINE.exec(source);
 
-
     if (value === spec.fallback) {
       if (!found) return { source, changed: [], label: "Set direction" };
 
@@ -214,7 +198,6 @@ export const pumlTuner: LayoutTuner = {
       return { source: out, changed, label: `Set direction to ${value}` };
     }
 
-
     const start = /^[ \t]*@start\w*.*$/im.exec(source);
     const at = start ? start.index + start[0].length : 0;
 
@@ -224,7 +207,6 @@ export const pumlTuner: LayoutTuner = {
     return { source: out, changed, label: `Set direction to ${value}` };
   },
 };
-
 
 export const pumlEditor: SemanticEditor = {
   shapes: Object.keys(SHAPE_WORDS) as NodeShape[],
@@ -245,7 +227,6 @@ export const pumlEditor: SemanticEditor = {
 
   rename(source, id, next) {
     if (pumlEditor.idProblem(next)) return null;
-
 
     const parent = id.slice(0, id.lastIndexOf(".") + 1);
     if (!next.startsWith(parent) || next.slice(parent.length).includes(".")) return null;
@@ -270,7 +251,6 @@ export const pumlEditor: SemanticEditor = {
     const label = next.replace(/\n/g, "\\n");
     const quoted = `"${label.replace(/"/g, "'")}"`;
 
-    // Already `keyword "Label" as name` — replace what is in the quotes.
     const existing = /"([^"]*)"/.exec(line);
     if (existing) {
       const at = lead + existing.index;
@@ -280,9 +260,6 @@ export const pumlEditor: SemanticEditor = {
       return { source: out, changed, label: `Relabel ${id}` };
     }
 
-    /* A bracket form carries its label between the brackets: `[Storefront]`.
-       Renaming that text renames the node too, so an alias is added instead
-       and the label goes where the label belongs. */
     if (/^(\[|\(|:)/.test(line)) {
       const closer = line[0] === "[" ? "]" : line[0] === "(" ? ")" : ":";
       const end = line.indexOf(closer, 1);
@@ -299,7 +276,6 @@ export const pumlEditor: SemanticEditor = {
       return { source: out, changed, label: `Relabel ${id}` };
     }
 
-    // `component web` — the label has to be introduced along with the alias.
     const nameAt = rangeIn(text, offset, declaration.name, lead);
     if (!nameAt) return null;
 
@@ -318,9 +294,6 @@ export const pumlEditor: SemanticEditor = {
 
     const { offset, line, lead } = statement;
 
-    /* Only a keyword declaration can change shape. A bracket form *is* its
-       shape — rewriting `[web]` as `database web` would be a bigger edit than
-       the properties bar implies, so it is refused instead. */
     const keyword = /^(?:(?:abstract|static)\s+)?([A-Za-z_]+)\b/.exec(line);
     if (!keyword || !KEYWORD_SHAPES[keyword[1]!.toLowerCase()]) return null;
 

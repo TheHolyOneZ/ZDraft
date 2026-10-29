@@ -1,5 +1,3 @@
-
-
 const NARROW = new Set("ijlt.,:;|!'`()[]{}/\\ ￼".split(""));
 const WIDE = new Set("mwMW@%".split(""));
 const CAPS = /[A-Z]/;
@@ -32,11 +30,9 @@ export function measureText(text: string, fontSize: number, weight = 400): numbe
   return em * fontSize * (weight >= 600 ? 1.03 : 1);
 }
 
-
 export function measureMono(text: string, fontSize: number): number {
   return [...text].length * fontSize * 0.6;
 }
-
 
 export function wrapText(
   text: string,
@@ -59,7 +55,6 @@ export function wrapText(
 
       const candidate = current + word;
       if (measureText(candidate, fontSize, weight) <= maxWidth || current === "") {
-
         if (current === "" && measureText(word, fontSize, weight) > maxWidth) {
           let chunk = "";
           for (const ch of word) {
@@ -84,7 +79,6 @@ export function wrapText(
   }
 
   if (lines.length <= maxLines) return lines;
-
 
   const kept = lines.slice(0, maxLines);
   kept[maxLines - 1] = truncateToWidth(kept[maxLines - 1] + "…", maxWidth, fontSize, weight);
@@ -121,7 +115,6 @@ export interface TextLine {
 
 export const LINE_HEIGHT = 1.32;
 
-
 export function centeredLines(
   lines: string[],
   box: { x: number; y: number; w: number; h: number },
@@ -146,7 +139,6 @@ export interface FittedLabel {
   lines: string[];
   size: number;
 }
-
 
 export function fitLabel(
   text: string,
@@ -179,4 +171,28 @@ export function fitLabel(
   }
 
   return { lines: wrapText(text, box.w, size, weight, maxLines), size };
+}
+
+export interface LabelBlock {
+  rows: Array<{ text: string; y: number }>;
+  box: { x: number; y: number; w: number; h: number };
+}
+
+export function labelBlock(
+  text: string,
+  center: { x: number; y: number },
+  size: number,
+  weight = 500,
+): LabelBlock {
+  const lines = text.split("\n");
+  const step = size * LINE_HEIGHT;
+  const spread = (lines.length - 1) * step;
+  const first = center.y - spread / 2 + size * 0.34;
+  const w = Math.max(...lines.map((l) => measureText(l, size, weight))) + 5;
+  const h = spread + size + 4;
+
+  return {
+    rows: lines.map((line, i) => ({ text: line, y: first + i * step })),
+    box: { x: center.x - w / 2, y: center.y - h / 2, w, h },
+  };
 }

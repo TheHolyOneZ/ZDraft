@@ -5,10 +5,7 @@ import type { SequenceHints } from "../sidecar/types";
 import type { DiagramTheme } from "../theme";
 
 export interface LayoutOpts {
-
-
   theme?: DiagramTheme;
-
 
   layoutProgram?: string;
 
@@ -17,10 +14,8 @@ export interface LayoutOpts {
   nodeSep?: number;
   rankSep?: number;
 
-
   sequenceHints?: SequenceHints | null;
 }
-
 
 export interface EngineAdapter {
   id: EngineId;
@@ -28,25 +23,20 @@ export interface EngineAdapter {
   label: string;
   extensions: string[];
 
-
   detectFamily(source: string): Family;
 
   layout(source: string, opts?: LayoutOpts): Promise<LayoutResult>;
 
   locate(source: string): LocateIndex;
 
-
   edit?: SemanticEditor | null;
-
 
   available?(): Promise<{ ok: true } | { ok: false; reason: string; remedy: string }>;
 }
 
-
 export function fingerprint(kind: string, label: string, ordinal: number): string {
   return `${kind}:${label.trim().replace(/\s+/g, " ")}:${ordinal}`;
 }
-
 
 export function makeFingerprinter(): (kind: string, label: string) => string {
   const seen = new Map<string, number>();

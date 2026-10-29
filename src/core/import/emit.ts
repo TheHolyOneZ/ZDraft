@@ -2,14 +2,12 @@ import type { Layout, Pin } from "../sidecar/types";
 import type { NodeShape } from "../model/scene";
 import type { ImportedModel, ImportedNode } from "./types";
 
-
 export interface EmitResult {
   source: string;
   layout: Layout;
 
   ids: Map<string, string>;
 }
-
 
 const FORMS: Partial<Record<NodeShape, [string, string]>> = {
   rect: ["[", "]"],
@@ -41,7 +39,6 @@ export function emitMermaid(model: ImportedModel): EmitResult {
   for (const node of byParent.get(undefined) ?? []) {
     lines.push(`  ${declare(node, ids)}`);
   }
-
 
   for (const group of model.groups) {
     const members = byParent.get(group.id) ?? [];
@@ -81,7 +78,6 @@ function declare(node: ImportedNode, ids: Map<string, string>): string {
   return `${id}${open}${label(node.label)}${close}`;
 }
 
-
 function pinsFor(nodes: readonly ImportedNode[], ids: Map<string, string>): Record<string, Pin> {
   if (nodes.length === 0) return {};
 
@@ -97,7 +93,6 @@ function pinsFor(nodes: readonly ImportedNode[], ids: Map<string, string>): Reco
       x: Math.round(node.x - left + node.w / 2),
       y: Math.round(node.y - top + node.h / 2),
 
-
       fingerprint: null,
       auto: null,
     };
@@ -105,7 +100,6 @@ function pinsFor(nodes: readonly ImportedNode[], ids: Map<string, string>): Reco
 
   return pins;
 }
-
 
 function assignIds(nodes: readonly ImportedNode[]): Map<string, string> {
   const taken = new Set<string>();
@@ -125,7 +119,6 @@ function assignIds(nodes: readonly ImportedNode[]): Map<string, string> {
   return ids;
 }
 
-
 function slug(text: string): string {
   const cleaned = text
     .normalize("NFKD")
@@ -138,7 +131,6 @@ function slug(text: string): string {
 
   return /^[0-9]/.test(cleaned) ? `n${cleaned}` : cleaned;
 }
-
 
 function label(text: string): string {
   const escaped = text

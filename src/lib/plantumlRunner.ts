@@ -6,7 +6,6 @@ import {
 import { useSettingsStore } from "../store/useSettingsStore";
 import { api, isTauri, type PlantUmlProbe } from "./tauri";
 
-
 let cached: { jar: string | null; probe: PlantUmlProbe } | null = null;
 
 export function forgetPlantUmlProbe(): void {
@@ -23,7 +22,6 @@ export async function probePlantUml(force = false): Promise<PlantUmlProbe | null
   cached = { jar, probe };
   return probe;
 }
-
 
 function statusOf(probe: PlantUmlProbe | null): PlantUmlStatus {
   if (!probe) {
@@ -80,12 +78,10 @@ const runner: PlantUmlRunner = {
   parse(svg) {
     const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
 
-
     if (doc.querySelector("parsererror")) return null;
     return doc.documentElement;
   },
 };
-
 
 export function installPlantUmlRunner(): void {
   setPlantUmlRunner(isTauri() ? runner : null);

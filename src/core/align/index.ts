@@ -1,10 +1,8 @@
 import { rectCenter, type Point, type Rect } from "../model/geometry";
 import type { GraphNode } from "../model/scene";
 
-
 export type AlignEdge = "left" | "center-x" | "right" | "top" | "middle-y" | "bottom";
 export type DistributeAxis = "horizontal" | "vertical";
-
 
 export interface Placed {
   id: string;
@@ -14,7 +12,6 @@ export interface Placed {
 export function placed(nodes: readonly GraphNode[]): Placed[] {
   return nodes.map((n) => ({ id: n.id, rect: n.rect }));
 }
-
 
 export function align(nodes: readonly Placed[], edge: AlignEdge): Map<string, Point> {
   const out = new Map<string, Point>();
@@ -53,7 +50,6 @@ export function align(nodes: readonly Placed[], edge: AlignEdge): Map<string, Po
   return out;
 }
 
-
 export function distribute(
   nodes: readonly Placed[],
   axis: DistributeAxis,
@@ -71,10 +67,8 @@ export function distribute(
   const first = order[0]!;
   const last = order[order.length - 1]!;
 
-
   const span = start(last) + size(last) - start(first);
   const occupied = order.reduce((sum, n) => sum + size(n), 0);
-
 
   const gap = (span - occupied) / (order.length - 1);
 
@@ -86,13 +80,11 @@ export function distribute(
     cursor += size(node) + gap;
   }
 
-
   out.delete(first.id);
   out.delete(last.id);
 
   return out;
 }
-
 
 export function space(
   nodes: readonly Placed[],

@@ -4,7 +4,6 @@ import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { useToastStore, type ToastKind } from "../../store/useToastStore";
 import { usePrefersReducedMotion } from "./hooks";
 
-
 export function Toasts() {
   const toasts = useToastStore((s) => s.toasts);
   const dismiss = useToastStore((s) => s.dismiss);

@@ -5,7 +5,6 @@ import { useDocumentStore } from "../store/useDocumentStore";
 import { toast } from "../store/useToastStore";
 import { Button, Modal, TextInput, Tooltip } from "./ui";
 
-
 export function BlockBar() {
   const blocks = useDocumentStore((s) => s.blocks);
   const active = useDocumentStore((s) => s.activeBlock);
@@ -122,7 +121,6 @@ export function BlockBar() {
     </>
   );
 }
-
 
 function suggest(id: string): string {
   const [engine, ordinal] = id.split(":");

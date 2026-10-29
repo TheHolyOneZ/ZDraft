@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 
-
 export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
 
@@ -15,9 +14,7 @@ export function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-
 const layers: symbol[] = [];
-
 
 export function useDismiss(
   open: boolean,
@@ -41,11 +38,9 @@ export function useDismiss(
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || !isTop()) return;
 
-
       e.stopPropagation();
       onDismiss();
     };
-
 
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKey, true);
@@ -57,7 +52,6 @@ export function useDismiss(
     };
   }, [open, onDismiss, refs]);
 }
-
 
 export function useReturnFocus(open: boolean) {
   const previous = useRef<HTMLElement | null>(null);
@@ -78,7 +72,6 @@ export interface FloatingPosition {
   flipped: boolean;
   minWidth: number;
 }
-
 
 export function useFloatingPosition(
   open: boolean,
@@ -123,7 +116,6 @@ export function useFloatingPosition(
 
   return position;
 }
-
 
 export function useTypeAhead(labels: string[], onMatch: (index: number) => void) {
   const buffer = useRef("");

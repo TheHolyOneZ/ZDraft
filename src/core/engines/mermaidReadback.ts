@@ -1,9 +1,7 @@
 import { distance, unionRects, type Point, type Rect } from "../model/geometry";
 
-
 export function parseTranslate(transform: string | null | undefined): Point {
   if (!transform) return { x: 0, y: 0 };
-
 
   const m = /translate\(\s*([-\d.eE+]+)(?:[\s,]+([-\d.eE+]+))?\s*\)/.exec(transform);
   if (!m) return { x: 0, y: 0 };
@@ -17,7 +15,6 @@ function num(el: Element, name: string, fallback = 0): number {
   const value = Number(raw);
   return Number.isFinite(value) ? value : fallback;
 }
-
 
 export function pathPoints(d: string): Point[] {
   const out: Point[] = [];
@@ -91,7 +88,6 @@ export function pathPoints(d: string): Point[] {
         break;
       }
       case "A": {
-
         take();
         take();
         take();
@@ -111,7 +107,6 @@ export function pathPoints(d: string): Point[] {
 
   return out;
 }
-
 
 export function localBBox(el: Element): Rect | null {
   const shift = parseTranslate(el.getAttribute("transform"));
@@ -164,8 +159,6 @@ function rawBBox(el: Element): Rect | null {
     case "g": {
       const boxes: Rect[] = [];
       for (const child of Array.from(el.children)) {
-
-
         if (child.tagName.toLowerCase() === "text") continue;
         const box = localBBox(child);
         if (box) boxes.push(box);
@@ -182,9 +175,7 @@ function boundsOf(points: readonly Point[]): Rect {
   return unionRects(points.map((p) => ({ x: p.x, y: p.y, w: 0, h: 0 })));
 }
 
-
 const NODE_ID_PREFIXES = ["flowchart-", "classId-", "entity-", "state-", "node-"];
-
 
 export function nodeIdFromDomId(domId: string, renderId: string): string | null {
   let rest = domId;
@@ -197,11 +188,9 @@ export function nodeIdFromDomId(domId: string, renderId: string): string | null 
     }
   }
 
-
   const trimmed = rest.replace(/-\d+$/, "");
   return trimmed || null;
 }
-
 
 export function edgeEndpointsFromDomId(
   domId: string,
@@ -226,14 +215,12 @@ export function edgeEndpointsFromDomId(
   return null;
 }
 
-
 function normaliseEndpoint(raw: string, renderId: string): string {
   for (const prefix of NODE_ID_PREFIXES) {
     if (raw.startsWith(prefix)) return nodeIdFromDomId(raw, renderId) ?? raw;
   }
   return raw;
 }
-
 
 export interface ReadNode {
   id: string;
@@ -249,7 +236,6 @@ export interface ReadCluster {
 }
 
 export interface ReadEdge {
-
   from?: string;
   to?: string;
   points: Point[];
@@ -265,7 +251,6 @@ export interface ReadGeometry {
   edges: ReadEdge[];
   bounds: Rect;
 }
-
 
 function textOf(el: Element | null): string {
   if (!el) return "";
@@ -285,7 +270,6 @@ export function readMermaidGeometry(svg: Element, renderId: string): ReadGeometr
     if (!id) continue;
 
     const at = parseTranslate(el.getAttribute("transform"));
-
 
     const shape = Array.from(el.children).find(
       (c) => !c.classList.contains("label") && c.tagName.toLowerCase() !== "text",
@@ -317,7 +301,6 @@ export function readMermaidGeometry(svg: Element, renderId: string): ReadGeometr
     });
   }
 
-
   const labelsByDomId = new Map<string, { at: Point; text: string }>();
   const orphanLabels: Array<{ at: Point; text: string }> = [];
 
@@ -342,7 +325,6 @@ export function readMermaidGeometry(svg: Element, renderId: string): ReadGeometr
     const domId = path.getAttribute("id") ?? "";
     const bare = renderId && domId.startsWith(`${renderId}-`) ? domId.slice(renderId.length + 1) : domId;
     const label = labelsByDomId.get(bare) ?? labelsByDomId.get(domId);
-
 
     const endpoints = edgeEndpointsFromDomId(domId, renderId, known);
 
@@ -369,7 +351,6 @@ export function readMermaidGeometry(svg: Element, renderId: string): ReadGeometr
     bounds: all.length ? unionRects(all) : { x: 0, y: 0, w: 0, h: 0 },
   };
 }
-
 
 export function nearestNode(point: Point, nodes: readonly ReadNode[]): string | null {
   let best: string | null = null;

@@ -2,12 +2,9 @@ import { tokenizeDot, type DotToken } from "../locate/dot";
 import type { NodeShape, SourceRange } from "../model/scene";
 import { spliceAll, type LayoutKnob, type LayoutTuner, type SemanticEditor } from "./types";
 
-
 const KEYWORDS = new Set(["graph", "digraph", "subgraph", "node", "edge", "strict"]);
 
-
 const ID_VALUED = new Set(["ltail", "lhead", "root"]);
-
 
 const SHAPE_WORDS: Partial<Record<NodeShape, string>> = {
   rect: "box",
@@ -32,7 +29,6 @@ const SHAPE_WORDS: Partial<Record<NodeShape, string>> = {
 
 const SHAPES = Object.keys(SHAPE_WORDS) as NodeShape[];
 
-
 export function idOccurrences(source: string, id: string): SourceRange[] {
   const tokens = tokenizeDot(source);
   const out: SourceRange[] = [];
@@ -42,13 +38,11 @@ export function idOccurrences(source: string, id: string): SourceRange[] {
     if (token.kind !== "id" || token.value !== id) continue;
     if (KEYWORDS.has(token.value.toLowerCase())) continue;
 
-
     const before = tokens[i - 1];
     if (before?.value === "=") {
       const name = tokens[i - 2];
       if (!name || !ID_VALUED.has(name.value.toLowerCase())) continue;
     }
-
 
     const after = tokens[i + 1];
     if (after?.value === "=" && insideAttrList(tokens, i)) continue;
@@ -72,7 +66,6 @@ function insideAttrList(tokens: readonly DotToken[], index: number): boolean {
   return false;
 }
 
-
 function attrListOf(
   source: string,
   id: string,
@@ -86,7 +79,6 @@ function attrListOf(
 
     const next = tokens[i + 1];
     if (next?.value !== "[") continue;
-
 
     const previous = tokens[i - 1];
     if (previous?.kind === "edgeop") continue;
@@ -110,7 +102,6 @@ function attrListOf(
   return null;
 }
 
-
 function attributeIn(
   source: string,
   open: number,
@@ -126,13 +117,11 @@ function attributeIn(
     const value = tokens[i + 2];
     if (!value) return null;
 
-
     return { value: { from: open + value.from, to: open + value.to } };
   }
 
   return null;
 }
-
 
 function asId(value: string): string {
   return /^[A-Za-z_\u0080-\uffff][A-Za-z0-9_\u0080-\uffff]*$/.test(value)
@@ -143,7 +132,6 @@ function asId(value: string): string {
 function quoted(value: string): string {
   return `"${value.replace(/(["\\])/g, "\\$1")}"`;
 }
-
 
 function insertAttribute(
   source: string,
@@ -166,12 +154,10 @@ function insertAttribute(
   return { range: { from: first.to, to: first.to }, text: ` [${text}]` };
 }
 
-
 function indentAt(source: string, at: number): string {
   const lineStart = source.lastIndexOf("\n", Math.max(0, at - 1)) + 1;
   return /^[ \t]*/.exec(source.slice(lineStart))?.[0] ?? "";
 }
-
 
 function freeClusterName(source: string, title: string): string {
   const base = `cluster_${title.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_|_$/g, "") || "group"}`;
@@ -182,7 +168,6 @@ function freeClusterName(source: string, title: string): string {
     if (!new RegExp(`\\b${candidate}\\b`).test(source)) return candidate;
   }
 }
-
 
 const DOT_KNOBS: readonly LayoutKnob[] = [
   {
@@ -245,7 +230,6 @@ const DOT_KNOBS: readonly LayoutKnob[] = [
   },
 ];
 
-
 function graphAttribute(
   source: string,
   name: string,
@@ -295,7 +279,6 @@ export const dotTuner: LayoutTuner = {
     const existing = graphAttribute(source, knob);
     const text = asId(value);
 
-
     if (value === spec.fallback) {
       if (!existing) return { source, changed: [], label: `Set ${knob}` };
 
@@ -311,7 +294,6 @@ export const dotTuner: LayoutTuner = {
       return { source: out, changed, label: `Set ${knob} to ${value}` };
     }
 
-
     const open = source.indexOf("{");
     if (open < 0) return null;
 
@@ -324,11 +306,9 @@ export const dotTuner: LayoutTuner = {
   },
 };
 
-
 function lineAround(source: string, range: SourceRange): SourceRange {
   let from = range.from;
   while (from > 0 && source[from - 1] !== "\n") {
-
     if (!/\s/.test(source[from - 1]!)) return { from: range.from, to: semicolonAfter(source, range.to) };
     from -= 1;
   }
@@ -388,8 +368,6 @@ export const dotEditor: SemanticEditor = {
     if (list) {
       const existing = attributeIn(source, list.open, list.close, "label");
       if (existing) {
-
-
         const { source: out, changed } = spliceAll(source, [
           { range: existing.value, text: quoted(next) },
         ]);
@@ -406,7 +384,6 @@ export const dotEditor: SemanticEditor = {
 
   group(source, ids, title) {
     if (ids.length === 0) return null;
-
 
     const close = source.lastIndexOf("}");
     if (close < 0) return null;

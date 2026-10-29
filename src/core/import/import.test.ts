@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { parseMermaid } from "../locate/mermaid";
 import { formatFor, importDiagram, ImportError } from ".";
 
-
 function drawio(body: string, { compressed = false } = {}): string {
   const inner = `<mxGraphModel dx="1422" dy="798" grid="1" pageWidth="850" pageHeight="1100">
     <root>
@@ -35,7 +34,6 @@ function edge(id: string, source: string, target: string, value = ""): string {
     <mxGeometry relative="1" as="geometry"/>
   </mxCell>`;
 }
-
 
 async function deflateRaw(text: string): Promise<string> {
   const bytes = new TextEncoder().encode(text);
@@ -74,20 +72,17 @@ describe("importing a draw.io file", () => {
     expect(result.source).toContain("flowchart TD");
   });
 
-
   it("pins every node where its author put it", async () => {
     const result = await importDiagram(FILE, "drawio");
     const pins = result.layout.pins!;
 
     expect(Object.keys(pins)).toHaveLength(3);
 
-
     expect(pins.API_gateway).toEqual({ x: 140, y: 30, fingerprint: null, auto: null });
   });
 
   it("keeps the diagram's own relative arrangement", async () => {
     const pins = (await importDiagram(FILE, "drawio")).layout.pins!;
-
 
     expect(pins.Orders!.y).toBeGreaterThan(pins.API_gateway!.y);
     expect(pins.Orders!.x).toBeLessThan(pins.Postgres!.x);
@@ -110,13 +105,11 @@ describe("importing a draw.io file", () => {
     expect((await importDiagram(FILE, "drawio")).source).toContain('-->|"HTTP"|');
   });
 
-
   it("emits Mermaid that ZDraft can parse straight back", async () => {
     const result = await importDiagram(FILE, "drawio");
     const parsed = parseMermaid(result.source);
 
     expect([...parsed.nodes.keys()].sort()).toEqual(["API_gateway", "Orders", "Postgres"]);
-
 
     for (const id of Object.keys(result.layout.pins!)) {
       expect(parsed.nodes.has(id), id).toBe(true);
@@ -136,7 +129,6 @@ describe("importing a draw.io file", () => {
     expect(result.source).toContain('"services"');
   });
 
-
   it("resolves a nested shape's position against its container", async () => {
     const file = drawio(`
       ${vertex("g1", "services", 1000, 500, { w: 400, h: 300 })}
@@ -144,7 +136,6 @@ describe("importing a draw.io file", () => {
       ${vertex("n2", "Loose", 1000, 900)}
     `);
     const pins = (await importDiagram(file, "drawio")).layout.pins!;
-
 
     expect(pins.Orders!.x).toBeGreaterThan(pins.Loose!.x);
   });
@@ -178,7 +169,6 @@ describe("importing a draw.io file", () => {
     expect(result.warnings.join(" ")).toContain("first of 2 pages");
     expect(result.source).toContain("First");
   });
-
 
   it("reads a compressed page, which is what draw.io writes by default", async () => {
     const inner = `<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/>${vertex(
@@ -267,7 +257,6 @@ describe("importing an Excalidraw file", () => {
     expect(result.source).toContain("Choice{");
   });
 
-
   it("adopts a loose label sitting inside a shape, and says it guessed", async () => {
     const result = await importDiagram(
       file([box("a", 0, 0), { id: "t", type: "text", text: "Cache", x: 40, y: 25, width: 60, height: 20 }]),
@@ -302,7 +291,6 @@ describe("importing an Excalidraw file", () => {
     expect(result.counts.edges).toBe(1);
     expect(result.warnings.join(" ")).toMatch(/matched by position/);
   });
-
 
   it("does not turn an arrow's own label into a node as well", async () => {
     const result = await importDiagram(

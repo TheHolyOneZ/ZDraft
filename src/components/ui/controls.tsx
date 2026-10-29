@@ -5,10 +5,8 @@ import { useCallback, useId, useRef, useState, type ReactNode } from "react";
 
 import { usePrefersReducedMotion } from "./hooks";
 
-
 const SNAPPY = { type: "spring", stiffness: 500, damping: 35 } as const;
 const DEFAULT = { type: "spring", stiffness: 300, damping: 30 } as const;
-
 
 export function Switch({
   checked,
@@ -46,7 +44,6 @@ export function Switch({
         height: dims.h,
         background: checked ? "var(--accent)" : "var(--input)",
         border: `1px solid ${checked ? "var(--accent)" : "var(--border-strong)"}`,
-
 
         boxShadow: checked ? "0 0 0 3px var(--accent-soft)" : "none",
       }}
@@ -86,7 +83,6 @@ export function Switch({
     </label>
   );
 }
-
 
 export function Checkbox({
   checked,
@@ -156,14 +152,12 @@ export function Checkbox({
   );
 }
 
-
 export interface Segment<T extends string> {
   value: T;
   label?: ReactNode;
   icon?: ReactNode;
   title?: string;
 }
-
 
 export function SegmentedControl<T extends string>({
   value,
@@ -239,7 +233,6 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-
 export function Slider({
   value,
   min,
@@ -268,7 +261,6 @@ export function Slider({
       const box = trackRef.current?.getBoundingClientRect();
       if (!box) return value;
       const ratio = Math.min(1, Math.max(0, (clientX - box.left) / box.width));
-
 
       const raw = min + ratio * (max - min);
       return Math.min(max, Math.max(min, Math.round(raw / step) * step));
@@ -358,7 +350,6 @@ export function Slider({
   );
 }
 
-
 export function Field({
   label,
   description,
@@ -384,7 +375,6 @@ export function Field({
     </div>
   );
 }
-
 
 export function TextInput({
   value,
@@ -434,7 +424,6 @@ export function TextInput({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") onSubmit?.();
-
 
             e.stopPropagation();
           }}

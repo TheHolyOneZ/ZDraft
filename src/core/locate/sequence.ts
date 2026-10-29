@@ -1,6 +1,5 @@
 import type { MessageKind, SourceRange } from "../model/scene";
 
-
 export interface ParsedParticipant {
   id: string;
   label: string;
@@ -50,7 +49,6 @@ export interface SequenceModel {
   events: SequenceEvent[];
 }
 
-
 const ARROWS: Array<{ op: string; arrow: MessageKind; dashed: boolean }> = [
   { op: "<<-->>", arrow: "sync", dashed: true },
   { op: "<<->>", arrow: "sync", dashed: false },
@@ -89,7 +87,6 @@ export function parseSequence(source: string): SequenceModel {
   const model: SequenceModel = { autonumber: false, participants: [], events: [] };
   const byId = new Map<string, ParsedParticipant>();
 
-
   const ensure = (id: string, range: SourceRange, implicit = true): ParsedParticipant => {
     const existing = byId.get(id);
     if (existing) return existing;
@@ -119,7 +116,6 @@ export function parseSequence(source: string): SequenceModel {
       continue;
     }
 
-
     const declared = /^(participant|actor)\s+(.+)$/.exec(trimmed);
     if (declared) {
       const rest = declared[2]!;
@@ -144,7 +140,6 @@ export function parseSequence(source: string): SequenceModel {
       });
       continue;
     }
-
 
     const note = /^note\s+(left of|right of|over)\s+([^:]+):\s*(.*)$/i.exec(trimmed);
     if (note) {
@@ -172,7 +167,6 @@ export function parseSequence(source: string): SequenceModel {
       model.events.push({ kind: "fragment-end", range });
       continue;
     }
-
 
     const section = /^(else|and|option)\b\s*(.*)$/.exec(trimmed);
     if (section) {
@@ -216,7 +210,6 @@ function parseMessage(line: string, range: SourceRange): ParsedMessage | null {
     let right = rest.slice(0, colon).trim();
     const text = clean(rest.slice(colon + 1));
 
-
     let activates = false;
     let deactivates = false;
     if (right.startsWith("+")) {
@@ -235,7 +228,6 @@ function parseMessage(line: string, range: SourceRange): ParsedMessage | null {
       to: right,
       text,
 
-
       arrow: left === right ? "self" : form.arrow,
       dashed: form.dashed,
       activates,
@@ -246,7 +238,6 @@ function parseMessage(line: string, range: SourceRange): ParsedMessage | null {
 
   return null;
 }
-
 
 export function locateSequence(source: string): {
   nodes: Map<string, SourceRange>;

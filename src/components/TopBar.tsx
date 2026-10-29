@@ -23,7 +23,6 @@ import { APP_THEMES, useSettingsStore, type AppTheme, type SplitMode } from "../
 import { LayoutTuning } from "./LayoutTuning";
 import { IconButton, SegmentedControl, Select, type SelectOption } from "./ui";
 
-
 export function TopBar({
   onOpenSettings,
   onOpenPalette,
@@ -60,7 +59,6 @@ export function TopBar({
   const setSplitMode = useSettingsStore((s) => s.setSplitMode);
   const zenMode = useSettingsStore((s) => s.zenMode);
   const toggleZen = useSettingsStore((s) => s.toggleZen);
-
 
   const themeOptions = useMemo<SelectOption<string>[]>(
     () =>
@@ -128,8 +126,6 @@ export function TopBar({
         menuWidth={300}
         options={themeOptions}
         onChange={(name) => {
-
-
           setDiagramTheme(name);
           setDocTheme(name);
         }}

@@ -2,10 +2,8 @@ import type { Compartment, Family, NodeShape, SourceRange } from "../model/scene
 import { edgeId } from "../model/scene";
 import type { LocateIndex } from "./types";
 
-
 export function detectMermaidType(source: string): string {
   let text = source;
-
 
   if (/^\s*---\r?\n/.test(text)) {
     const end = text.indexOf("\n---", 4);
@@ -58,7 +56,6 @@ export function detectMermaidType(source: string): string {
   return "unknown";
 }
 
-
 export function familyForMermaidType(type: string): Family {
   switch (type) {
     case "flowchart":
@@ -76,18 +73,15 @@ export function familyForMermaidType(type: string): Family {
       return "sequence";
     default:
 
-
       return "passthrough";
   }
 }
-
 
 export interface ParsedNode {
   id: string;
   label: string;
   shape: NodeShape;
   range: SourceRange;
-
 
   sections?: Compartment[];
 
@@ -111,12 +105,10 @@ export interface ParsedSubgraph {
   title?: string;
   range: SourceRange;
 
-
   members: string[];
 
   parent?: string;
 }
-
 
 const NODE_FORMS: Array<{ open: string; close: string; shape: NodeShape }> = [
   { open: "[[", close: "]]", shape: "subroutine" },
@@ -135,7 +127,6 @@ const NODE_FORMS: Array<{ open: string; close: string; shape: NodeShape }> = [
   { open: ">", close: "]", shape: "note" },
 ];
 
-
 function cleanLabel(raw: string): string {
   let text = raw.trim();
   if (
@@ -152,7 +143,6 @@ function cleanLabel(raw: string): string {
 }
 
 const ID_RE = /[A-Za-z0-9_À-￿][\w\-.À-￿]*/y;
-
 
 export interface MermaidModel {
   type: string;
@@ -176,7 +166,6 @@ export function parseMermaid(source: string): MermaidModel {
 
   if (model.family !== "graph") return model;
 
-
   if (type === "class") return parseClassDiagram(source, model);
   if (type === "er") return parseErDiagram(source, model);
   if (type === "state") return parseStateDiagram(source, model);
@@ -190,7 +179,6 @@ export function parseMermaid(source: string): MermaidModel {
     const trimmed = line.trim();
     if (trimmed === "") continue;
 
-
     const dir = /^(?:flowchart|graph)\s+(TB|TD|BT|LR|RL)\b/.exec(trimmed) ??
       /^direction\s+(TB|TD|BT|LR|RL)\b/.exec(trimmed);
     if (dir) {
@@ -199,7 +187,6 @@ export function parseMermaid(source: string): MermaidModel {
     }
 
     if (/^(?:flowchart|graph|stateDiagram(?:-v2)?|classDiagram|erDiagram)\b/.test(trimmed)) continue;
-
 
     if (/^(?:classDef|class|style|linkStyle|click|accTitle|accDescr|subgraph|end)\b/.test(trimmed)) {
       const sub = /^subgraph\s+(.*)$/.exec(trimmed);
@@ -236,7 +223,6 @@ function splitLines(source: string): Array<{ text: string; offset: number }> {
   return out;
 }
 
-
 function stripComment(line: string): string {
   let quote: string | null = null;
 
@@ -257,7 +243,6 @@ function stripComment(line: string): string {
 }
 
 function parseSubgraphHeader(rest: string, offset: number): ParsedSubgraph | null {
-
   const withBrackets = /^([^\s[]+)\s*\[(.*)\]\s*$/.exec(rest.trim());
   if (withBrackets) {
     return {
@@ -272,7 +257,6 @@ function parseSubgraphHeader(rest: string, offset: number): ParsedSubgraph | nul
   if (bare === "") return null;
   return { id: bare, title: bare, range: { from: offset, to: offset + bare.length + 9 }, members: [] };
 }
-
 
 function parseStatement(
   line: string,
@@ -316,7 +300,6 @@ function parseStatement(
 
     i = node.next;
 
-
     const existing = model.nodes.get(node.parsed.id);
     if (!existing || (existing.shape === "rect" && existing.label === existing.id && node.hadBrackets)) {
       model.nodes.set(node.parsed.id, node.parsed);
@@ -351,12 +334,10 @@ function parseStatement(
   }
 }
 
-
 function matchLink(
   line: string,
   i: number,
 ): { link: { dashed: boolean; thick: boolean; arrowEnd: boolean; arrowStart: boolean; label?: string }; next: number } | null {
-
   const re = /^(<?(?:-{2,}|-\.+-|={2,}|~{3,})>?|<-{2,}>?)/;
   const rest = line.slice(i);
   const m = re.exec(rest);
@@ -366,7 +347,6 @@ function matchLink(
   let next = i + op.length;
   let label: string | undefined;
 
-
   if (line[next] === "|") {
     const close = line.indexOf("|", next + 1);
     if (close > 0) {
@@ -374,9 +354,8 @@ function matchLink(
       next = close + 1;
     }
   } else {
-
     const tail = line.slice(next);
-    const inline = /^\s*([^-=~<>|]+?)\s*((?:-{2,}|={2,})>?)/.exec(tail);
+    const inline = /^\s*((?:[^-=~<>|]|<br\s*\/?>)+?)\s*((?:-{2,}|={2,})>?)/i.exec(tail);
     if (inline && !op.endsWith(">")) {
       label = cleanLabel(inline[1]!);
       next += inline[0]!.length;
@@ -431,7 +410,6 @@ function matchNode(
   };
 }
 
-
 function findClose(line: string, start: number, close: string): number {
   let quote: string | null = null;
 
@@ -450,7 +428,6 @@ function findClose(line: string, start: number, close: string): number {
 
   return -1;
 }
-
 
 export function locateMermaid(source: string): LocateIndex {
   const model = parseMermaid(source);
@@ -471,19 +448,16 @@ export function locateMermaid(source: string): LocateIndex {
   return { nodes, edges };
 }
 
-
 const CLASS_RELATIONS = [
   "<|--|>", "<|..|>", "*--", "o--", "<|--", "--|>", "<|..", "..|>",
   "<--", "-->", "<..", "..>", "--", "..",
 ] as const;
-
 
 const CARDINALITY = /^\s*"[^"]*"\s*/;
 
 function parseClassDiagram(source: string, model: MermaidModel): MermaidModel {
   const lines = splitLines(source);
   const pairSeen = new Map<string, number>();
-
 
   let openClass: { node: ParsedNode; attributes: string[]; methods: string[] } | null = null;
 
@@ -495,7 +469,6 @@ function parseClassDiagram(source: string, model: MermaidModel): MermaidModel {
     model.nodes.set(id, node);
     return node;
   };
-
 
   const addMember = (target: NonNullable<typeof openClass>, raw: string) => {
     const member = raw.trim();
@@ -538,7 +511,6 @@ function parseClassDiagram(source: string, model: MermaidModel): MermaidModel {
       continue;
     }
 
-
     const declared = /^class\s+([\w.~$-]+)(?:\s*\[\s*"([^"]*)"\s*\])?\s*(\{)?/.exec(trimmed);
     if (declared) {
       const id = declared[1]!;
@@ -548,7 +520,6 @@ function parseClassDiagram(source: string, model: MermaidModel): MermaidModel {
       if (declared[3]) openClass = { node, attributes: [], methods: [] };
       continue;
     }
-
 
     const relation = matchClassRelation(trimmed);
     if (relation) {
@@ -574,7 +545,6 @@ function parseClassDiagram(source: string, model: MermaidModel): MermaidModel {
       continue;
     }
 
-
     const member = /^([\w.~$-]+)\s*:\s*(.+)$/.exec(trimmed);
     if (member) {
       const id = member[1]!;
@@ -586,8 +556,6 @@ function parseClassDiagram(source: string, model: MermaidModel): MermaidModel {
       const sections = node.sections ?? [];
       const items = [...holder.attributes, ...holder.methods];
       if (items.length) {
-
-
         if (sections.length === 0) sections.push({ items: [] });
         sections[0]!.items.push(...items);
         node.sections = sections;
@@ -616,7 +584,6 @@ function matchClassRelation(line: string): ClassRelation | null {
     let left = line.slice(0, at).trim();
     let rightWhole = line.slice(at + op.length);
 
-
     left = left.replace(/\s*"[^"]*"\s*$/, "").trim();
     rightWhole = rightWhole.replace(CARDINALITY, "");
 
@@ -632,7 +599,6 @@ function matchClassRelation(line: string): ClassRelation | null {
       label: label || undefined,
       dashed: op.includes("."),
 
-
       arrowEnd: op.includes(">"),
       arrowStart: op.startsWith("<"),
     };
@@ -640,7 +606,6 @@ function matchClassRelation(line: string): ClassRelation | null {
 
   return null;
 }
-
 
 const ER_RELATION = /^([\w."-]+)\s+([|}{o][|}{o]?(?:--|\.\.)[|}{o][|}{o]?)\s+([\w."-]+)\s*:\s*(.+)$/;
 
@@ -701,7 +666,6 @@ function parseErDiagram(source: string, model: MermaidModel): MermaidModel {
         dashed: relation[2]!.includes(".."),
         thick: false,
 
-
         arrowEnd: false,
         arrowStart: false,
         range: { from: offset + line.indexOf(trimmed), to: offset + line.trimEnd().length },
@@ -712,7 +676,6 @@ function parseErDiagram(source: string, model: MermaidModel): MermaidModel {
   if (openEntity && attributes.length) openEntity.sections = [{ items: attributes }];
   return model;
 }
-
 
 const STATE_TERMINAL = "[*]";
 
@@ -752,7 +715,6 @@ function parseStateDiagram(source: string, model: MermaidModel): MermaidModel {
     }
     if (/^(?:note|end note|class|classDef|style)\b/.test(trimmed)) continue;
 
-
     const renamed = /^state\s+"([^"]*)"\s+as\s+([\w.-]+)/.exec(trimmed);
     if (renamed) {
       const id = renamed[2]!;
@@ -778,14 +740,12 @@ function parseStateDiagram(source: string, model: MermaidModel): MermaidModel {
       continue;
     }
 
-
     const transition = /^(\[\*\]|[\w.-]+)\s*-->\s*(\[\*\]|[\w.-]+)\s*(?::\s*(.*))?$/.exec(trimmed);
     if (transition) {
       const fromId = transition[1]!;
       const toId = transition[2]!;
       ensure(fromId, offset + line.indexOf(fromId), offset + line.indexOf(fromId) + fromId.length);
       ensure(toId, offset + line.lastIndexOf(toId), offset + line.lastIndexOf(toId) + toId.length);
-
 
       if (fromId !== STATE_TERMINAL && toId !== STATE_TERMINAL) {
         const key = `${fromId}->${toId}`;
@@ -805,7 +765,6 @@ function parseStateDiagram(source: string, model: MermaidModel): MermaidModel {
       }
       continue;
     }
-
 
     const bare = /^([\w.-]+)$/.exec(trimmed);
     if (bare) {

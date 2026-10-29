@@ -47,8 +47,6 @@ describe("arrowheads", () => {
   });
 
   it("draws a head when the tip *is* the route's last point", () => {
-
-
     const route = poly([0, 0], [100, 0]);
     const head = headArrow(route, { x: 100, y: 0 }, "arrow", 10);
 
@@ -59,7 +57,6 @@ describe("arrowheads", () => {
   it("points the head along the last meaningful segment", () => {
     const route = poly([0, 0], [0, 100]);
     const head = headArrow(route, { x: 0, y: 100 }, "arrow", 10)!;
-
 
     const ys = [...head.path.matchAll(/,(-?[\d.]+)/g)].map((m) => Number(m[1]));
     expect(Math.max(...ys)).toBeCloseTo(100, 3);
@@ -109,8 +106,6 @@ describe("pointAlong", () => {
   });
 
   it("measures by arc length, not by point count", () => {
-
-
     const at = pointAlong(poly([0, 0], [100, 0], [110, 0]), 0.5);
     expect(at.x).toBeCloseTo(55, 3);
   });

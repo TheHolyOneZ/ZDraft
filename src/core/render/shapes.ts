@@ -2,32 +2,25 @@ import type { BoundaryShape, Rect } from "../model/geometry";
 import type { NodeShape } from "../model/scene";
 import { measureText } from "./text";
 
-
 export interface ShapeGeometry {
-
   path: string;
 
   details: string[];
 
   boundary: BoundaryShape;
 
-
   textInset: { x: number; y: number };
-
 
   textBox?: Rect;
 }
 
 function n(v: number): string {
-
-
   return Number.isFinite(v) ? String(Math.round(v * 1000) / 1000) : "0";
 }
 
 function poly(points: Array<[number, number]>): string {
   return points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${n(x)},${n(y)}`).join(" ") + " Z";
 }
-
 
 export function roundedRectPath(r: Rect, radius: number): string {
   const rad = Math.max(0, Math.min(radius, r.w / 2, r.h / 2));
@@ -55,7 +48,6 @@ export function roundedRectPath(r: Rect, radius: number): string {
     "Z",
   ].join(" ");
 }
-
 
 export function ellipsePath(r: Rect): string {
   const rx = r.w / 2;
@@ -96,7 +88,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
       return rect(h / 2);
 
     case "circle": {
-
       const d = Math.min(w, h);
       const box: Rect = { x: midX - d / 2, y: midY - d / 2, w: d, h: d };
       return {
@@ -111,7 +102,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
       return {
         path: ellipsePath(r),
         details: [],
-
 
         boundary: "ellipse",
         textInset: { x: w * 0.146, y: h * 0.146 },
@@ -178,8 +168,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "cylinder": {
-
-
       const ry = Math.min(h * 0.16, w * 0.35);
       return {
         path: [
@@ -233,7 +221,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "doc": {
-
       const wave = Math.min(h * 0.18, 16);
       return {
         path: [
@@ -263,8 +250,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "person": {
-
-
       const strip = Math.min(h * 0.32, 22);
       const figure = Math.max(h - strip, 8);
       const head = Math.min(w * 0.3, figure * 0.34, 14);
@@ -291,8 +276,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "cloud": {
-
-
       const rx = w / 2;
       const ry = h / 2;
       return {
@@ -312,7 +295,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "step": {
-
       const notch = Math.min(w * 0.16, 20);
       return {
         path: poly([
@@ -330,8 +312,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "page": {
-
-
       const step = Math.min(w * 0.05, h * 0.09, 7);
       const face: Rect = { x, y: y + step * 2, w: w - step * 2, h: h - step * 2 };
       return {
@@ -346,7 +326,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "package": {
-
       const tab = Math.min(h * 0.2, 14);
       const tabW = Math.min(w * 0.42, 64);
       return {
@@ -366,8 +345,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "callout": {
-
-
       const tail = Math.min(h * 0.2, 14);
       const tailX = x + Math.min(w * 0.3, 40);
       const radius = Math.min(cornerRadius * 2, 10, (h - tail) / 2);
@@ -397,8 +374,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "queue": {
-
-
       const rx = Math.min(w * 0.12, 16);
       return {
         path: [
@@ -416,8 +391,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "stored": {
-
-
       const rx = Math.min(w * 0.12, 16);
       return {
         path: [
@@ -449,8 +422,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
     }
 
     case "text": {
-
-
       return {
         path: roundedRectPath(r, 0),
         details: [],
@@ -464,7 +435,6 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
   }
 }
 
-
 export function personRect(rect: Rect, label: string, fontSize: number): Rect {
   const labelW = measureText(label, fontSize, 500) + 10;
   const strip = fontSize + 10;
@@ -473,11 +443,9 @@ export function personRect(rect: Rect, label: string, fontSize: number): Rect {
   return { x: rect.x - (w - rect.w) / 2, y: rect.y, w, h: rect.h + strip };
 }
 
-
 export function isUnpainted(shape: NodeShape): boolean {
   return shape === "text";
 }
-
 
 export function boundaryFor(shape: NodeShape): BoundaryShape {
   switch (shape) {

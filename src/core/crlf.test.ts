@@ -11,7 +11,6 @@ import { locatePlantUml } from "./locate/puml";
 import { locateSequence, parseSequence } from "./locate/sequence";
 import { parseMarkdownBlocks, withBlockSource, withMarker } from "./markdown";
 
-
 const crlf = (source: string) => source.replace(/\n/g, "\r\n");
 
 const DOT = `digraph g {
@@ -66,7 +65,6 @@ digraph { x -> y; }
 \`\`\`
 `;
 
-
 const FAMILIES = {
   "mermaid class": `classDiagram
   class Order {
@@ -89,7 +87,6 @@ const FAMILIES = {
   }
 `,
 } as const;
-
 
 const MMD_SEQUENCE = `sequenceDiagram
   participant browser as Browser
@@ -122,7 +119,6 @@ describe("a source with Windows line endings", () => {
     );
   });
 
-
   it("reads a sequence diagram down to its messages", () => {
     const source = MMD_SEQUENCE;
     const lf = parseSequence(source);
@@ -135,7 +131,6 @@ describe("a source with Windows line endings", () => {
     ]);
     expect(cr.events.length).toBeGreaterThan(1);
   });
-
 
   it("locates the same nodes in every engine", () => {
     const cases = [
@@ -184,7 +179,6 @@ describe("a source with Windows line endings", () => {
 
     expect(cr.map((b) => [b.id, b.engine])).toEqual(lf.map((b) => [b.id, b.engine]));
     expect(cr).toHaveLength(2);
-
 
     expect(cr[0]!.marked).toBe(true);
   });

@@ -18,8 +18,6 @@ import {
 const P = (x: number, y: number) => ({ x, y });
 
 describe("the palette", () => {
-
-
   it("has no amber in it", () => {
     for (const colour of ANNOTATION_COLORS) {
       expect(colour.id).not.toBe("amber");
@@ -45,12 +43,10 @@ describe("making a mark", () => {
     expect(note?.size).toEqual([200, 100]);
   });
 
-
   it("leaves nothing behind when a drag was really a click", () => {
     expect(annotationFromDrag("arrow", P(10, 10), P(12, 11))).toBeNull();
     expect(annotationFromDrag("highlight", P(10, 10), P(12, 11))).toBeNull();
   });
-
 
   it("refuses a highlight with no height to it", () => {
     expect(annotationFromDrag("highlight", P(0, 0), P(200, 1))).toBeNull();
@@ -85,8 +81,6 @@ describe("making a mark", () => {
 });
 
 describe("ink", () => {
-
-
   it("thins a stroke to the points that carry its shape", () => {
     const drawn = Array.from({ length: 200 }, (_, i) => P(i, 0));
     const mark = annotationFromDrag("stroke", drawn[0]!, drawn[199]!, drawn);
@@ -151,7 +145,6 @@ describe("moving and finding", () => {
     expect(annotationAt({ a1: note }, P(600, 600))).toBeNull();
   });
 
-
   it("grabs a highlight by its edge and lets the middle through", () => {
     const wash: Annotation = {
       kind: "highlight",
@@ -171,7 +164,6 @@ describe("moving and finding", () => {
     expect(annotationAt({ a1: arrow }, P(450, 403))).toBe("a1");
     expect(annotationAt({ a1: arrow }, P(450, 460))).toBeNull();
   });
-
 
   it("grabs the newest mark where two overlap", () => {
     const under = { ...note, at: [100, 100] as [number, number] };
@@ -210,12 +202,10 @@ describe("the leader line to what a note is about", () => {
     expect(line!.to.x).toBeCloseTo(400);
   });
 
-
   it("draws nothing when the note is over the node", () => {
     expect(leaderLine(note, { x: 20, y: 10, w: 100, h: 40 })).toBeNull();
   });
 });
-
 
 describe("following a rename", () => {
   const note: Annotation = {
@@ -235,7 +225,6 @@ describe("following a rename", () => {
 
   it("leaves marks about something else alone", () => {
     const before = { a1: { ...note, anchor: "orders" } };
-
 
     expect(retargetAnnotations(before, "payments", "billing")).toBe(before);
   });

@@ -27,7 +27,6 @@ describe("renaming a PlantUML node", () => {
     expect(edit.source).toContain("storefront --> checkout : POST /checkout");
   });
 
-
   it("leaves the label and the comments alone", () => {
     const edit = pumlEditor.rename(DOC, "web", "storefront")!;
 
@@ -111,7 +110,6 @@ describe("relabelling", () => {
     expect(edit.source).toContain('component "Checkout service" as checkout');
   });
 
-
   it("adds an alias to a bracket form rather than renaming it", () => {
     const edit = pumlEditor.setLabel("@startuml\n[web]\n[web] --> [api]\n@enduml\n", "web", "Store")!;
     expect(edit.source).toContain("[Store] as web");
@@ -135,7 +133,6 @@ describe("reshaping", () => {
     const edit = pumlEditor.setShape(DOC, "web", "queue")!;
     expect(edit.source).toContain('queue "Storefront" as web');
   });
-
 
   it("refuses a bracket form, which is already a shape", () => {
     expect(pumlEditor.setShape("@startuml\n[web]\n@enduml\n", "web", "cylinder")).toBeNull();
@@ -165,7 +162,6 @@ describe("PlantUML's layout direction", () => {
     const source = "@startuml\nleft to right direction\na --> b\n@enduml\n";
     const edit = tuner.set(source, "direction", "top to bottom direction")!;
 
-
     expect(edit.source).toBe("@startuml\na --> b\n@enduml\n");
   });
 
@@ -173,7 +169,6 @@ describe("PlantUML's layout direction", () => {
     expect(tuner.set(DOC, "direction", "top to bottom direction")!.source).toBe(DOC);
   });
 });
-
 
 describe("what the parser makes of the result", () => {
   it("keeps every node and link through a rename", () => {

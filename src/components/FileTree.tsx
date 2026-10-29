@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { baseName } from "../lib/path";
 import { api, isTauri, type FolderEntry } from "../lib/tauri";
+import { confirm } from "../store/useConfirmStore";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { useToastStore } from "../store/useToastStore";
@@ -29,13 +30,11 @@ import {
   type MenuItem,
 } from "./ui";
 
-
 export function FileTree({ onNew }: { onNew(): void }) {
   const root = useWorkspaceStore((s) => s.root);
   const setRoot = useWorkspaceStore((s) => s.setRoot);
   const closeRoot = useWorkspaceStore((s) => s.closeRoot);
   const version = useWorkspaceStore((s) => s.version);
-
 
   const [missing, setMissing] = useState(false);
   useEffect(() => setMissing(false), [root, version]);
@@ -164,7 +163,6 @@ function Directory({
     };
   }, [path, version]);
 
-
   if (failed) {
     return (
       <div
@@ -177,7 +175,6 @@ function Directory({
   }
 
   if (!entries) {
-
     return (
       <div className="space-y-1 px-3 py-1">
         {[0, 1, 2].map((i) => (
@@ -186,7 +183,6 @@ function Directory({
       </div>
     );
   }
-
 
   if (entries.length === 0) {
     return onNew ? (
@@ -229,7 +225,6 @@ function Entry({ entry, depth }: { entry: FolderEntry; depth: number }) {
   const indent = 10 + depth * 12;
   const isFolder = entry.kind === "folder";
   const active = currentPath === entry.path;
-
 
   const openable = entry.kind === "diagram" || entry.kind === "document";
 
@@ -283,9 +278,8 @@ function Entry({ entry, depth }: { entry: FolderEntry; depth: number }) {
           push,
           refresh: () => useWorkspaceStore.getState().refresh(),
           reopen: () => {
-
-
-            if (useDocumentStore.getState().path === entry.path) void openFile(entry.path);
+            const doc = useDocumentStore.getState();
+            if (doc.path === entry.path) void doc.reloadLayout();
           },
         })}
       />
@@ -294,7 +288,6 @@ function Entry({ entry, depth }: { entry: FolderEntry; depth: number }) {
     </>
   );
 }
-
 
 function entryMenu({
   entry,
@@ -342,7 +335,18 @@ function entryMenu({
       id: "release",
       label: "Back to auto-layout",
       danger: true,
-      onSelect: () => {
+      onSelect: async () => {
+        const choice = await confirm({
+          title: `Back to auto-layout for ${entry.name}?`,
+          body: "This deletes its .zlayout.toml — every pin, bend, label offset and annotation in it. The diagram source is not touched.",
+          choices: [
+            { id: "cancel", label: "Cancel" },
+            { id: "delete", label: "Delete layout file", variant: "danger" },
+          ],
+          dismiss: "cancel",
+        });
+        if (choice !== "delete") return;
+
         void api
           .deleteLayout(entry.path)
           .then(() => {

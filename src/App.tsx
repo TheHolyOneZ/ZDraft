@@ -8,6 +8,7 @@ import { DiagnosticsStrip } from "./components/DiagnosticsStrip";
 import { DiffBar } from "./components/DiffBar";
 import { Editor, type EditorHandle } from "./components/editor/Editor";
 import { ExportDialog } from "./components/ExportDialog";
+import { ConfirmDialog } from "./components/ConfirmDialog";
 import { ConflictDialog } from "./components/ConflictDialog";
 import { GroupDialog } from "./components/GroupDialog";
 import { ImportDialog } from "./components/ImportDialog";
@@ -26,13 +27,13 @@ import { edgeAt, idAt } from "./core/locate/types";
 import type { SourceRange } from "./core/model/scene";
 import type { AnnotationKind } from "./core/sidecar/types";
 import { themeByName } from "./core/theme";
-import { api, isTauri } from "./lib/tauri";
+import { api, appWindow, isTauri } from "./lib/tauri";
 import { adapterFor, useDocumentStore } from "./store/useDocumentStore";
 import { useHistoryStore } from "./store/useHistoryStore";
 import { useSettingsStore } from "./store/useSettingsStore";
+import { toast } from "./store/useToastStore";
 import { useTourStore } from "./store/useTourStore";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
-
 
 const SAMPLE = `digraph architecture {
   rankdir=LR;
@@ -80,13 +81,25 @@ export default function App() {
   const blocks = useDocumentStore((s) => s.blocks);
   const engine = useDocumentStore((s) => s.engine);
   const name = useDocumentStore((s) => s.name);
-  const dirty = useDocumentStore((s) => s.dirty);
+  const dirty = useDocumentStore((s) => s.dirty || s.layoutDirty);
   const layoutTheme = useDocumentStore((s) => s.layout.theme);
   const selection = useDocumentStore((s) => s.selection);
   const setSource = useDocumentStore((s) => s.setSource);
   const select = useDocumentStore((s) => s.select);
   const openSample = useDocumentStore((s) => s.openSample);
-  const saveSource = useDocumentStore((s) => s.saveSource);
+  const saveSource = useCallback(
+    () =>
+      useDocumentStore
+        .getState()
+        .saveSource()
+        .catch((e: unknown) =>
+          toast.error(
+            `Could not save ${useDocumentStore.getState().name}`,
+            String((e as { message?: string })?.message ?? e),
+          ),
+        ),
+    [],
+  );
 
   const [locate, setLocate] = useState<SourceRange | null>(null);
   const [newOpen, setNewOpen] = useState(false);
@@ -101,7 +114,6 @@ export default function App() {
   const [importOpen, setImportOpen] = useState(false);
   const splitRef = useRef<HTMLDivElement | null>(null);
 
-
   const diagramTheme = useMemo(
     () => themeByName(layoutTheme?.name ?? defaultDiagramTheme),
     [layoutTheme, defaultDiagramTheme],
@@ -111,14 +123,12 @@ export default function App() {
     document.documentElement.dataset.theme = appTheme;
   }, [appTheme]);
 
-
   const tourSeen = useTourStore((s) => s.seen);
   useEffect(() => {
     if (tourSeen) return;
     const id = window.setTimeout(() => useTourStore.getState().start(), 1200);
     return () => window.clearTimeout(id);
   }, [tourSeen]);
-
 
   useEffect(() => {
     let cancelled = false;
@@ -137,7 +147,6 @@ export default function App() {
           await useDocumentStore.getState().openFile(args.file);
           return;
         }
-
 
         const remembered = useWorkspaceStore.getState().lastFile;
         if (remembered && (await api.pathExists(remembered).catch(() => false))) {
@@ -162,13 +171,22 @@ export default function App() {
     };
   }, [openSample]);
 
+  useEffect(() => {
+    const win = appWindow();
+    if (!win) return;
+
+    const unlisten = win.onCloseRequested(async (event) => {
+      if (!(await useDocumentStore.getState().confirmLeave())) event.preventDefault();
+    });
+    return () => {
+      void unlisten.then((fn) => fn());
+    };
+  }, []);
 
   const index = useMemo(() => adapterFor(engine).locate(source), [engine, source]);
 
-
   const indexRef = useRef(index);
   indexRef.current = index;
-
 
   const fromEditor = useRef(false);
 
@@ -206,7 +224,6 @@ export default function App() {
     if (typeof chosen === "string") useWorkspaceStore.getState().setRoot(chosen);
   }, []);
 
-
   const undo = useCallback(() => {
     const history = useHistoryStore.getState();
     const entry = history.takeUndo();
@@ -229,14 +246,12 @@ export default function App() {
     });
   }, []);
 
-
   useEffect(() => {
     const onContextMenu = (e: MouseEvent) => e.preventDefault();
 
     window.addEventListener("contextmenu", onContextMenu, true);
     return () => window.removeEventListener("contextmenu", onContextMenu, true);
   }, []);
-
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -255,13 +270,9 @@ export default function App() {
         e.preventDefault();
         setNewOpen(true);
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "n") {
-
-
         e.preventDefault();
         setTemplatesOpen(true);
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "o") {
-
-
         e.preventDefault();
         setImportOpen(true);
       } else if (mod && e.key.toLowerCase() === "s") {
@@ -274,16 +285,11 @@ export default function App() {
         e.preventDefault();
         toggleSidebar();
       } else if (mod && !e.shiftKey && e.key.toLowerCase() === "z") {
-
-
         e.preventDefault();
         undo();
       } else if (mod && ((e.shiftKey && e.key.toLowerCase() === "z") || e.key.toLowerCase() === "y")) {
-
-
         e.preventDefault();
         redo();
-
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "d") {
         e.preventDefault();
         toggleZen();
@@ -291,44 +297,33 @@ export default function App() {
         e.preventDefault();
         setKeysOpen((v) => !v);
       } else if (mod && e.key === "Enter") {
-
         e.preventDefault();
         useDocumentStore.getState().setSource(useDocumentStore.getState().source, true);
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         useDocumentStore.setState((s) => ({ fitToken: s.fitToken + 1 }));
       } else if (e.key === "/" && !isTypingTarget(e.target)) {
-
-
         e.preventDefault();
         setPaletteOpen(true);
       } else if (e.key === "F5") {
-
-
         e.preventDefault();
         setPresentOpen(true);
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "g") {
-
         e.preventDefault();
         const store = useDocumentStore.getState();
         void store.setDiffMode(!store.diffMode);
       } else if (mod && e.key.toLowerCase() === "g" && !e.shiftKey) {
-
         const store = useDocumentStore.getState();
         if (store.selection.size === 0 || !adapterFor(store.engine).edit?.group) return;
         e.preventDefault();
         setGroupIds([...store.selection]);
       } else if (e.key === "F2" && !isTypingTarget(e.target)) {
-
-
         const store = useDocumentStore.getState();
         const only = store.selection.size === 1 ? [...store.selection][0]! : null;
         if (!only || !adapterFor(store.engine).edit) return;
         e.preventDefault();
         useDocumentStore.getState().requestRename(only);
       } else if (!mod && !isTypingTarget(e.target) && ANNOTATION_KEYS[e.key.toLowerCase()] !== undefined) {
-
-
         e.preventDefault();
         const next = ANNOTATION_KEYS[e.key.toLowerCase()]!;
         const store = useDocumentStore.getState();
@@ -342,13 +337,11 @@ export default function App() {
         const store = useDocumentStore.getState();
         store.removeAnnotations([...store.annotationSelection]);
       } else if (e.key.toLowerCase() === "p" && !mod && !isTypingTarget(e.target)) {
-
         const store = useDocumentStore.getState();
         if (store.selection.size === 0) return;
         e.preventDefault();
         store.togglePins([...store.selection]);
       } else if (e.key === "Escape") {
-
         const doc = useDocumentStore.getState();
         if (doc.annotationTool) doc.setAnnotationTool(null);
         else if (doc.annotationSelection.size > 0) doc.selectAnnotations([], false);
@@ -401,7 +394,6 @@ export default function App() {
             >
               <Editor
                 value={source}
-
 
                 engine={blocks.length > 0 ? "markdown" : engine}
                 onChange={setSource}
@@ -477,11 +469,13 @@ export default function App() {
         onImport={() => setImportOpen(true)}
       />
       <Tour />
+
+
+      <ConfirmDialog />
       <Toasts />
     </div>
   );
 }
-
 
 const ANNOTATION_KEYS: Record<string, AnnotationKind | null> = {
   v: null,

@@ -2,7 +2,6 @@ import { Maximize2, Minus, Plus, Scan } from "lucide-react";
 
 import { IconButton, Tooltip } from "./ui";
 
-
 export function CanvasControls({
   zoom,
   onZoomIn,

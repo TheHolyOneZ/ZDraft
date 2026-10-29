@@ -1,10 +1,9 @@
 import { ArrowRight, CornerUpLeft, MapPin, PinOff, Trash2 } from "lucide-react";
 
 import { isGraph, isPassthrough, isSequence, nodeText } from "../core/model/scene";
-import { useDocumentStore } from "../store/useDocumentStore";
+import { releaseAllPinsWithConfirm, useDocumentStore } from "../store/useDocumentStore";
 import { FileTree } from "./FileTree";
 import { EmptyState, IconButton, Panel, SectionHeader } from "./ui";
-
 
 export function Sidebar({ onNewDiagram }: { onNewDiagram(): void }) {
   return (
@@ -26,7 +25,6 @@ function Outline() {
   const setHovered = useDocumentStore((s) => s.setHovered);
   const pins = useDocumentStore((s) => s.layout.pins);
 
-
   const nodes =
     scene && isGraph(scene)
       ? scene.nodes.map((n) => ({ id: n.id, label: nodeText(n.body) || n.id }))
@@ -41,8 +39,6 @@ function Outline() {
       <SectionHeader count={nodes.length}>Outline</SectionHeader>
 
       {nodes.length === 0 ? (
-
-
         passthrough ? (
           <EmptyState
             title="Not modelled"
@@ -95,7 +91,6 @@ function Pins() {
   const selection = useDocumentStore((s) => s.selection);
   const select = useDocumentStore((s) => s.select);
   const releasePins = useDocumentStore((s) => s.releasePins);
-  const releaseAllPins = useDocumentStore((s) => s.releaseAllPins);
   const migrateOrphan = useDocumentStore((s) => s.migrateOrphan);
   const dropOrphans = useDocumentStore((s) => s.dropOrphans);
   const scene = useDocumentStore((s) => s.scene);
@@ -113,7 +108,7 @@ function Pins() {
           entries.length > 0 ? (
             <IconButton
               icon={<PinOff size={13} strokeWidth={1.75} />}
-              onClick={releaseAllPins}
+              onClick={() => void releaseAllPinsWithConfirm()}
               title="Release all pins"
               size={22}
             />
@@ -124,8 +119,6 @@ function Pins() {
       </SectionHeader>
 
       {entries.length === 0 ? (
-
-
         passthrough ? (
           <EmptyState
             title="Nothing to pin"

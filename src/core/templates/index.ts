@@ -1,6 +1,5 @@
 import type { EngineId } from "../model/scene";
 
-
 export type TemplateCategory =
   | "architecture"
   | "behaviour"
@@ -27,7 +26,6 @@ export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
 };
 
 export const TEMPLATES: readonly Template[] = [
-
   {
     id: "c4-context",
     name: "C4 — system context",
@@ -144,7 +142,6 @@ digraph topology {
 `,
   },
 
-
   {
     id: "sequence-auth",
     name: "Sequence — sign-in with MFA",
@@ -253,7 +250,6 @@ digraph topology {
   comms --> done([Write the review within 48h])
 `,
   },
-
 
   {
     id: "er-commerce",
@@ -424,7 +420,6 @@ warehouse -> consumers.finance
 `,
   },
 
-
   {
     id: "deployment",
     name: "Deployment — two regions",
@@ -531,7 +526,6 @@ digraph network {
 `,
   },
 
-
   {
     id: "org-chart",
     name: "Org chart",
@@ -619,7 +613,6 @@ staff.answer -> systems.courier: looks up
 export function templateById(id: string): Template | undefined {
   return TEMPLATES.find((t) => t.id === id);
 }
-
 
 export function templatesByCategory(): Array<{
   category: TemplateCategory;

@@ -4,7 +4,6 @@ import { emitMermaid } from "./emit";
 import type { Layout } from "../sidecar/types";
 import { ImportError, type ImportedModel } from "./types";
 
-
 export { ImportError } from "./types";
 export type { ImportedModel } from "./types";
 
@@ -21,7 +20,6 @@ export interface Import {
   warnings: string[];
 }
 
-
 export function formatFor(name: string): ImportFormat | null {
   const lower = name.toLowerCase();
   if (lower.endsWith(".drawio") || lower.endsWith(".drawio.xml")) return "drawio";
@@ -29,9 +27,7 @@ export function formatFor(name: string): ImportFormat | null {
   return null;
 }
 
-
 export const IMPORT_EXTENSIONS = ["drawio", "excalidraw", "xml"] as const;
-
 
 export async function importDiagram(text: string, format: ImportFormat): Promise<Import> {
   const model: ImportedModel =

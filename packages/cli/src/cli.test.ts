@@ -1,10 +1,4 @@
-/**
- * @vitest-environment node
- *
- * A directive, not a comment: D2's WASM wants a real worker and
- * `URL.createObjectURL`, and jsdom has neither. Do not let a tidy pass
- * take this out.
- */
+/** @vitest-environment node */
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -54,7 +48,6 @@ describe("the arguments", () => {
     expect(args.options.ignorePins).toBe(true);
     expect(args.options.background).toBe(false);
   });
-
 
   it("refuses a flag with no value rather than eating the next one", () => {
     expect(() => parseArgs(["render", "--theme", "--strict", "a.dot"])).toThrow(/needs a value/);
@@ -114,7 +107,6 @@ describe("rendering", () => {
     expect(result!.name).toBe("chain");
   });
 
-
   it("applies the pins beside the file", async () => {
     const [pinned] = await renderFile(join(dir, "chain.dot"), OPTIONS);
     const [plain] = await renderFile(join(dir, "chain.dot"), { ...OPTIONS, ignorePins: true });
@@ -135,7 +127,6 @@ describe("rendering", () => {
     const [result] = await renderFile(join(dir, "broken.dot"), OPTIONS);
     expect(result!.diagnostics.some((d) => d.severity === "error")).toBe(true);
   });
-
 
   it("surfaces a pin whose node no longer exists", async () => {
     const orphaned = join(dir, "orphan.dot");
@@ -161,7 +152,6 @@ describe("rendering", () => {
     expect(error).toBeInstanceOf(RenderError);
     expect((error as RenderError).remedy).toContain(".dot");
   });
-
 
   it("refuses Mermaid rather than rendering it wrongly", async () => {
     const mmd = join(dir, "flow.mmd");
@@ -204,7 +194,6 @@ describe("rendering", () => {
     const [asked] = await renderFile(themed, { ...OPTIONS, theme: "blueprint" });
     const [ignored] = await renderFile(themed, { ...OPTIONS, ignorePins: true });
 
-
     expect(asked!.svg).not.toBe(ignored!.svg);
   });
 
@@ -212,14 +201,11 @@ describe("rendering", () => {
     const [once] = await renderFile(join(dir, "chain.dot"), OPTIONS);
     const [twice] = await renderFile(join(dir, "chain.dot"), OPTIONS);
 
-
     expect(once!.svg).toBe(twice!.svg);
   });
 });
 
 describe("what the app would draw", () => {
-
-
   it("renders the same bytes the app's exporter does", async () => {
     const { graphvizAdapter } = await import("../../../src/core/engines/graphviz");
     const { sceneToSvg } = await import("../../../src/core/render/svg");

@@ -8,7 +8,6 @@ import { adapterFor, useDocumentStore } from "../store/useDocumentStore";
 import { IconButton, Select, Slider, Tooltip } from "./ui";
 import { useDismiss, useFloatingPosition, usePrefersReducedMotion } from "./ui/hooks";
 
-
 export function LayoutTuning() {
   const engine = useDocumentStore((s) => s.engine);
   const source = useDocumentStore((s) => s.source);
@@ -62,7 +61,6 @@ export function LayoutTuning() {
               exit={reduced ? { opacity: 0 } : { opacity: 0, y: -2 }}
               transition={reduced ? { duration: 0.1 } : { duration: 0.14 }}
 
-
               className="glass fixed z-[400] flex w-[320px] flex-col gap-3 rounded-xl p-3"
               style={{
                 top: position?.top ?? -9999,
@@ -104,12 +102,6 @@ export function LayoutTuning() {
   );
 }
 
-/**
- * A number as short as it can be written without changing it.
- *
- * A step of 0.05 produces `0.35000000000000003`, and writing that into
- * someone's source is the kind of thing that makes a tool look careless.
- */
 function trim(value: number): string {
   return String(Math.round(value * 1000) / 1000);
 }

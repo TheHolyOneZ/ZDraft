@@ -3,10 +3,8 @@ import { useEffect, useState } from "react";
 
 import { appWindow } from "../lib/tauri";
 
-
 export function Titlebar({ subtitle }: { subtitle?: string }) {
   const [maximized, setMaximized] = useState(false);
-
 
   const [available] = useState(() => appWindow() !== null);
 
@@ -115,7 +113,6 @@ function WindowButton({
     </button>
   );
 }
-
 
 function Mark() {
   return (

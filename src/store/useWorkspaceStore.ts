@@ -2,16 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface WorkspaceState {
-
   root: string | null;
 
   version: number;
 
   recent: string[];
 
-
   lastFile: string | null;
-
 
   viewports: Record<string, { x: number; y: number; zoom: number }>;
 
@@ -20,7 +17,6 @@ interface WorkspaceState {
   rememberViewport(path: string, viewport: { x: number; y: number; zoom: number }): void;
   refresh(): void;
   forget(path: string): void;
-
 
   closeRoot(): void;
 }
@@ -50,7 +46,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set((s) => {
           const viewports = { ...s.viewports, [path]: viewport };
 
-
           const keys = Object.keys(viewports);
           if (keys.length > MAX_VIEWPORTS) {
             for (const key of keys.slice(0, keys.length - MAX_VIEWPORTS)) delete viewports[key];
@@ -73,7 +68,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     }),
     {
       name: "zdraft.workspace",
-
 
       partialize: (s) => ({
         root: s.root,

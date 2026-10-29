@@ -9,7 +9,6 @@ import { sceneToSvg } from "./svg";
 
 const theme = themeByName("blueprint");
 
-
 function parseSvg(markup: string): Element {
   const doc = new DOMParser().parseFromString(markup, "image/svg+xml");
   expect(doc.querySelector("parsererror")).toBeNull();
@@ -44,7 +43,6 @@ describe("sceneToSvg — graph", () => {
   it("escapes label text rather than emitting broken markup", () => {
     const markup = sceneToSvg(graph, theme);
 
-
     const svg = parseSvg(markup);
     const joined = Array.from(svg.querySelectorAll("text"))
       .map((t) => t.textContent)
@@ -56,7 +54,6 @@ describe("sceneToSvg — graph", () => {
   });
 
   it("omits the background when asked, for a transparent export", () => {
-
     const withBg = parseSvg(sceneToSvg(graph, theme, { background: true }));
     const without = parseSvg(sceneToSvg(graph, theme, { background: false }));
 
@@ -99,7 +96,6 @@ describe("sceneToSvg — sequence", () => {
     const svg = parseSvg(markup);
     const labels = Array.from(svg.querySelectorAll("text")).map((t) => t.textContent);
 
-
     expect(labels.filter((l) => l === "User")).toHaveLength(2);
     expect(labels.filter((l) => l === "API")).toHaveLength(2);
   });
@@ -115,7 +111,6 @@ describe("sceneToSvg — sequence", () => {
   });
 
   it("draws the activation bar", () => {
-
     expect(markup).toContain(theme.accent);
   });
 
@@ -134,7 +129,6 @@ describe("sceneToSvg — passthrough", () => {
     bounds: { x: 0, y: 0, w: 10, h: 10 },
     reason: "not modelled",
   };
-
 
   it("keeps the engine's drawing verbatim", () => {
     expect(sceneToSvg(scene, theme)).toContain(scene.svg);
@@ -165,7 +159,6 @@ describe("sceneToSvg — passthrough", () => {
   });
 });
 
-
 describe("the annotation layer, exported", () => {
   const note: Annotation = {
     kind: "note",
@@ -193,7 +186,6 @@ describe("the annotation layer, exported", () => {
   it("keeps a note out in the margin inside the exported box", () => {
     const svg = sceneToSvg(graph, theme, { padding: 0, annotations: { a1: note } });
 
-
     const viewBox = parseSvg(svg).getAttribute("viewBox")!.split(" ").map(Number);
     expect(viewBox[0]! + viewBox[2]!).toBeGreaterThanOrEqual(370);
   });
@@ -210,5 +202,53 @@ describe("the annotation layer, exported", () => {
 
     parseSvg(svg);
     expect(svg).toContain("&lt;");
+  });
+});
+
+describe("sceneToSvg — multi-line labels", () => {
+  const lined: GraphScene = {
+    ...graph,
+    nodes: [
+      graph.nodes[0]!,
+      { ...graph.nodes[0]!, id: "b", body: { kind: "label", text: "B" }, rect: { x: 200, y: 0, w: 80, h: 40 } },
+    ],
+    edges: [
+      {
+        id: "a->b#0",
+        from: "a",
+        to: "b",
+        route: { kind: "poly", points: [{ x: 80, y: 20 }, { x: 200, y: 20 }] },
+        startArrow: "none",
+        endArrow: "arrow",
+        label: { text: "first line\nsecond line", at: { x: 140, y: 20 } },
+      },
+    ],
+    clusters: [
+      { id: "c", label: "Sub\ngraph", rect: { x: -10, y: -40, w: 120, h: 90 } },
+    ],
+  };
+
+  it("breaks an edge label into one row per line", () => {
+    const svg = parseSvg(sceneToSvg(lined, theme));
+    const rows = Array.from(svg.querySelectorAll("tspan")).map((t) => t.textContent);
+    expect(rows).toEqual(["first line", "second line"]);
+
+    const ys = Array.from(svg.querySelectorAll("tspan")).map((t) => Number(t.getAttribute("y")));
+    expect(ys[1]!).toBeGreaterThan(ys[0]!);
+  });
+
+  it("gives a cluster title one text element per line", () => {
+    const svg = parseSvg(sceneToSvg(lined, theme));
+    const texts = Array.from(svg.querySelectorAll("text")).map((t) => t.textContent);
+    expect(texts).toContain("Sub");
+    expect(texts).toContain("graph");
+  });
+
+  it("breaks a sequence message label and keeps it above the arrow", () => {
+    const scene = layoutSequence(parseSequence("sequenceDiagram\n  A->>B: one<br/>two"), { theme });
+    const svg = parseSvg(sceneToSvg(scene, theme));
+    const rows = Array.from(svg.querySelectorAll("tspan"));
+    expect(rows.map((t) => t.textContent)).toEqual(["one", "two"]);
+    expect(Number(rows[1]!.getAttribute("y"))).toBeLessThan(scene.messages[0]!.y);
   });
 });

@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-
 interface TourState {
   seen: boolean;
   running: boolean;

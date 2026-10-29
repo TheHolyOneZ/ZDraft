@@ -30,12 +30,11 @@ import { createPortal } from "react-dom";
 
 import { isGraph, nodeText } from "../core/model/scene";
 import { DIAGRAM_THEMES } from "../core/theme";
-import { adapterFor, useDocumentStore } from "../store/useDocumentStore";
+import { adapterFor, releaseAllPinsWithConfirm, useDocumentStore } from "../store/useDocumentStore";
 import { useHistoryStore } from "../store/useHistoryStore";
 import { useSettingsStore } from "../store/useSettingsStore";
 import { useTourStore } from "../store/useTourStore";
 import { usePrefersReducedMotion } from "./ui";
-
 
 export function CommandPalette({
   open,
@@ -71,7 +70,6 @@ export function CommandPalette({
   const pins = useDocumentStore((s) => s.layout.pins);
   const select = useDocumentStore((s) => s.select);
   const releasePins = useDocumentStore((s) => s.releasePins);
-  const releaseAllPins = useDocumentStore((s) => s.releaseAllPins);
   const selection = useDocumentStore((s) => s.selection);
   const engine = useDocumentStore((s) => s.engine);
   const source = useDocumentStore((s) => s.source);
@@ -82,12 +80,10 @@ export function CommandPalette({
 
   const settings = useSettingsStore();
 
-
   const undoLabel = useHistoryStore((s) => s.past[s.past.length - 1]?.label ?? null);
   const redoLabel = useHistoryStore((s) => s.future[s.future.length - 1]?.label ?? null);
 
   const nodes = useMemo(() => (scene && isGraph(scene) ? scene.nodes : []), [scene]);
-
 
   const tuner = adapterFor(engine).edit?.tuning;
   const direction = useMemo(() => {
@@ -202,14 +198,11 @@ export function CommandPalette({
                     label="Release every pin — back to pure auto-layout"
                     hint={pinCount === 0 ? "nothing pinned" : `${pinCount} pinned`}
                     disabled={pinCount === 0}
-                    onSelect={run(releaseAllPins)}
+                    onSelect={run(() => void releaseAllPinsWithConfirm())}
                   />
                 </Group>
 
                 <Group heading="Edit">
-                  {/* Named after what they would actually undo, so the palette
-                      answers "what will Ctrl+Z do?" rather than repeating the
-                      word back. */}
                   <Item
                     icon={<Undo2 size={14} strokeWidth={1.75} />}
                     label={undoLabel ? `Undo ${undoLabel.toLowerCase()}` : "Undo"}
@@ -340,8 +333,6 @@ export function CommandPalette({
                     {nodes.map((node) => (
                       <Item
                         key={node.id}
-                        // Both the id and the label are searchable: people
-                        // remember one or the other, rarely both.
                         value={`${node.id} ${nodeText(node.body)}`}
                         icon={
                           pins?.[node.id] ? (

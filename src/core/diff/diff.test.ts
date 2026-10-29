@@ -45,7 +45,6 @@ describe("diffScenes", () => {
     expect(removed.rect).toBeUndefined();
   });
 
-
   it("does not confuse a rename with an add and a remove", async () => {
     const diff = diffScenes(
       await scene(BASE),
@@ -60,7 +59,6 @@ describe("diffScenes", () => {
     expect(changed!.wasLabel).toBe("A");
     expect(changed!.label).toBe("Alpha");
   });
-
 
   it("ignores a neighbour that auto-layout reflowed", async () => {
     const wider = 'digraph d { a [label="A much longer label"]; b [label="B"]; a -> b; }';
@@ -87,7 +85,6 @@ describe("diffScenes", () => {
     expect(diff.nodes.find((n) => n.id === "a")?.change).toBe("moved");
   });
 
-
   it("reports a node whose pin was released", async () => {
     const before = await scene(BASE);
     const node = before.nodes.find((n) => n.id === "a")!;
@@ -108,7 +105,6 @@ describe("diffScenes", () => {
 
     expect(diff.nodes.find((n) => n.id === "a")?.change).toBe("reshaped");
   });
-
 
   it("finds a node moved only by a pin", async () => {
     const before = await scene(BASE);
@@ -138,7 +134,6 @@ describe("diffScenes", () => {
     const before = await scene(BASE);
     const after = await scene('digraph d { a [label="Alpha renamed"]; b [label="B"]; a -> b; }');
 
-
     expect(diffScenes(before, after).nodes.find((n) => n.id === "a")?.change).toBe("relabelled");
   });
 
@@ -155,7 +150,6 @@ describe("diffScenes", () => {
     );
     expect(removed.edges.filter((e) => e.change === "removed")).toHaveLength(1);
   });
-
 
   it("does not report an edge that only rerouted", async () => {
     const before = await scene(BASE);
@@ -183,8 +177,6 @@ describe("diffScenes", () => {
 });
 
 describe("isLayoutOnly", () => {
-
-
   it("knows a move is the sidecar and everything else is the source", () => {
     expect(isLayoutOnly("moved")).toBe(true);
     expect(isLayoutOnly("added")).toBe(false);

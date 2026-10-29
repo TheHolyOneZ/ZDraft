@@ -1,8 +1,6 @@
 import { simplifyPolyline, type Point, type Rect } from "../model/geometry";
 
-
 export interface RouteGrid {
-
   cell: number;
   origin: Point;
   cols: number;
@@ -11,9 +9,7 @@ export interface RouteGrid {
   blocked: Uint8Array;
 }
 
-
 export const DEFAULT_CELL = 12;
-
 
 export const CLEARANCE = 6;
 
@@ -23,8 +19,6 @@ export function buildGrid(
   cell = DEFAULT_CELL,
   clearance = CLEARANCE,
 ): RouteGrid {
-
-
   const origin = { x: bounds.x - cell, y: bounds.y - cell };
   const cols = Math.max(1, Math.ceil((bounds.w + cell * 2) / cell) + 1);
   const rows = Math.max(1, Math.ceil((bounds.h + cell * 2) / cell) + 1);
@@ -45,7 +39,6 @@ export function buildGrid(
 
   return { cell, origin, cols, rows, blocked };
 }
-
 
 export function setRectBlocked(
   grid: RouteGrid,
@@ -80,7 +73,6 @@ function inside(grid: RouteGrid, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < grid.cols && y < grid.rows;
 }
 
-
 function clearAround(grid: RouteGrid, p: Point, radius = 1): void {
   const c = toCell(grid, p);
   for (let dy = -radius; dy <= radius; dy++) {
@@ -92,9 +84,7 @@ function clearAround(grid: RouteGrid, p: Point, radius = 1): void {
   }
 }
 
-
 const TURN_PENALTY = 3;
-
 
 export function hasLineOfSight(grid: RouteGrid, a: Point, b: Point): boolean {
   const span = Math.hypot(b.x - a.x, b.y - a.y);
@@ -109,7 +99,6 @@ export function hasLineOfSight(grid: RouteGrid, a: Point, b: Point): boolean {
 
   return true;
 }
-
 
 function pullString(grid: RouteGrid, path: readonly Point[]): Point[] {
   if (path.length <= 2) return [...path];
@@ -132,7 +121,6 @@ function pullString(grid: RouteGrid, path: readonly Point[]): Point[] {
   return out;
 }
 
-
 export function routeOrthogonal(
   grid: RouteGrid,
   from: Point,
@@ -148,7 +136,6 @@ export function routeOrthogonal(
 
   const { cols, rows, blocked } = grid;
   const size = cols * rows;
-
 
   const stateCount = size * 5;
   const gScore = new Float64Array(stateCount).fill(Infinity);
@@ -167,7 +154,6 @@ export function routeOrthogonal(
 
   const startState = stateOf(start.x, start.y, 4);
   gScore[startState] = 0;
-
 
   const heap: Array<{ f: number; state: number }> = [{ f: heuristic(start.x, start.y), state: startState }];
 
@@ -249,7 +235,6 @@ export function routeOrthogonal(
     if (cameFrom[s] === -1) break;
   }
   cells.reverse();
-
 
   const path = [from, ...cells.slice(1, -1), to];
   return simplifyPolyline(pullString(grid, path));

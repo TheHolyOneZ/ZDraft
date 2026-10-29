@@ -7,7 +7,6 @@ import { useDocumentStore } from "../store/useDocumentStore";
 import { toast } from "../store/useToastStore";
 import { Button, Modal, SegmentedControl } from "./ui";
 
-
 type Side = "ours" | "theirs";
 
 interface Row {
@@ -31,7 +30,6 @@ export function ConflictDialog() {
   const [choice, setChoice] = useState<Record<string, Side>>({});
   const [busy, setBusy] = useState(false);
 
-
   useEffect(() => {
     if (!conflict) {
       setSides(null);
@@ -54,7 +52,6 @@ export function ConflictDialog() {
       cancelled = true;
     };
   }, [conflict]);
-
 
   const rows = useMemo<Row[]>(() => {
     if (!sides) return [];
@@ -81,7 +78,6 @@ export function ConflictDialog() {
     return {
       ...sides.theirs,
 
-
       edges: { ...(sides.ours.edges ?? {}), ...(sides.theirs.edges ?? {}) },
       pins,
     };
@@ -107,7 +103,6 @@ export function ConflictDialog() {
   return (
     <Modal
       open
-
 
       onClose={() => void (merged && apply(merged))}
       title="This layout was merged by two people"

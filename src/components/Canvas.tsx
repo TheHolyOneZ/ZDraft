@@ -75,7 +75,6 @@ interface DragState {
   moved: boolean;
 }
 
-
 interface AnnoDraw {
   pointerId: number;
   kind: AnnotationKind;
@@ -86,7 +85,6 @@ interface AnnoDraw {
 
   over: string | null;
 }
-
 
 interface AnnoDrag {
   pointerId: number;
@@ -102,7 +100,6 @@ interface MarqueeState {
   additive: boolean;
 }
 
-
 interface LifelineDrag {
   pointerId: number;
   id: string;
@@ -110,7 +107,6 @@ interface LifelineDrag {
   x: number;
   moved: boolean;
 }
-
 
 interface GapDrag {
   pointerId: number;
@@ -126,7 +122,6 @@ interface GapDrag {
   moved: boolean;
 }
 
-
 interface LabelDrag {
   pointerId: number;
   edgeId: string;
@@ -136,7 +131,6 @@ interface LabelDrag {
   startWorld: Point;
   moved: boolean;
 }
-
 
 interface WaypointDrag {
   pointerId: number;
@@ -214,9 +208,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   const [menuTarget, setMenuTarget] = useState<string | null>(null);
   const [menuAnnotation, setMenuAnnotation] = useState<string | null>(null);
 
-
   const [menuNode, setMenuNode] = useState<string | null>(null);
-
 
   useLayoutEffect(() => {
     const el = containerRef.current;
@@ -232,18 +224,14 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     return () => observer.disconnect();
   }, []);
 
-
   const fit = useCallback(
     (box?: Rect) => {
-
-
       const target = box ?? unionRect(scene?.bounds, annotationsBounds(annotations));
       if (!target || size.w === 0 || target.w <= 0) return;
       setViewport(fitBox(target, size.w, size.h));
     },
     [scene, annotations, size.w, size.h],
   );
-
 
   const fittedFor = useRef<number | null>(null);
   const restoredFor = useRef<string | null>(null);
@@ -264,7 +252,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     fit();
   }, [scene, size.w, size.h, fitToken, fit, path]);
 
-
   useEffect(() => {
     if (!path || viewport === IDENTITY) return;
 
@@ -274,15 +261,12 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     return () => window.clearTimeout(timer);
   }, [path, viewport]);
 
-
   const isTyping = (el: EventTarget | null) =>
     el instanceof HTMLElement &&
     (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || !!el.closest(".cm-editor"));
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-
-
       if (e.ctrlKey || e.metaKey) {
         const centre = { x: size.w / 2, y: size.h / 2 };
         if (e.key === "=" || e.key === "+") {
@@ -309,7 +293,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
         setSpaceHeld(true);
         return;
       }
-
 
       const deltas: Record<string, Point> = {
         ArrowLeft: { x: -1, y: 0 },
@@ -350,7 +333,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     };
   }, [selection, pinAt, size.w, size.h]);
 
-
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -372,7 +354,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
-
 
   const localPoint = useCallback((e: { clientX: number; clientY: number }): Point => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -417,7 +398,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   const edgeIdAt = (target: EventTarget | null): string | null => {
     if (!(target instanceof Element)) return null;
 
-
     return (
       target.closest("[data-edge]")?.getAttribute("data-edge") ??
       target.closest("[data-message]")?.getAttribute("data-message") ??
@@ -438,8 +418,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
-
-
     const target = e.target instanceof Element ? e.target : null;
     if (!target || !containerRef.current?.contains(target)) return;
     if (target.closest("[data-canvas-ui]")) return;
@@ -455,7 +433,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     }
 
     if (e.button !== 0) return;
-
 
     if (annotationTool) {
       const world = screenToWorld(viewport, at);
@@ -473,11 +450,9 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       return;
     }
 
-
     const handle = handleAt(e.target);
     if (handle && selectedEdge) {
       const current = (layout.edges?.[selectedEdge]?.waypoints ?? []).map(([x, y]) => ({ x, y }));
-
 
       const points =
         handle.kind === "add"
@@ -501,7 +476,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       return;
     }
 
-
     const labelEdgeId = edgeLabelIdAt(e.target);
     if (labelEdgeId && scene && isGraph(scene)) {
       const offset = layout.edges?.[labelEdgeId]?.label_offset;
@@ -521,13 +495,11 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       return;
     }
 
-
     const ghostId = ghostIdAt(e.target);
     if (ghostId) {
       releasePins([ghostId]);
       return;
     }
-
 
     const annoId = annotationIdAt(e.target);
     if (annoId) {
@@ -549,7 +521,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       setAnnoDrag(state);
       return;
     }
-
 
     const gapId = gapIdAt(e.target);
     if (gapId && sequence) {
@@ -575,7 +546,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     if (messageId && sequence) {
       const index = sequence.messages.findIndex((m) => m.id === messageId);
       selectEdge(messageId);
-
 
       const previous = index > 0 ? sequence.messages[index - 1] : undefined;
       if (previous) {
@@ -614,7 +584,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
 
     const nodeId = nodeIdAt(e.target);
 
-
     const clusterId = nodeId ? null : clusterIdAt(e.target);
 
     if ((nodeId || clusterId) && scene && isGraph(scene)) {
@@ -622,12 +591,9 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
 
       let ids: string[];
       if (clusterId) {
-
         select([clusterId], additive);
         ids = nodesIn(scene, new Set([clusterId])).map((n) => n.id);
       } else {
-
-
         ids =
           selection.has(nodeId!) && !additive
             ? [...selection]
@@ -639,7 +605,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
         const node = scene.nodes.find((n) => n.id === id);
         if (node) origins.set(id, rectCenter(node.rect));
       }
-
 
       if (origins.size === 0) return;
 
@@ -655,7 +620,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       setDrag(state);
       return;
     }
-
 
     const edgeId = edgeIdAt(e.target);
     if (edgeId) {
@@ -689,7 +653,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
         ...drawing,
         to: world,
 
-
         path: drawing.kind === "stroke" ? [...drawing.path, world] : drawing.path,
       };
       annoDrawRef.current = next;
@@ -715,7 +678,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     if (gap?.pointerId === e.pointerId) {
       const world = screenToWorld(viewportRef.current, at);
       const axis = gap.kind === "lifeline" ? world.x : world.y;
-
 
       const delta = Math.max(-gap.base, axis - gap.origin);
 
@@ -767,9 +729,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       const dx = world.x - dragging.startWorld.x;
       const dy = world.y - dragging.startWorld.y;
 
-
       const moved = dragging.moved || Math.hypot(dx, dy) > 2;
-
 
       const snap = e.altKey ? 0 : gridSnap;
 
@@ -816,10 +776,8 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
         mark.color = useDocumentStore.getState().annotationPen;
         const id = addAnnotation(mark);
 
-
         if (mark.kind === "note") setEditingNote(id);
       }
-
 
       useDocumentStore.getState().setAnnotationTool(null);
       return;
@@ -857,7 +815,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       if (lifeline.moved && sequence) {
         const order = reorderLifelines(sequence, lifeline.id, lifeline.x);
 
-
         if (order) setLifelineOrder(order);
       }
       return;
@@ -885,7 +842,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       setDrag(null);
       setDragging(null);
 
-
       if (dragging.moved) pinAt(dragging.current, 0);
       return;
     }
@@ -906,7 +862,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       box.additive,
     );
   };
-
 
   const sequence: SequenceScene | null = scene && isSequence(scene) ? scene : null;
 
@@ -939,7 +894,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     return applyPins(raw, { ...layout, pins, edges }).scene;
   }, [scene, drag, waypointDrag, labelDrag, raw, layout]);
 
-
   const diff = useMemo(() => {
     if (!diffMode || !headScene || !shown) return EMPTY_DIFF;
     return diffScenes(headScene, shown, {
@@ -955,7 +909,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       shown.edges.filter((e) => selection.has(e.from) || selection.has(e.to)).map((e) => e.id),
     );
   }, [shown, selection]);
-
 
   const shownGhosts = useMemo(() => {
     const out = new Map<string, Rect>();
@@ -976,7 +929,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     return out;
   }, [raw, ghosts, drag, selection, pinned, shown]);
 
-
   const movingIds = useMemo(
     () => (annoDrag?.moved ? new Set(annoDrag.ids) : undefined),
     [annoDrag],
@@ -991,7 +943,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     }
     return out;
   }, [movingIds, annotations]);
-
 
   const drawnPreview = useMemo(() => {
     if (!annoDraw) return null;
@@ -1020,7 +971,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
         const node = mark ? null : nodeIdAt(e.target);
         setMenuTarget(node);
 
-
         if (!node && !mark) {
           const edge = edgeIdAt(e.target);
           if (edge) selectEdge(edge);
@@ -1030,10 +980,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       data-space={spaceHeld ? "true" : undefined}
       data-panning={panRef.current ? "true" : undefined}
       onDoubleClick={(e) => {
-
-
         const under = document.elementFromPoint(e.clientX, e.clientY);
-
 
         const noteId = annotationIdAt(under) ?? annotationIdAt(e.target);
         if (noteId && annotations?.[noteId]?.kind === "note") {
@@ -1041,7 +988,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
           setEditingNote(noteId);
           return;
         }
-
 
         const labelEdge = edgeLabelIdAt(under) ?? edgeLabelIdAt(e.target);
         if (labelEdge) {
@@ -1258,7 +1204,6 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   );
 }
 
-
 function PassthroughBanner({ reason }: { reason: string }) {
   return (
     <div
@@ -1278,7 +1223,6 @@ function PassthroughBanner({ reason }: { reason: string }) {
   );
 }
 
-
 function reorderLifelines(
   scene: SequenceScene,
   id: string,
@@ -1293,7 +1237,6 @@ function reorderLifelines(
 
   return next.join("\u0000") === current.join("\u0000") ? null : next;
 }
-
 
 function dropLineFor(scene: SequenceScene, id: string, x: number): number | null {
   const others = scene.lifelines.filter((l) => l.id !== id);
@@ -1376,7 +1319,6 @@ function unionOf(rects: Rect[]): Rect {
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
-
 function unionRect(a: Rect | undefined, b: Rect | null): Rect | undefined {
   if (!a) return b ?? undefined;
   if (!b) return a;
@@ -1390,7 +1332,6 @@ function unionRect(a: Rect | undefined, b: Rect | null): Rect | undefined {
     h: Math.max(a.y + a.h, b.y + b.h) - y,
   };
 }
-
 
 function annotationMenu({
   id,
@@ -1445,7 +1386,6 @@ function annotationMenu({
   return items;
 }
 
-
 function anchored(
   mark: Annotation | null,
   drawing: AnnoDraw,
@@ -1470,7 +1410,6 @@ function anchored(
     size: [w, h],
   };
 }
-
 
 function NoteEditor({
   mark,
@@ -1505,8 +1444,6 @@ function NoteEditor({
       onChange={(e) => setText(e.target.value)}
       onBlur={() => onCommit(text)}
       onKeyDown={(e) => {
-
-
         e.stopPropagation();
         if (e.key === "Escape") {
           e.preventDefault();
@@ -1537,7 +1474,6 @@ function NoteEditor({
   );
 }
 
-
 function menuItems({
   target,
   selection,
@@ -1563,7 +1499,6 @@ function menuItems({
   hasWaypoints: boolean;
   clearWaypoints(): void;
 }): MenuItem[] {
-
   if (!target && edgeId) {
     return [
       {
@@ -1585,7 +1520,6 @@ function menuItems({
       },
     ];
   }
-
 
   const acting = target && selection.has(target) ? [...selection] : target ? [target] : [];
   const actingPinned = acting.filter((id) => pinned.has(id));

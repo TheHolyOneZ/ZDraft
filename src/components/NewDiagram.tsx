@@ -16,7 +16,6 @@ import { useToastStore } from "../store/useToastStore";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { Button, Modal, Select, TextInput, type SelectOption } from "./ui";
 
-
 export function NewDiagram({
   open,
   onClose,
@@ -43,7 +42,6 @@ export function NewDiagram({
   const target = dir ?? root;
   const starter = starterById(starterId) ?? DEFAULT_STARTER;
   const extension = EXTENSION_FOR[starter.engine];
-
 
   useEffect(() => {
     if (!open) return;
@@ -73,13 +71,14 @@ export function NewDiagram({
     setBusy(true);
     setFailure(null);
     try {
-      await createFile(target, fileName, starter.source, starter.engine);
+      if (!(await createFile(target, fileName, starter.source, starter.engine))) {
+        setBusy(false);
+        return;
+      }
       refresh();
       onClose();
       push({ kind: "success", title: `Created ${fileName}` });
     } catch (e) {
-
-
       setFailure(String((e as { message?: string })?.message ?? e));
       setBusy(false);
     }

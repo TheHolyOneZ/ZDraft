@@ -15,7 +15,6 @@ function node(id: string, rect: Rect): GraphNode {
   };
 }
 
-
 function pathHits(path: readonly { x: number; y: number }[], rect: Rect): boolean {
   for (let i = 1; i < path.length; i++) {
     if (segmentIntersectsRect(path[i - 1]!, path[i]!, rect)) return true;
@@ -44,8 +43,6 @@ describe("segmentIntersectsRect", () => {
   });
 
   it("does not count merely grazing an edge", () => {
-
-
     expect(segmentIntersectsRect({ x: 0, y: 10 }, { x: 30, y: 10 }, box)).toBe(false);
   });
 });
@@ -123,13 +120,10 @@ describe("routeOrthogonal", () => {
     const grid = buildGrid(bounds, [{ x: 180, y: 60, w: 40, h: 80 }]);
     const path = routeOrthogonal(grid, { x: 20, y: 100 }, { x: 380, y: 100 })!;
 
-
     expect(path.length).toBeLessThanOrEqual(6);
   });
 
   it("reports failure rather than a path through a wall", () => {
-
-
     const grid = buildGrid({ x: 0, y: 0, w: 100, h: 100 }, [
       { x: 0, y: 40, w: 200, h: 20 },
     ]);
@@ -199,8 +193,6 @@ describe("rerouteEdges with obstacle avoidance", () => {
   });
 
   it("never overrides a manual waypoint", () => {
-
-
     const [routed] = rerouteEdges([edge], {
       nodes,
       moved: new Set(["a"]),
@@ -269,8 +261,6 @@ describe("a node dragged onto an edge", () => {
   };
 
   it("re-routes an edge a moved node has landed on", () => {
-
-
     const wall = node("wall", { x: 180, y: 60, w: 40, h: 100 });
     const nodes = new Map([a, b, wall].map((n) => [n.id, n]));
 
@@ -289,15 +279,12 @@ describe("a node dragged onto an edge", () => {
   });
 
   it("does not treat an edge's own endpoints as a collision", () => {
-
-
     const nodes = new Map([a, b].map((n) => [n.id, n]));
     const [routed] = rerouteEdges([{ ...straight, id: "c->d", from: "x", to: "y" }], {
       nodes,
       moved: new Set(["a"]),
       bounds,
     });
-
 
     expect(routed!.route.points).toHaveLength(2);
   });

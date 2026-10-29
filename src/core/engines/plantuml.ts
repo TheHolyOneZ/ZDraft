@@ -27,9 +27,7 @@ import { DEFAULT_FONT_SIZE } from "../theme";
 import type { DiagramTheme } from "../theme";
 import { makeFingerprinter, type EngineAdapter, type LayoutOpts } from "./types";
 
-
 export interface PlantUmlStatus {
-
   ready: boolean;
 
   reason: string;
@@ -37,16 +35,13 @@ export interface PlantUmlStatus {
   remedy: string;
 }
 
-
 export interface PlantUmlRunner {
-
   render(source: string, skinparams: readonly string[]): Promise<string>;
   status(): Promise<PlantUmlStatus>;
   parse(svg: string): Element | null;
 }
 
 let runner: PlantUmlRunner | null = null;
-
 
 export function setPlantUmlRunner(next: PlantUmlRunner | null): void {
   runner = next;
@@ -56,12 +51,10 @@ export function plantUmlRunner(): PlantUmlRunner | null {
   return runner;
 }
 
-
 function hex(colour: string): string | null {
   const match = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(colour.trim());
   return match ? match[1]! : null;
 }
-
 
 export function skinparamsFor(theme: DiagramTheme | undefined): string[] {
   if (!theme) return [];
@@ -71,7 +64,6 @@ export function skinparamsFor(theme: DiagramTheme | undefined): string[] {
     const value = colour ? hex(colour) : null;
     if (value) params.push(`${name}=#${value}`);
   };
-
 
   params.push("backgroundColor=transparent");
   params.push("shadowing=false");
@@ -83,7 +75,6 @@ export function skinparamsFor(theme: DiagramTheme | undefined): string[] {
   add("noteBackgroundColor", theme.nodeFill);
   add("noteBorderColor", theme.nodeStroke);
   add("noteFontColor", theme.nodeText);
-
 
   for (const kind of [
     "participant",
@@ -113,7 +104,6 @@ export function skinparamsFor(theme: DiagramTheme | undefined): string[] {
 
   return params;
 }
-
 
 function mapHead(head: string): ArrowKind {
   switch (head) {
@@ -146,7 +136,6 @@ function bodyFor(label: string, model: PumlModel, id: string): NodeBody {
   };
 }
 
-
 export function buildPlantUmlScene(
   geometry: ReadPumlGeometry,
   source: string,
@@ -165,7 +154,6 @@ export function buildPlantUmlScene(
   const nodes: GraphNode[] = geometry.entities.map((read) => {
     const parsed = model.entities.get(read.id);
 
-
     const marker = read.marker !== undefined;
     const label = marker ? "" : (parsed?.label ?? read.text ?? read.id);
     const shape = marker ? "circle" : (parsed?.shape ?? "rect");
@@ -174,7 +162,6 @@ export function buildPlantUmlScene(
       id: read.id,
       body: marker ? { kind: "label", text: "" } : bodyFor(label, model, read.id),
       shape,
-
 
       rect: shape === "person" ? personRect(read.rect, label, DEFAULT_FONT_SIZE) : read.rect,
       fingerprint: fp(marker ? `state-${read.marker}` : shape, label),
@@ -207,7 +194,6 @@ export function buildPlantUmlScene(
     pairSeen.set(pair, ordinal + 1);
     const id = edgeId(from, to, ordinal);
 
-
     const declared = model.links.find(
       (l) => l.from === from && l.to === to && (l.label ?? "") === (link.label ?? ""),
     );
@@ -233,7 +219,6 @@ export function buildPlantUmlScene(
     engine: "plantuml",
     diagramType: geometry.diagramType.toLowerCase() || "uml",
 
-
     direction: "TB",
     nodes,
     edges,
@@ -241,7 +226,6 @@ export function buildPlantUmlScene(
     bounds: boundsOf(nodes, clusters, edges, geometry.bounds),
   };
 }
-
 
 function parentOf(id: string, clusters: ReadonlySet<string>): string | undefined {
   let cut = id.lastIndexOf(".");
@@ -270,7 +254,6 @@ function boundsOf(
   return { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 };
 }
 
-
 function passthrough(svg: string, geometry: ReadPumlGeometry, kind: string): PassthroughScene {
   return {
     family: "passthrough",
@@ -282,14 +265,12 @@ function passthrough(svg: string, geometry: ReadPumlGeometry, kind: string): Pas
   };
 }
 
-
 function stripOuterSvg(svg: string): string {
   const open = svg.indexOf(">", svg.indexOf("<svg"));
   const close = svg.lastIndexOf("</svg>");
   if (open < 0 || close < 0) return svg;
   return svg.slice(open + 1, close);
 }
-
 
 function emptyScene(): GraphScene {
   return {
@@ -308,7 +289,6 @@ export const plantumlAdapter: EngineAdapter = {
   id: "plantuml",
   label: "PlantUML",
   extensions: [".puml", ".plantuml", ".pu", ".iuml", ".wsd"],
-
 
   detectFamily(): Family {
     return "graph";
@@ -395,7 +375,6 @@ export const plantumlAdapter: EngineAdapter = {
   },
 };
 
-
 function diagnosticFrom(err: unknown, source: string): Diagnostic {
   const shaped = err as { message?: string; remedy?: string } | undefined;
   const message = shaped?.message ?? String(err);
@@ -420,4 +399,3 @@ function lineRange(source: string, line: number): { from: number; to: number } |
   for (let i = 0; i < line - 1; i += 1) from += lines[i]!.length + 1;
   return { from, to: from + lines[line - 1]!.length };
 }
-

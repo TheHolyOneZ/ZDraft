@@ -6,7 +6,6 @@ import { createPortal } from "react-dom";
 
 import { useDismiss, useFloatingPosition, usePrefersReducedMotion, useTypeAhead } from "./hooks";
 
-
 export interface SelectOption<T extends string> {
   value: T;
   label: string;
@@ -28,7 +27,6 @@ export interface SelectProps<T extends string> {
   disabled?: boolean;
 
   menuWidth?: number;
-
 
   block?: boolean;
   className?: string;
@@ -70,13 +68,11 @@ export function Select<T extends string>({
     setActive,
   );
 
-
   useEffect(() => {
     if (!open) return;
     const index = options.findIndex((o) => o.value === value);
     setActive(index >= 0 ? index : (enabledIndexes[0] ?? 0));
   }, [open, options, value, enabledIndexes]);
-
 
   useEffect(() => {
     if (!open) return;
@@ -205,8 +201,6 @@ export function Select<T extends string>({
               transition={reduced ? { duration: 0.1 } : { type: "spring", stiffness: 500, damping: 35 }}
               className="glass fixed z-[600] max-h-[min(420px,60vh)] overflow-y-auto rounded-xl p-1"
               style={{
-
-
                 top: position?.top ?? 0,
                 left: position?.left ?? 0,
                 visibility: position ? "visible" : "hidden",
@@ -269,8 +263,6 @@ function Option<T extends string>({
         option.disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
       )}
       style={{
-
-
         background: active && !option.disabled ? "var(--row-selected)" : "transparent",
         color: active ? "var(--text)" : "var(--text-2)",
       }}
@@ -297,7 +289,6 @@ function Option<T extends string>({
     </div>
   );
 }
-
 
 export function Swatch({ colors }: { colors: readonly string[] }) {
   return (

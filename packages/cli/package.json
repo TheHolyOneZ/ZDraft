@@ -1,6 +1,6 @@
 {
   "name": "@zdraft/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Render ZDraft diagrams from the command line, layout pins and all",
   "author": "TheHolyOneZ",

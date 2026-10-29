@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { locateDot, tokenizeDot } from "./dot";
 import { idAt } from "./types";
 
-
 function textOf(source: string, range: { from: number; to: number } | undefined): string {
   return range ? source.slice(range.from, range.to) : "";
 }

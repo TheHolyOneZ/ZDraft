@@ -2,11 +2,9 @@ import type { Point } from "../model/geometry";
 import { distance, lerp } from "../model/geometry";
 import type { ArrowKind, EdgeRoute } from "../model/scene";
 
-
 function n(v: number): string {
   return Number.isFinite(v) ? String(Math.round(v * 1000) / 1000) : "0";
 }
-
 
 export function edgePathD(route: EdgeRoute): string {
   const pts = route.points;
@@ -27,7 +25,6 @@ export function edgePathD(route: EdgeRoute): string {
   return pts.map((p, i) => `${i === 0 ? "M" : "L"}${n(p.x)},${n(p.y)}`).join(" ");
 }
 
-
 export function routeTail(route: EdgeRoute): Point | undefined {
   return route.points[route.points.length - 1];
 }
@@ -35,7 +32,6 @@ export function routeTail(route: EdgeRoute): Point | undefined {
 export function routeHead(route: EdgeRoute): Point | undefined {
   return route.points[0];
 }
-
 
 function anchorAwayFrom(
   points: readonly Point[],
@@ -55,7 +51,6 @@ export interface ArrowGeometry {
 
   filled: boolean;
 }
-
 
 export function arrowGeometry(
   kind: ArrowKind,
@@ -129,7 +124,6 @@ export function arrowGeometry(
   }
 }
 
-
 export function headArrow(
   route: EdgeRoute,
   tip: Point | undefined,
@@ -145,7 +139,6 @@ export function headArrow(
   return arrowGeometry(kind, actualTip, from, size);
 }
 
-
 export function tailArrow(
   route: EdgeRoute,
   tip: Point | undefined,
@@ -160,7 +153,6 @@ export function tailArrow(
 
   return arrowGeometry(kind, actualTip, from, size);
 }
-
 
 export function pointAlong(route: EdgeRoute, t: number): Point {
   const pts = route.points;
@@ -187,7 +179,6 @@ export function pointAlong(route: EdgeRoute, t: number): Point {
 
   return pts[pts.length - 1]!;
 }
-
 
 export function routeLength(route: EdgeRoute): number {
   let total = 0;

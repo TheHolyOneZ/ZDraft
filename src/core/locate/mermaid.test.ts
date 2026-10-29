@@ -27,7 +27,6 @@ describe("detectMermaidType", () => {
 
 describe("familyForMermaidType", () => {
   it("puts class and ER in the graph family, not renderers of their own", () => {
-
     expect(familyForMermaidType("flowchart")).toBe("graph");
     expect(familyForMermaidType("state")).toBe("graph");
     expect(familyForMermaidType("class")).toBe("graph");
@@ -77,7 +76,6 @@ describe("parseMermaid — nodes", () => {
   });
 
   it("prefers the longer bracket form", () => {
-
     const model = parseMermaid("flowchart LR\n  db[(Postgres)]");
     expect(model.nodes.get("db")).toMatchObject({ shape: "cylinder", label: "Postgres" });
   });
@@ -119,6 +117,18 @@ describe("parseMermaid — edges", () => {
   it("reads an inline label", () => {
     const model = parseMermaid("flowchart LR\n  a -- retry --> b");
     expect(model.edges[0]).toMatchObject({ from: "a", to: "b", label: "retry" });
+  });
+
+  it("converts <br> in a pipe label to a line break", () => {
+    const model = parseMermaid("flowchart LR\n  a -->|first<br/>second| b");
+    expect(model.edges[0]).toMatchObject({ from: "a", to: "b", label: "first\nsecond" });
+  });
+
+  it("reads an inline label that contains <br>", () => {
+    const model = parseMermaid("flowchart LR\n  a -- one<br>two<BR />three --> b");
+    expect(model.edges).toHaveLength(1);
+    expect(model.edges[0]).toMatchObject({ from: "a", to: "b", label: "one\ntwo\nthree" });
+    expect([...model.nodes.keys()]).toEqual(["a", "b"]);
   });
 
   it("distinguishes dotted, thick and plain links", () => {
@@ -234,8 +244,6 @@ describe("parseMermaid — class diagrams", () => {
   const model = parseMermaid(source);
 
   it("does not read members as node declarations", () => {
-
-
     expect([...model.nodes.keys()].sort()).toEqual(["Customer", "LineItem", "Order"]);
   });
 
@@ -309,8 +317,6 @@ describe("parseMermaid — state diagrams", () => {
   const model = parseMermaid(source);
 
   it("does not turn a transition label into a node", () => {
-
-
     expect([...model.nodes.keys()].sort()).toEqual(["Done", "Idle", "Running"]);
   });
 

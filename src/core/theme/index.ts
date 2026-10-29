@@ -1,5 +1,3 @@
-
-
 export interface DiagramTheme {
   id: string;
   label: string;
@@ -27,7 +25,6 @@ export interface DiagramTheme {
 
   accent: string;
 
-
   series: string[];
 
   strokeWidth: number;
@@ -36,13 +33,11 @@ export interface DiagramTheme {
   monoFamily: string;
   fontSize: number;
 
-
   printSafe?: boolean;
 }
 
 const UI_FONT = "Inter, 'Inter Variable', 'Segoe UI', system-ui, sans-serif";
 const MONO_FONT = "'JetBrains Mono', 'JetBrains Mono Variable', ui-monospace, monospace";
-
 
 export const DEFAULT_FONT_SIZE = 13;
 
@@ -53,7 +48,6 @@ const BASE = {
   monoFamily: MONO_FONT,
   fontSize: DEFAULT_FONT_SIZE,
 } as const;
-
 
 const blueprint: DiagramTheme = {
   ...BASE,
@@ -76,7 +70,6 @@ const blueprint: DiagramTheme = {
   series: ["#38BDF8", "#34D399", "#FBBF24", "#F472B6", "#A78BFA", "#FB923C", "#2DD4BF", "#F87171"],
 };
 
-
 const paper: DiagramTheme = {
   ...BASE,
   id: "paper",
@@ -97,7 +90,6 @@ const paper: DiagramTheme = {
   accent: "#0369A1",
   series: ["#0369A1", "#15803D", "#A16207", "#BE185D", "#6D28D9", "#C2410C", "#0F766E", "#B91C1C"],
 };
-
 
 const slate: DiagramTheme = {
   ...BASE,
@@ -120,7 +112,6 @@ const slate: DiagramTheme = {
   series: ["#60A5FA", "#4ADE80", "#FBBF24", "#F472B6", "#C084FC", "#FB923C", "#2DD4BF", "#F87171"],
 };
 
-
 const pastel: DiagramTheme = {
   ...BASE,
   id: "pastel",
@@ -141,7 +132,6 @@ const pastel: DiagramTheme = {
   accent: "#5B8DBE",
   series: ["#AECBEB", "#B7E4C7", "#FBE7A1", "#F7C8D8", "#D6C9F0", "#FAD7B0", "#A8DCD5", "#F2B8B5"],
 };
-
 
 const mono: DiagramTheme = {
   ...BASE,
@@ -166,7 +156,6 @@ const mono: DiagramTheme = {
   strokeWidth: 1.75,
   printSafe: true,
 };
-
 
 const neon: DiagramTheme = {
   ...BASE,
@@ -202,7 +191,6 @@ export const DEFAULT_DIAGRAM_THEME = "blueprint";
 
 const BY_ID = new Map(DIAGRAM_THEMES.map((t) => [t.id, t]));
 
-
 export function themeByName(name: string | undefined | null): DiagramTheme {
   if (!name) return BY_ID.get(DEFAULT_DIAGRAM_THEME)!;
   return BY_ID.get(name.toLowerCase()) ?? BY_ID.get(DEFAULT_DIAGRAM_THEME)!;
@@ -211,7 +199,6 @@ export function themeByName(name: string | undefined | null): DiagramTheme {
 export function isKnownTheme(name: string): boolean {
   return BY_ID.has(name.toLowerCase());
 }
-
 
 export function seriesColor(theme: DiagramTheme, key: string): string {
   let hash = 0;

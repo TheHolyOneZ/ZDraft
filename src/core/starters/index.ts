@@ -1,6 +1,5 @@
 import type { EngineId } from "../model/scene";
 
-
 export interface Starter {
   id: string;
   engine: EngineId;
@@ -187,13 +186,11 @@ Document -> Layout: reads
   },
 ];
 
-
 export const DEFAULT_STARTER = STARTERS[0]!;
 
 export function starterById(id: string): Starter | undefined {
   return STARTERS.find((s) => s.id === id);
 }
-
 
 export const EXTENSION_FOR: Record<EngineId, string> = {
   graphviz: ".dot",
@@ -201,7 +198,6 @@ export const EXTENSION_FOR: Record<EngineId, string> = {
   d2: ".d2",
   plantuml: ".puml",
 };
-
 
 export function nameProblem(name: string): string | null {
   const trimmed = name.trim();
@@ -220,7 +216,6 @@ export function nameProblem(name: string): string | null {
   if (trimmed.length > 120) return "That name is too long.";
   return null;
 }
-
 
 export function withExtension(name: string, extension: string): string {
   const trimmed = name.trim();

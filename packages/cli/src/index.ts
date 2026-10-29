@@ -5,7 +5,6 @@ import { DIAGRAM_THEMES } from "../../../src/core/theme";
 import { RenderError, renderFile, type RenderOptions } from "./render";
 import { expand, watch } from "./watch";
 
-
 const USAGE = `zdraft — render ZDraft diagrams, layout pins and all
 
   zdraft render <paths...> [options]
@@ -57,7 +56,6 @@ export function parseArgs(argv: readonly string[]): Args {
 
   for (let i = 0; i < rest.length; i += 1) {
     const arg = rest[i]!;
-
 
     const value = () => {
       const next = rest[i + 1];
@@ -117,7 +115,6 @@ export function parseArgs(argv: readonly string[]): Args {
   return args;
 }
 
-
 interface Outcome {
   written: number;
   errors: number;
@@ -146,7 +143,6 @@ async function renderOne(path: string, args: Args, log: (line: string) => void):
 
     for (const d of errors) console.error(`✗ ${result.source}${where(d)}: ${d.message}`);
     for (const d of warnings) console.error(`! ${result.source}${where(d)}: ${d.message}`);
-
 
     for (const id of result.orphans) {
       console.error(
@@ -217,7 +213,6 @@ export async function main(argv: readonly string[]): Promise<number> {
 
   if (args.command === "watch") {
     log(`\nWatching ${files.length} ${files.length === 1 ? "file" : "files"}. Ctrl+C to stop.`);
-
 
     await watch(args.paths, async (changed) => {
       log(`\n${new Date().toLocaleTimeString()}  ${basename(changed)}`);

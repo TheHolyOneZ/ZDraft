@@ -12,7 +12,6 @@ import { toast } from "../store/useToastStore";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { Button, Modal, TextInput } from "./ui";
 
-
 export function TemplateGallery({
   open,
   onClose,
@@ -37,7 +36,6 @@ export function TemplateGallery({
     [groups, selectedId],
   );
 
-
   const touched = useRef(false);
   useEffect(() => {
     if (!open) {
@@ -60,7 +58,7 @@ export function TemplateGallery({
 
     setBusy(true);
     try {
-      await createFile(target, fileName, selected.source, selected.engine);
+      if (!(await createFile(target, fileName, selected.source, selected.engine))) return;
       refresh();
       onClose();
       toast.success(`Created ${fileName}`, "Delete what does not apply and rename the rest.");
@@ -168,8 +166,6 @@ export function TemplateGallery({
               This template did not render. That is a bug in ZDraft, not in your setup.
             </span>
           ) : (
-
-
             <div
               className="h-full w-full [&>svg]:h-full [&>svg]:w-full [&>svg]:object-contain"
               dangerouslySetInnerHTML={{ __html: preview.svg }}
@@ -185,7 +181,6 @@ type Preview =
   | { status: "loading"; svg: "" }
   | { status: "ready"; svg: string }
   | { status: "failed"; svg: "" };
-
 
 function usePreview(template: Template | undefined, theme: ReturnType<typeof themeByName>): Preview {
   const [state, setState] = useState<Preview>({ status: "loading", svg: "" });
@@ -232,7 +227,6 @@ function drawable(scene: Scene): boolean {
   if (isSequence(scene)) return scene.lifelines.length > 0;
   return true;
 }
-
 
 function slug(name: string): string {
   return (

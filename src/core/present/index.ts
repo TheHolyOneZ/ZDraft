@@ -7,14 +7,11 @@ import {
   type SequenceScene,
 } from "../model/scene";
 
-
 export interface RevealStep {
-
   title: string;
 
   reveal: string[];
 }
-
 
 export function revealSteps(scene: Scene | null): RevealStep[] {
   if (!scene) return [];
@@ -22,7 +19,6 @@ export function revealSteps(scene: Scene | null): RevealStep[] {
   if (isSequence(scene)) return sequenceSteps(scene);
   return [];
 }
-
 
 function graphSteps(scene: GraphScene): RevealStep[] {
   if (scene.nodes.length < 2) return [];
@@ -32,7 +28,6 @@ function graphSteps(scene: GraphScene): RevealStep[] {
   const out = new Map<string, string[]>(scene.nodes.map((n) => [n.id, []]));
 
   for (const edge of scene.edges) {
-
     if (edge.from === edge.to) continue;
     if (!order.has(edge.from) || !order.has(edge.to)) continue;
 
@@ -47,8 +42,6 @@ function graphSteps(scene: GraphScene): RevealStep[] {
 
   while (left.size > 0) {
     if (ready.length === 0) {
-
-
       const earliest = [...left].sort((a, b) => order.get(a)! - order.get(b)!)[0]!;
       ready = [earliest];
     }
@@ -73,7 +66,6 @@ function graphSteps(scene: GraphScene): RevealStep[] {
   return steps.length > 1 ? steps : [];
 }
 
-
 function titleFor(scene: GraphScene, ids: readonly string[]): string {
   const nodes = ids
     .map((id) => scene.nodes.find((n) => n.id === id))
@@ -96,7 +88,6 @@ function oneLine(text: string): string {
   return text.replace(/\s*\n\s*/g, " ").trim();
 }
 
-
 function sequenceSteps(scene: SequenceScene): RevealStep[] {
   if (scene.messages.length === 0) return [];
 
@@ -111,7 +102,6 @@ function sequenceSteps(scene: SequenceScene): RevealStep[] {
     })),
   ];
 }
-
 
 export function sceneAtStep(scene: Scene, steps: readonly RevealStep[], index: number): Scene {
   if (steps.length === 0) return scene;
@@ -129,7 +119,6 @@ export function sceneAtStep(scene: Scene, steps: readonly RevealStep[], index: n
 function graphAtStep(scene: GraphScene, shown: ReadonlySet<string>): GraphScene {
   const nodes = scene.nodes.filter((n) => shown.has(n.id));
 
-
   const clusters = scene.clusters.filter((cluster) =>
     nodes.some((n) => inCluster(scene, n.parent, cluster.id)),
   );
@@ -143,7 +132,6 @@ function graphAtStep(scene: GraphScene, shown: ReadonlySet<string>): GraphScene 
   };
 }
 
-
 function inCluster(scene: GraphScene, parent: string | undefined, clusterId: string): boolean {
   let at = parent;
   const guard = new Set<string>();
@@ -155,7 +143,6 @@ function inCluster(scene: GraphScene, parent: string | undefined, clusterId: str
   }
   return false;
 }
-
 
 function sequenceAtStep(scene: SequenceScene, shown: ReadonlySet<string>): SequenceScene {
   const messages = scene.messages.filter((m) => shown.has(m.id));
@@ -171,7 +158,6 @@ function sequenceAtStep(scene: SequenceScene, shown: ReadonlySet<string>): Seque
     notes: scene.notes.filter((n) => n.rect.y <= floor),
   };
 }
-
 
 function headBottom(scene: SequenceScene): number {
   return scene.lifelines.reduce((y, l) => Math.max(y, l.head.y + l.head.h), 0);

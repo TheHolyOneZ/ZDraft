@@ -9,11 +9,9 @@ import {
 import type { Cluster, Diagnostic, GraphEdge, GraphNode, GraphScene } from "../model/scene";
 import { rerouteEdges } from "../route";
 
-
 export interface OrphanPin {
   id: string;
   pin: Pin;
-
 
   migrateTo?: string;
 }
@@ -21,12 +19,10 @@ export interface OrphanPin {
 export interface AppliedLayout {
   scene: GraphScene;
 
-
   ghosts: ReadonlyMap<string, Rect>;
   orphans: OrphanPin[];
   diagnostics: Diagnostic[];
 }
-
 
 const DRIFT_FACTOR = 3;
 
@@ -54,7 +50,6 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     ghosts.set(node.id, auto);
     moved.add(node.id);
 
-
     const when = pin.auto;
     if (when) {
       const now = rectCenter(auto);
@@ -74,7 +69,6 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     return { ...node, rect };
   });
 
-
   const orphans: OrphanPin[] = [];
   const unpinnedByFingerprint = new Map<string, string[]>();
   for (const node of scene.nodes) {
@@ -88,7 +82,6 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     if (byId.has(id)) continue;
 
     const pin = pins[id]!;
-
 
     const candidates = pin.fingerprint ? unpinnedByFingerprint.get(pin.fingerprint) : undefined;
     const migrateTo = candidates?.length === 1 ? candidates[0] : undefined;
@@ -107,7 +100,6 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     });
   }
 
-
   const waypoints = new Map<string, Point[]>();
   for (const [id, hint] of Object.entries(layout?.edges ?? {})) {
     if (hint.waypoints?.length) {
@@ -118,7 +110,6 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     }
   }
 
-
   const clusters = refitClusters(scene, nodes, moved);
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
@@ -127,10 +118,8 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     moved,
     waypoints,
 
-
     bounds: scene.bounds,
   });
-
 
   edges = edges.map((edge) => {
     const offset = layout?.edges?.[edge.id]?.label_offset;
@@ -145,7 +134,6 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     diagnostics,
   };
 }
-
 
 function refitClusters(
   scene: GraphScene,
@@ -167,7 +155,6 @@ function refitClusters(
     if (!cluster.parent) continue;
     push(childrenOf, cluster.parent, cluster.id);
   }
-
 
   const byId = new Map(scene.clusters.map((c) => [c.id, c]));
   const ordered = [...scene.clusters].sort((a, b) => depthOf(b, byId) - depthOf(a, byId));
@@ -199,7 +186,6 @@ function refitClusters(
       if (a.rect !== n.rect) touched = true;
     }
 
-
     if (!touched || next.length === 0) continue;
 
     const before = unionRects(auto);
@@ -229,14 +215,12 @@ function depthOf(cluster: Cluster, byId: ReadonlyMap<string, Cluster>): number {
   let depth = 0;
   let parent = cluster.parent;
 
-
   while (parent && depth <= byId.size) {
     depth += 1;
     parent = byId.get(parent)?.parent;
   }
   return depth;
 }
-
 
 function boundsOf(
   nodes: readonly GraphNode[],
@@ -253,12 +237,10 @@ function boundsOf(
 
   if (rects.length === 0) return scene.bounds;
 
-
   const box = unionRects(rects);
   const pad = 12;
   return { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 };
 }
-
 
 export function pinFor(node: GraphNode, center: Point): Pin {
   const auto = rectCenter(node.rect);
@@ -285,7 +267,6 @@ export function withoutPins(layout: Layout, ids: readonly string[]): Layout {
   for (const id of ids) delete pins[id];
   return { ...layout, pins };
 }
-
 
 export function migratePin(layout: Layout, from: string, to: string): Layout {
   const pin = layout.pins?.[from];

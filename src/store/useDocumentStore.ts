@@ -28,8 +28,10 @@ import type { Annotation, AnnotationKind, Conflict, Layout, Sidecar } from "../c
 import type { GitStatus } from "../lib/tauri";
 import { themeByName } from "../core/theme";
 import { api, isTauri } from "../lib/tauri";
+import { confirm } from "./useConfirmStore";
 import { useHistoryStore } from "./useHistoryStore";
 import { useSettingsStore } from "./useSettingsStore";
+import { toast, useToastStore } from "./useToastStore";
 import { useWorkspaceStore } from "./useWorkspaceStore";
 import { joinPath } from "../lib/path";
 
@@ -44,7 +46,6 @@ export function adapterFor(engine: EngineId): EngineAdapter {
   return ADAPTERS[engine] ?? graphvizAdapter;
 }
 
-
 const LAYOUT_DEBOUNCE_MS = 150;
 
 const SAVE_DEBOUNCE_MS = 400;
@@ -55,11 +56,11 @@ export interface DocumentState {
   engine: EngineId;
   source: string;
 
-
   eol: Eol;
 
   dirty: boolean;
 
+  layoutDirty: boolean;
 
   raw: Scene | null;
 
@@ -72,13 +73,11 @@ export interface DocumentState {
 
   fitToken: number;
 
-
   blocks: MarkdownBlock[];
 
   activeBlock: string | null;
 
   sidecar: Sidecar;
-
 
   headScene: Scene | null;
 
@@ -88,12 +87,9 @@ export interface DocumentState {
 
   diffMode: boolean;
 
-
   setDiffMode(on: boolean): Promise<void>;
 
-
   selectBlock(id: string): void;
-
 
   markBlock(id: string, name: string): boolean;
 
@@ -101,11 +97,9 @@ export interface DocumentState {
 
   selectedEdge: string | null;
 
-
   annotationSelection: ReadonlySet<string>;
 
   annotationTool: AnnotationKind | null;
-
 
   annotationPen: string;
   setAnnotationTool(tool: AnnotationKind | null): void;
@@ -119,51 +113,46 @@ export interface DocumentState {
 
   dragging: string | null;
 
-
   setSource(source: string, force?: boolean): void;
 
   setEngine(engine: EngineId): void;
   openSample(name: string, source: string, engine?: EngineId): void;
   openFile(path: string): Promise<void>;
 
-
-  createFile(dir: string, fileName: string, source: string, engine: EngineId): Promise<string>;
-
+  createFile(dir: string, fileName: string, source: string, engine: EngineId): Promise<string | null>;
 
   createImported(
     dir: string,
     fileName: string,
     source: string,
     layout: Layout,
-  ): Promise<string>;
+  ): Promise<string | null>;
+
   saveSource(): Promise<void>;
+
+  confirmLeave(): Promise<boolean>;
+
+  reloadLayout(): Promise<void>;
 
   select(ids: string[], additive: boolean): void;
   selectEdge(id: string | null): void;
   setHovered(id: string | null): void;
   setDragging(id: string | null): void;
 
-
   stale: boolean;
-
 
   sourceOrigin: "file" | "edit";
 
-
   renameRequest: string | null;
   requestRename(id: string | null): void;
-
 
   conflict: Conflict | null;
 
   resolveConflict(sidecar: Sidecar): Promise<void>;
 
-
   pinAt(positions: ReadonlyMap<string, Point>, snap?: number): void;
 
-
   togglePins(ids: readonly string[]): void;
-
 
   restoreLayout(layout: Layout): void;
   releasePins(ids: readonly string[]): void;
@@ -177,12 +166,9 @@ export interface DocumentState {
 
   setSequenceGap(kind: "lifeline" | "message", id: string, gap: number): void;
 
-
   editNode(id: string, change: NodeChange): boolean;
 
-
   tuneLayout(knob: string, value: string): boolean;
-
 
   groupNodes(ids: readonly string[], title: string): boolean;
 
@@ -190,7 +176,6 @@ export interface DocumentState {
   dropOrphans(ids: readonly string[]): void;
   setDiagramTheme(name: string | null): void;
 }
-
 
 function editScope(state: DocumentState): {
   source: string;
@@ -208,24 +193,25 @@ function editScope(state: DocumentState): {
     : { source: state.source, block: null, write: (next) => next };
 }
 
-
 function layoutOf(sidecar: Sidecar): Layout {
   const { version: _version, blocks: _blocks, ...layout } = sidecar;
   return layout;
 }
-
 
 export type NodeChange =
   | { kind: "rename"; to: string }
   | { kind: "label"; text: string }
   | { kind: "shape"; shape: NodeShape };
 
+const RELEASE_ALL = "Release every pin";
+
 let layoutTimer: number | null = null;
 let saveTimer: number | null = null;
+
+let sidecarOnDisk = false;
 let layoutRun = 0;
 
 export const useDocumentStore = create<DocumentState>()((set, get) => {
-
   const relayout = (source: string) => {
     if (layoutTimer !== null) window.clearTimeout(layoutTimer);
 
@@ -234,7 +220,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       set({ stale: false });
       const adapter = adapterFor(get().engine);
 
-
       const theme = themeByName(
         get().layout.theme?.name ?? useSettingsStore.getState().diagramTheme,
       );
@@ -242,11 +227,9 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       void adapter
         .layout(source, { theme, sequenceHints: get().layout.sequence })
         .then((result) => {
-
           if (run !== layoutRun) return;
 
           const hasError = result.diagnostics.some((d) => d.severity === "error");
-
 
           const raw = hasError ? get().raw : result.scene;
 
@@ -256,11 +239,9 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     }, LAYOUT_DEBOUNCE_MS);
   };
 
-
   const reapply = (engineDiagnostics: Diagnostic[] = []) => {
     const { raw, layout } = get();
     if (!raw || !isGraph(raw)) {
-
       set({ scene: raw, diagnostics: engineDiagnostics, ghosts: new Map(), orphans: [] });
       return;
     }
@@ -279,29 +260,33 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     });
   };
 
+  const syncTreeBadge = async (path: string) => {
+    const exists = await api
+      .layoutPathFor(path)
+      .then((sidecarPath) => api.pathExists(sidecarPath))
+      .catch(() => sidecarOnDisk);
+    if (exists === sidecarOnDisk || get().path !== path) return;
+    sidecarOnDisk = exists;
+    useWorkspaceStore.getState().refresh();
+  };
 
-  const scheduleSave = () => {
+  const writeSidecar = (): Promise<void> => {
+    const { path, layout, activeBlock, sidecar: current } = get();
+    if (!path || !isTauri()) return Promise.resolve();
 
-
-    if (get().conflict) return;
-
-    if (saveTimer !== null) window.clearTimeout(saveTimer);
-
-    saveTimer = window.setTimeout(() => {
-      const { path, layout, activeBlock, sidecar: current } = get();
-      if (!path || !isTauri()) return;
-
-
-      const sidecar: Sidecar = activeBlock
-        ? {
-            ...current,
-            version: 1,
-            blocks: { ...current.blocks, [activeBlock]: layout },
-          }
-        : { version: 1, ...layout, blocks: current.blocks };
-      void api.writeLayout(path, sidecar).catch(() => {
-
-
+    const sidecar: Sidecar = activeBlock
+      ? {
+          ...current,
+          version: 1,
+          blocks: { ...current.blocks, [activeBlock]: layout },
+        }
+      : { version: 1, ...layout, blocks: current.blocks };
+    return api.writeLayout(path, sidecar).then(
+      () => {
+        set({ layoutDirty: false });
+        void syncTreeBadge(path);
+      },
+      (e) => {
         set((s) => ({
           diagnostics: [
             ...s.diagnostics,
@@ -311,10 +296,34 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
             },
           ],
         }));
-      });
+        throw e;
+      },
+    );
+  };
+
+  const scheduleSave = () => {
+    if (get().conflict) return;
+
+    if (saveTimer !== null) window.clearTimeout(saveTimer);
+    saveTimer = null;
+    if (!get().path || !isTauri()) return;
+
+    set({ layoutDirty: true });
+
+    if (!useSettingsStore.getState().autoSaveLayout) return;
+
+    saveTimer = window.setTimeout(() => {
+      saveTimer = null;
+      void writeSidecar().catch(() => {});
     }, SAVE_DEBOUNCE_MS);
   };
 
+  const flushLayout = async () => {
+    if (saveTimer === null) return;
+    window.clearTimeout(saveTimer);
+    saveTimer = null;
+    await writeSidecar();
+  };
 
   const mutateLayout = (next: Layout, label = "layout change") => {
     const previous = get().layout;
@@ -322,7 +331,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
     useHistoryStore.getState().record({ kind: "layout", label, before: previous, after: next });
     set({ layout: next });
-
 
     if (get().raw?.family === "sequence" && previous.sequence !== next.sequence) {
       relayout(get().source);
@@ -339,6 +347,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     source: "",
     eol: "\n",
     dirty: false,
+    layoutDirty: false,
 
     raw: null,
     scene: null,
@@ -374,7 +383,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       const changed = source !== get().source;
       set({ source, dirty: changed ? get().path !== null : get().dirty });
 
-
       let engineSource = source;
       if (get().blocks.length > 0 || isMarkdown(get().name)) {
         const blocks = parseMarkdownBlocks(source);
@@ -388,7 +396,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         });
         engineSource = active?.source ?? "";
       }
-
 
       if (force || useSettingsStore.getState().autoRender) relayout(engineSource);
       else set({ stale: true });
@@ -417,6 +424,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         conflict: null,
         layout: {},
         dirty: false,
+        layoutDirty: false,
         selection: new Set(),
         annotationSelection: new Set(),
         selectedEdge: null,
@@ -431,8 +439,11 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     },
 
     openFile: async (path) => {
-      const file = await api.readFile(path);
+      const current = get();
+      if (path === current.path && (current.dirty || current.layoutDirty)) return;
+      if (!(await get().confirmLeave())) return;
 
+      const file = await api.readFile(path);
 
       useHistoryStore.getState().clear();
       const state = await api.readLayout(path);
@@ -440,9 +451,9 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
       const sidecar: Sidecar = { ...read, blocks: read.blocks ?? {} };
       const conflict = state.status === "conflict" ? state.conflict : null;
+      sidecarOnDisk = state.status !== "none";
 
       useWorkspaceStore.getState().setLastFile(file.path);
-
 
       const text = toLf(file.text);
 
@@ -466,10 +477,10 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         layout: active ? (sidecar.blocks![active.id] ?? {}) : layoutOf(sidecar),
         conflict,
         dirty: false,
+        layoutDirty: false,
         selection: new Set(),
         annotationSelection: new Set(),
         selectedEdge: null,
-
 
         raw: null,
         scene: null,
@@ -483,14 +494,16 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
     createFile: async (dir, fileName, source, engine) => {
       const path = joinPath(dir, fileName);
-      useHistoryStore.getState().clear();
 
       if (await api.pathExists(path)) {
         throw new Error(`${fileName} already exists in this folder.`);
       }
+      if (!(await get().confirmLeave())) return null;
+      useHistoryStore.getState().clear();
 
       await api.writeFile(path, source);
       useWorkspaceStore.getState().setLastFile(path);
+      sidecarOnDisk = false;
 
       set({
         path,
@@ -498,7 +511,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         engine,
         source,
         sourceOrigin: "file",
-
 
         blocks: [],
         activeBlock: null,
@@ -511,6 +523,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
         layout: {},
         dirty: false,
+        layoutDirty: false,
         selection: new Set(),
         annotationSelection: new Set(),
         selectedEdge: null,
@@ -528,11 +541,12 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
     createImported: async (dir, fileName, source, layout) => {
       const path = await get().createFile(dir, fileName, source, "mermaid");
+      if (!path) return null;
 
       const sidecar: Sidecar = { version: 1, ...layout, blocks: {} };
       await api.writeLayout(path, sidecar);
+      sidecarOnDisk = true;
       set({ layout, sidecar });
-
 
       relayout(source);
       return path;
@@ -544,6 +558,71 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
       await api.writeFile(path, withEol(source, eol));
       set({ dirty: false });
+
+      if (get().layoutDirty) {
+        if (saveTimer !== null) window.clearTimeout(saveTimer);
+        saveTimer = null;
+        await writeSidecar();
+      }
+    },
+
+    confirmLeave: async () => {
+      await flushLayout().catch(() => {});
+
+      const { dirty, layoutDirty, name, path } = get();
+      if (!path || (!dirty && !layoutDirty)) return true;
+
+      const what =
+        dirty && layoutDirty
+          ? "Your edits to the source and the layout"
+          : dirty
+            ? "Your edits to the source"
+            : "Your layout changes";
+
+      const choice = await confirm({
+        title: `Save changes to ${name}?`,
+        body: `${what} have not been written to disk yet. If you don't save, they are lost.`,
+        choices: [
+          { id: "cancel", label: "Cancel" },
+          { id: "discard", label: "Don't save", variant: "danger" },
+          { id: "save", label: "Save", variant: "primary" },
+        ],
+        dismiss: "cancel",
+      });
+
+      if (choice === "cancel") return false;
+      if (choice === "discard") return true;
+
+      try {
+        await get().saveSource();
+        return true;
+      } catch (e) {
+        toast.error(`Could not save ${name}`, String((e as { message?: string })?.message ?? e));
+        return false;
+      }
+    },
+
+    reloadLayout: async () => {
+      const path = get().path;
+      if (!path) return;
+
+      if (saveTimer !== null) window.clearTimeout(saveTimer);
+      saveTimer = null;
+
+      const state = await api.readLayout(path);
+      const read = state.status === "ok" ? state.sidecar : { version: 1 };
+      const sidecar: Sidecar = { ...read, blocks: read.blocks ?? {} };
+      const { activeBlock } = get();
+      sidecarOnDisk = state.status !== "none";
+
+      useHistoryStore.getState().clear();
+      set({
+        sidecar,
+        layout: activeBlock ? (sidecar.blocks![activeBlock] ?? {}) : layoutOf(sidecar),
+        conflict: state.status === "conflict" ? state.conflict : null,
+        layoutDirty: false,
+      });
+      relayout(editScope(get()).source);
     },
 
     selectEdge: (selectedEdge) =>
@@ -551,8 +630,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
     select: (ids, additive) =>
       set((s) => {
-
-
         if (!additive) {
           return { selection: new Set(ids), selectedEdge: null, annotationSelection: new Set() };
         }
@@ -565,7 +642,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       }),
 
     setAnnotationTool: (annotationTool) =>
-
 
       set({ annotationTool, selection: new Set(), selectedEdge: null }),
 
@@ -662,12 +738,11 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         ids.length === 1 ? "Release a pin" : `Release ${ids.length} pins`,
       ),
 
-    releaseAllPins: () => mutateLayout({ ...get().layout, pins: {} }, "Release every pin"),
+    releaseAllPins: () => mutateLayout({ ...get().layout, pins: {} }, RELEASE_ALL),
 
     togglePins: (ids) => {
       const { layout, scene } = get();
       if (ids.length === 0 || !scene || !isGraph(scene)) return;
-
 
       const nodes = nodesIn(scene, new Set(ids));
       if (nodes.length === 0) return;
@@ -678,7 +753,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         return;
       }
 
-
       const positions = new Map<string, Point>();
       for (const node of nodes) positions.set(node.id, rectCenter(node.rect));
       get().pinAt(positions, 0);
@@ -686,7 +760,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
     restoreLayout: (layout) => {
       useHistoryStore.getState().withApplying(() => mutateLayout(layout, "restore"));
-
 
       const marks = layout.annotations ?? {};
       set((s) => {
@@ -709,7 +782,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       const key = kind === "lifeline" ? "lifeline_gap" : "message_gap";
       const gaps = { ...(get().layout.sequence?.[key] ?? {}) };
 
-
       if (gap === 0) delete gaps[id];
       else gaps[id] = gap;
 
@@ -722,8 +794,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       const existing = edges[edgeId];
 
       if (points.length === 0) {
-
-
         if (existing?.label_offset) edges[edgeId] = { ...existing, waypoints: [] };
         else delete edges[edgeId];
       } else {
@@ -742,7 +812,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     setLabelOffset: (edgeId, offset) => {
       const edges = { ...get().layout.edges };
       const existing = edges[edgeId];
-
 
       if (!offset || (Math.round(offset.x) === 0 && Math.round(offset.y) === 0)) {
         if (existing?.waypoints?.length) edges[edgeId] = { ...existing, label_offset: null };
@@ -773,7 +842,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         return;
       }
 
-
       const [source, sidecarText] = await Promise.all([
         api.gitHeadBlob(path).catch(() => null),
         api.gitHeadBlob(`${path}.zlayout.toml`).catch(() => null),
@@ -791,7 +859,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
           headLayout = activeBlock ? (parsed.blocks?.[activeBlock] ?? {}) : layoutOf(parsed);
         }
       }
-
 
       const blockSource = activeBlock
         ? (parseMarkdownBlocks(source).find((b) => b.id === activeBlock)?.source ?? null)
@@ -826,7 +893,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       const block = blocks.find((b) => b.id === id);
       if (!block || id === activeBlock) return;
 
-
       const carried: Record<string, Layout> = activeBlock
         ? { ...sidecar.blocks, [activeBlock]: layout }
         : { ...sidecar.blocks };
@@ -854,7 +920,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
       const marked = withMarker(source, block, name);
       if (!marked) return false;
-
 
       const carried: Record<string, Layout> = { ...sidecar.blocks };
       const existing = id === activeBlock ? layout : carried[id];
@@ -884,7 +949,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       if (!path) return;
 
       await api.writeLayout(path, sidecar);
-      set({ conflict: null, layout: sidecar });
+      set({ conflict: null, layout: sidecar, layoutDirty: false });
       useHistoryStore.getState().clear();
       reapply([]);
     },
@@ -898,7 +963,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       const edit = tuner.set(scope.source, knob, value);
       if (!edit) return false;
 
-
       if (edit.source === scope.source) return true;
 
       const document = scope.write(edit.source);
@@ -910,7 +974,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       });
       relayout(edit.source);
 
-
       if (get().path) void get().saveSource();
       return true;
     },
@@ -919,7 +982,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       const { engine, layout } = get();
       const editor = adapterFor(engine).edit;
       if (!editor) return false;
-
 
       const scope = editScope(get());
       const source = scope.source;
@@ -932,7 +994,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
             : editor.setShape(source, id, change.shape);
 
       if (!edit) return false;
-
 
       if (change.kind === "rename") {
         const annotations = retargetAnnotations(layout.annotations, id, change.to);
@@ -955,7 +1016,6 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       relayout(edit.source);
 
       if (change.kind === "rename") set({ selection: new Set([change.to]) });
-
 
       if (get().path) void get().saveSource();
 
@@ -988,17 +1048,54 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     setDiagramTheme: (name) => {
       mutateLayout({ ...get().layout, theme: name ? { name } : null }, "Change the theme");
 
-
       const raw = get().raw;
       if (raw && raw.family === "passthrough") relayout(get().source);
     },
   };
 });
 
-
 export function nodeCenter(state: DocumentState, id: string): Point | null {
   const scene = state.scene;
   if (!scene || !isGraph(scene)) return null;
   const node = scene.nodes.find((n) => n.id === id);
   return node ? rectCenter(node.rect) : null;
+}
+
+export async function releaseAllPinsWithConfirm(): Promise<void> {
+  const { layout, path, name } = useDocumentStore.getState();
+  const count = Object.keys(layout.pins ?? {}).length;
+  if (count === 0) return;
+
+  const writesNow = path !== null && isTauri() && useSettingsStore.getState().autoSaveLayout;
+  const choice = await confirm({
+    title: count === 1 ? "Release the pin?" : `Release all ${count} pins?`,
+    body:
+      `Every pinned node in ${name} goes back to where auto-layout puts it. ` +
+      (writesNow
+        ? "The layout file beside the diagram is updated straight away; Ctrl+Z brings the pins back."
+        : "Nothing is written until you save; Ctrl+Z brings the pins back."),
+    choices: [
+      { id: "cancel", label: "Cancel" },
+      { id: "release", label: count === 1 ? "Release" : "Release all", variant: "danger" },
+    ],
+    dismiss: "cancel",
+  });
+  if (choice !== "release") return;
+
+  useDocumentStore.getState().releaseAllPins();
+  useToastStore.getState().push({
+    kind: "success",
+    title: count === 1 ? "Released 1 pin" : `Released ${count} pins`,
+    body: writesNow ? "The layout file is updated." : "Save to write the change.",
+    timeout: 10_000,
+    action: {
+      label: "Undo",
+      run: () => {
+        const history = useHistoryStore.getState();
+        if (history.nextUndoLabel() !== RELEASE_ALL) return;
+        const entry = history.takeUndo();
+        if (entry?.kind === "layout") useDocumentStore.getState().restoreLayout(entry.before);
+      },
+    },
+  });
 }

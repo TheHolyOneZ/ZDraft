@@ -12,22 +12,17 @@ import clsx from "clsx";
 
 import { usePrefersReducedMotion } from "./hooks";
 
-
 export const SPRING = {
   default: { type: "spring", stiffness: 300, damping: 30, mass: 1 },
   snappy: { type: "spring", stiffness: 500, damping: 35 },
   soft: { type: "spring", stiffness: 180, damping: 24 },
 } as const;
 
-
 type Side = "top" | "bottom" | "left" | "right";
-
 
 const TIP_GAP = 8;
 
-
 const TITLEBAR = 36;
-
 
 export function Tooltip({
   label,
@@ -46,7 +41,6 @@ export function Tooltip({
   const tipRef = useRef<HTMLSpanElement | null>(null);
   const timer = useRef<number | null>(null);
   const id = useId();
-
 
   const show = () => {
     timer.current = window.setTimeout(() => setOpen(true), 400);
@@ -70,12 +64,9 @@ export function Tooltip({
 
     const next = place(side, trigger, tip);
 
-
     setAt((current) =>
       current && current.top === next.top && current.left === next.left ? current : next,
     );
-
-
   }, [open, side]);
 
   return (
@@ -104,7 +95,6 @@ export function Tooltip({
               "glass pointer-events-none fixed z-[600] w-max rounded-lg px-2.5 py-1.5",
               "text-[11px] font-medium",
 
-
               "max-w-[min(280px,calc(100vw-16px))]",
             )}
             style={{
@@ -131,7 +121,6 @@ export function Tooltip({
   );
 }
 
-
 function place(
   side: Side,
   trigger: DOMRect,
@@ -156,7 +145,6 @@ function place(
     left: "right",
     right: "left",
   };
-
 
   const chosen =
     room[side] < need[side] && room[opposite[side]] >= need[opposite[side]] ? opposite[side] : side;
@@ -191,7 +179,6 @@ function place(
         : Math.min(trigger.right + TIP_GAP, window.innerWidth - tip.width - TIP_GAP),
   };
 }
-
 
 interface ButtonBase {
   onClick?: () => void;
@@ -304,7 +291,6 @@ export function Button({
   );
 }
 
-
 export function Panel({
   children,
   className,
@@ -349,7 +335,6 @@ export function SectionHeader({
   );
 }
 
-
 export function EmptyState({
   icon,
   title,
@@ -377,7 +362,6 @@ export function EmptyState({
   );
 }
 
-
 export function Splitter({
   orientation,
   onDrag,
@@ -398,8 +382,6 @@ export function Splitter({
       aria-orientation={orientation}
       onDoubleClick={onDoubleClick}
       onPointerDown={(e) => {
-
-
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
         last.current = vertical ? e.clientX : e.clientY;

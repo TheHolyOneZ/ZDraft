@@ -6,7 +6,6 @@ import iconUrl from "../assets/icon-256.png";
 import { isTauri } from "../lib/tauri";
 import { toast } from "../store/useToastStore";
 
-
 export function About() {
   return (
     <>
@@ -107,7 +106,6 @@ export function About() {
   );
 }
 
-
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-4">
@@ -121,7 +119,6 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
     </section>
   );
 }
-
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -138,7 +135,6 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
 
 function Link({
   label,

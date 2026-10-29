@@ -35,7 +35,6 @@ import {
 import { adapterFor, useDocumentStore } from "../store/useDocumentStore";
 import { IconButton, Select, TextInput, Tooltip } from "./ui";
 
-
 export function PropertiesBar() {
   const scene = useDocumentStore((s) => s.scene);
   const selection = useDocumentStore((s) => s.selection);
@@ -50,7 +49,6 @@ export function PropertiesBar() {
   const annotationSelection = useDocumentStore((s) => s.annotationSelection);
   const removeAnnotations = useDocumentStore((s) => s.removeAnnotations);
   const updateAnnotation = useDocumentStore((s) => s.updateAnnotation);
-
 
   const selectedMarks = annotations
     ? [...annotationSelection].filter((id) => annotations[id])
@@ -110,7 +108,6 @@ export function PropertiesBar() {
 
   if (scene && isSequence(scene)) return <SequenceProperties />;
 
-
   if (scene && isPassthrough(scene)) {
     return (
       <Bar>
@@ -126,7 +123,6 @@ export function PropertiesBar() {
 
   const graph = scene && isGraph(scene) ? scene : null;
   const clusters = graph ? graph.clusters.filter((c) => selection.has(c.id)) : [];
-
 
   const nodes = graph ? nodesIn(graph, selection) : [];
 
@@ -304,7 +300,6 @@ export function PropertiesBar() {
   );
 }
 
-
 function NodeIdentity({ node }: { node: GraphNode }) {
   const engine = useDocumentStore((s) => s.engine);
   const editNode = useDocumentStore((s) => s.editNode);
@@ -314,9 +309,7 @@ function NodeIdentity({ node }: { node: GraphNode }) {
   const [editing, setEditing] = useState<"id" | "label" | null>(null);
   const [draft, setDraft] = useState("");
 
-
   useEffect(() => setEditing(null), [node.id]);
-
 
   const renameRequest = useDocumentStore((s) => s.renameRequest);
   const requestRename = useDocumentStore((s) => s.requestRename);
@@ -409,7 +402,6 @@ function NodeIdentity({ node }: { node: GraphNode }) {
   );
 }
 
-
 function EditableText({
   value,
   editable,
@@ -450,14 +442,11 @@ function EditableText({
   );
 }
 
-
 function AlignTools({ nodes }: { nodes: GraphNode[] }) {
   const pinAt = useDocumentStore((s) => s.pinAt);
   const items = useMemo(() => placed(nodes), [nodes]);
 
   const apply = (positions: Map<string, Point>) => {
-
-
     if (positions.size > 0) pinAt(positions, 0);
   };
 
@@ -508,7 +497,6 @@ function AlignTools({ nodes }: { nodes: GraphNode[] }) {
   );
 }
 
-
 const ALIGNMENTS: Array<{ edge: AlignEdge; icon: React.ReactNode; title: string }> = [
   { edge: "left", icon: <AlignStartVertical size={13} strokeWidth={1.75} />, title: "Align left edges" },
   {
@@ -536,7 +524,6 @@ function Bar({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
 
 function Group({
   icon,
@@ -580,7 +567,6 @@ function Field({ label, value }: { label: string; value: string | number }) {
     </span>
   );
 }
-
 
 function SequenceProperties() {
   const scene = useDocumentStore((s) => s.scene);
@@ -693,7 +679,6 @@ function SequenceProperties() {
     </Bar>
   );
 }
-
 
 function Stepper({
   icon,

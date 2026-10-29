@@ -1,9 +1,6 @@
 import { Modal } from "./ui";
 
-
 interface Shortcut {
-
-
   keys: string[];
   what: string;
 
@@ -170,7 +167,6 @@ export function Shortcuts({ open, onClose }: { open: boolean; onClose(): void })
     </Modal>
   );
 }
-
 
 function Keys({ parts }: { parts: readonly string[] }) {
   return (

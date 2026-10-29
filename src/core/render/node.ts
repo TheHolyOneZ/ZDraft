@@ -11,7 +11,6 @@ import {
   type TextLine,
 } from "./text";
 
-
 export interface NodeRender {
   geometry: ShapeGeometry;
   lines: TextLine[];
@@ -23,7 +22,6 @@ export interface NodeRender {
   dashed: boolean;
 }
 
-
 const PAD_X = 10;
 const PAD_Y = 7;
 
@@ -31,17 +29,14 @@ function resolveFill(node: GraphNode, theme: DiagramTheme): string {
   const explicit = node.style?.fill;
   if (explicit) return explicit;
 
-
   if (node.style?.className) return seriesColor(theme, node.style.className);
   return theme.nodeFill;
 }
-
 
 export function renderNode(node: GraphNode, theme: DiagramTheme): NodeRender {
   const local: Rect = { x: 0, y: 0, w: node.rect.w, h: node.rect.h };
   const geometry = shapeGeometry(node.shape, local, theme.cornerRadius);
   const inset = geometry.textInset;
-
 
   const inner: Rect = geometry.textBox ?? {
     x: inset.x,
@@ -57,8 +52,6 @@ export function renderNode(node: GraphNode, theme: DiagramTheme): NodeRender {
     const fitted = fitLabel(node.body.text, inner, theme.fontSize, 500);
     lines.push(...centeredLines(fitted.lines, inner, fitted.size, 500));
   } else {
-
-
     const titleSize = theme.fontSize + 1;
     const rowSize = theme.fontSize - 1;
     let y = inner.y;
@@ -99,8 +92,6 @@ export function renderNode(node: GraphNode, theme: DiagramTheme): NodeRender {
       for (const item of section.items) {
         y += rowSize * LINE_HEIGHT;
         lines.push({
-
-
           text: truncateToWidth(item, inner.w, rowSize, 400),
           x: inner.x,
           y: y - rowSize * 0.3,
@@ -112,7 +103,6 @@ export function renderNode(node: GraphNode, theme: DiagramTheme): NodeRender {
       }
     }
   }
-
 
   const bare = isUnpainted(node.shape);
 
@@ -127,7 +117,6 @@ export function renderNode(node: GraphNode, theme: DiagramTheme): NodeRender {
   };
 }
 
-
 export function nodeTextColors(
   node: GraphNode,
   theme: DiagramTheme,
@@ -138,11 +127,10 @@ export function nodeTextColors(
 
 export interface ClusterRender {
   path: string;
-  label?: TextLine;
+  labels: TextLine[];
   fill: string;
   stroke: string;
 }
-
 
 export function renderCluster(cluster: Cluster, theme: DiagramTheme): ClusterRender {
   const size = theme.fontSize - 1;
@@ -153,17 +141,17 @@ export function renderCluster(cluster: Cluster, theme: DiagramTheme): ClusterRen
     path: shapeGeometry("rect", local, theme.cornerRadius).path,
     fill: cluster.style?.fill ?? theme.clusterFill,
     stroke: cluster.style?.stroke ?? theme.clusterStroke,
-    label: cluster.label
-      ? {
-          text: truncateToWidth(cluster.label, local.w - PAD_X * 2, size, 600),
+    labels: cluster.label
+      ? cluster.label.split("\n").map((row, i) => ({
+          text: truncateToWidth(row, local.w - PAD_X * 2, size, 600),
           x: PAD_X,
-          y: size + PAD_Y,
-          anchor: "start",
+          y: size + PAD_Y + i * size * LINE_HEIGHT,
+          anchor: "start" as const,
           size,
           weight: 600,
           muted: true,
-        }
-      : undefined,
+        }))
+      : [],
   };
 }
 

@@ -1,7 +1,4 @@
-
-
 export const MERMAID_VERSION = "11.17.2";
-
 
 const FONT_SIZE = 13;
 const FONT_FAMILY = "Inter, 'Inter Variable', 'Segoe UI', system-ui, sans-serif";
@@ -9,16 +6,13 @@ const FONT_FAMILY = "Inter, 'Inter Variable', 'Segoe UI', system-ui, sans-serif"
 export const MERMAID_CONFIG = {
   startOnLoad: false,
 
-
   securityLevel: "loose",
-
 
   deterministicIds: true,
   deterministicIDSeed: "zdraft",
 
   fontFamily: FONT_FAMILY,
   fontSize: FONT_SIZE,
-
 
   htmlLabels: false,
 
@@ -30,10 +24,8 @@ export const MERMAID_CONFIG = {
   gantt: { useMaxWidth: false },
   pie: { useMaxWidth: false },
 
-
   theme: "base",
 } as const;
-
 
 export const FIXTURE_NAMES = [
   "flowchart-lr",
@@ -46,7 +38,6 @@ export const FIXTURE_NAMES = [
 ] as const;
 
 export type FixtureName = (typeof FIXTURE_NAMES)[number];
-
 
 export function mermaidThemeVariables(theme: {
   background: string;
@@ -82,7 +73,6 @@ export function mermaidThemeVariables(theme: {
     clusterBkg: theme.clusterFill,
     clusterBorder: theme.clusterStroke,
     edgeLabelBackground: theme.background,
-
 
     actorBkg: theme.nodeFill,
     actorBorder: theme.nodeStroke,

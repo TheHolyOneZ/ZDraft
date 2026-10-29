@@ -1,15 +1,13 @@
 import { memo } from "react";
 
-import { ACTIVATION_STEP, ACTIVATION_WIDTH } from "../../core/sequence/layout";
+import { ACTIVATION_STEP, ACTIVATION_WIDTH, messageLabelRows } from "../../core/sequence/layout";
 import { arrowGeometry } from "../../core/render/edges";
 import { truncateToWidth } from "../../core/render/text";
 import type { Lifeline, Message, SequenceScene } from "../../core/model/scene";
 import type { DiagramTheme } from "../../core/theme";
 
-
 const ARROW_SIZE = 10;
 const SELF_LOOP_WIDTH = 44;
-
 
 export const LifelineLayer = memo(function LifelineLayer({
   scene,
@@ -100,7 +98,6 @@ function HeadBox({
   );
 }
 
-
 export const FragmentLayer = memo(function FragmentLayer({
   scene,
   theme,
@@ -183,7 +180,6 @@ export const FragmentLayer = memo(function FragmentLayer({
     </g>
   );
 });
-
 
 export const ActivationLayer = memo(function ActivationLayer({
   scene,
@@ -328,7 +324,6 @@ function MessageShape({
     ? { x: fromX + SELF_LOOP_WIDTH, y: message.y + 26 }
     : { x: fromX, y: message.y };
 
-
   const kind = message.kind === "destroy" ? "cross" : message.kind === "async" ? "open" : "arrow";
   const head = arrowGeometry(kind, tip, anchor, ARROW_SIZE);
 
@@ -378,13 +373,16 @@ function MessageShape({
           strokeLinejoin="round"
           style={{ pointerEvents: "none" }}
         >
-          {message.label}
+          {messageLabelRows(message.label, message.y, theme).map((row, i) => (
+            <tspan key={i} x={labelX} y={row.y}>
+              {row.text}
+            </tspan>
+          ))}
         </text>
       )}
     </g>
   );
 }
-
 
 export const ReorderIndicator = memo(function ReorderIndicator({
   scene,
@@ -408,7 +406,6 @@ export const ReorderIndicator = memo(function ReorderIndicator({
     />
   );
 });
-
 
 export const GapHandleLayer = memo(function GapHandleLayer({
   scene,
@@ -451,7 +448,6 @@ export const GapHandleLayer = memo(function GapHandleLayer({
     </g>
   );
 });
-
 
 export const GapGuide = memo(function GapGuide({
   scene,

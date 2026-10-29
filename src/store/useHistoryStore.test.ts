@@ -51,7 +51,6 @@ describe("useHistoryStore", () => {
     store.record(layoutEntry(empty, pinned));
     store.record({ kind: "source", label: "Undo typing" });
 
-
     expect(useHistoryStore.getState().takeUndo()?.kind).toBe("source");
     expect(useHistoryStore.getState().takeUndo()?.kind).toBe("layout");
     expect(useHistoryStore.getState().takeUndo()?.kind).toBe("source");
@@ -67,7 +66,6 @@ describe("useHistoryStore", () => {
     useHistoryStore.getState().record({ kind: "source", label: "Undo typing" });
     expect(useHistoryStore.getState().canRedo()).toBe(false);
   });
-
 
   it("records nothing while an undo is being applied", () => {
     const store = useHistoryStore.getState();
@@ -109,7 +107,6 @@ describe("useHistoryStore", () => {
     expect(past).toHaveLength(200);
     expect(past[past.length - 1]!.label).toBe("step 259");
   });
-
 
   it("clears both sides when a different file is opened", () => {
     useHistoryStore.getState().record(layoutEntry(empty, pinned));

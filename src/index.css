@@ -52,7 +52,7 @@ html[data-theme="drafting"] {
   --canvas-bg: #0b0e13;
 
 
-  --glass-base: rgba(21, 26, 33, 0.88);
+  --glass-base: rgba(21, 26, 33, 0.96);
   --glass-fill: rgba(255, 255, 255, 0.045);
   --glass-edge: rgba(255, 255, 255, 0.09);
   --glass-top: rgba(255, 255, 255, 0.11);
@@ -106,7 +106,7 @@ html[data-theme="blueprint"] {
   --grid-strong: rgba(103, 232, 249, 0.14);
   --canvas-bg: #08182b;
 
-  --glass-base: rgba(15, 39, 69, 0.88);
+  --glass-base: rgba(15, 39, 69, 0.96);
   --glass-fill: rgba(255, 255, 255, 0.05);
   --glass-edge: rgba(103, 232, 249, 0.14);
   --glass-top: rgba(255, 255, 255, 0.12);
@@ -159,7 +159,7 @@ html[data-theme="paper"] {
   --grid-strong: rgba(90, 84, 72, 0.11);
   --canvas-bg: #fdfcfa;
 
-  --glass-base: rgba(242, 240, 234, 0.9);
+  --glass-base: rgba(242, 240, 234, 0.96);
   --glass-fill: rgba(255, 255, 255, 0.6);
   --glass-edge: rgba(0, 0, 0, 0.08);
   --glass-top: rgba(255, 255, 255, 0.9);
@@ -212,7 +212,7 @@ html[data-theme="contrast"] {
   --grid-strong: rgba(255, 255, 255, 0.18);
   --canvas-bg: #000000;
 
-  --glass-base: rgba(10, 10, 10, 0.94);
+  --glass-base: rgba(10, 10, 10, 0.97);
   --glass-fill: rgba(255, 255, 255, 0.08);
   --glass-edge: rgba(255, 255, 255, 0.3);
   --glass-top: rgba(255, 255, 255, 0.35);

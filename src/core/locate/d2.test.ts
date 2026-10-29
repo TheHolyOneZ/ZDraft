@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { locateD2 } from "./d2";
 import { idAt } from "./types";
 
-
 function at(source: string, id: string): string | undefined {
   const range = locateD2(source).nodes.get(id);
   return range ? source.slice(range.from, range.to) : undefined;
@@ -22,7 +21,6 @@ describe("locateD2", () => {
   });
 
   it("keeps the first mention rather than a later one", () => {
-
     const src = "a -> b\nb: Bee\n";
     const range = locateD2(src).nodes.get("b")!;
     expect(range.from).toBeLessThan(src.indexOf("b: Bee"));
@@ -88,7 +86,6 @@ describe("locateD2", () => {
     expect(index.nodes.has("net.a")).toBe(true);
   });
 
-
   it("ignores a hash comment", () => {
     const index = locateD2("# a -> b\nc: C\n");
     expect(index.nodes.has("a")).toBe(false);
@@ -135,7 +132,6 @@ describe("locateD2", () => {
   });
 
   it("survives a file that does not compile", () => {
-
     const index = locateD2("a -> \nb: {\n  c: C\n");
     expect(index.nodes.has("a")).toBe(true);
     expect(index.nodes.has("b.c")).toBe(true);
@@ -147,7 +143,6 @@ describe("locateD2", () => {
     expect(idAt(index, src.indexOf("beta") + 1)).toBe("beta");
     expect(idAt(index, 1)).toBe("alpha");
   });
-
 
   it("points every range at text containing its own id", () => {
     const src = `direction: right
@@ -168,7 +163,6 @@ edge.gateway -> core.api
       expect(text, id).toContain(last);
     }
   });
-
 
   it("does not swallow a block that follows an inline label", () => {
     const index = locateD2(`db: Ledger {shape: cylinder}

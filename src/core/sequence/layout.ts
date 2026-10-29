@@ -14,9 +14,8 @@ import type {
   SequenceScene,
 } from "../model/scene";
 import type { SequenceHints } from "../sidecar/types";
-import { measureText } from "../render/text";
+import { LINE_HEIGHT, measureText } from "../render/text";
 import type { DiagramTheme } from "../theme";
-
 
 const HEAD_HEIGHT = 34;
 const HEAD_MIN_WIDTH = 88;
@@ -38,11 +37,9 @@ const FRAGMENT_PAD = 12;
 const NOTE_PAD = 10;
 const BOTTOM_MARGIN = 16;
 
-
 export function messageId(from: string, to: string, ordinal: number): string {
   return ordinal === 0 ? `${from}->${to}` : `${from}->${to}#${ordinal}`;
 }
-
 
 export function orderLifelines(
   participants: readonly ParsedParticipant[],
@@ -80,11 +77,9 @@ export function layoutSequence(
   const ordered = orderLifelines(model.participants, hints?.lifeline_order);
   const titleSize = theme.fontSize;
 
-
   const widths = ordered.map((p) =>
     Math.max(HEAD_MIN_WIDTH, measureText(p.label, titleSize, 600) + HEAD_PAD_X * 2),
   );
-
 
   const gaps = ordered.map((p, i) => (i === 0 ? 0 : COLUMN_GAP + (hints?.lifeline_gap?.[p.id] ?? 0)));
 
@@ -96,18 +91,14 @@ export function layoutSequence(
     cursor += gaps[i]! + (i === 0 ? 0 : widths[i - 1]! / 2);
     cursor += widths[i]! / 2;
     centres.push(cursor);
-
-
   });
 
   const indexOf = new Map(ordered.map((p, i) => [p.id, i]));
-
 
   const messages: Message[] = [];
   const activations: Activation[] = [];
   const fragments: Fragment[] = [];
   const notes: SequenceNote[] = [];
-
 
   const open = new Map<string, number[]>();
   const openFragments: Array<{ fragment: Fragment; startY: number }> = [];
@@ -135,9 +126,10 @@ export function layoutSequence(
         const placed = placeMessage(event, y, indexOf, theme, pairSeen, order++);
         if (!placed) break;
 
+        y += placed.lead;
         if (event.activates) activate(event.to);
         messages.push(placed.message);
-        y += placed.height + (hints?.message_gap?.[placed.message.id] ?? 0);
+        y += placed.height - placed.lead + (hints?.message_gap?.[placed.message.id] ?? 0);
         if (event.deactivates) deactivate(event.to === event.from ? event.from : event.to);
         break;
       }
@@ -192,7 +184,6 @@ export function layoutSequence(
     }
   }
 
-
   for (const [id, stack] of open) {
     for (let depth = stack.length - 1; depth >= 0; depth--) {
       activations.push({ lifeline: id, top: stack[depth]!, bottom: y, depth });
@@ -203,7 +194,6 @@ export function layoutSequence(
   }
 
   const bottom = y + BOTTOM_MARGIN;
-
 
   const lifelines: Lifeline[] = ordered.map((p, i) => {
     const w = widths[i]!;
@@ -218,7 +208,6 @@ export function layoutSequence(
       sourceRange: p.range,
     };
   });
-
 
   const left = Math.min(...lifelines.map((l) => l.head.x), 0);
   const right = Math.max(...lifelines.map((l) => l.head.x + l.head.w), 0);
@@ -255,7 +244,6 @@ export function layoutSequence(
     bounds,
   };
 }
-
 
 function widenForMessages(
   model: SequenceModel,
@@ -295,7 +283,7 @@ function placeMessage(
   theme: DiagramTheme,
   pairSeen: Map<string, number>,
   order: number,
-): { message: Message; height: number } | null {
+): { message: Message; height: number; lead: number } | null {
   const from = indexOf.get(event.from);
   const to = indexOf.get(event.to);
   if (from === undefined || to === undefined) return null;
@@ -305,10 +293,9 @@ function placeMessage(
   pairSeen.set(key, ordinal + 1);
 
   const selfLoop = event.arrow === "self";
-  const lines = event.text.split("\n").length;
-  const height = selfLoop
-    ? SELF_MESSAGE_HEIGHT
-    : MESSAGE_SPACING + (lines - 1) * theme.fontSize * 1.3;
+
+  const lead = (event.text.split("\n").length - 1) * messageLineStep(theme);
+  const height = lead + (selfLoop ? SELF_MESSAGE_HEIGHT : MESSAGE_SPACING);
 
   return {
     message: {
@@ -316,13 +303,28 @@ function placeMessage(
       from: event.from,
       to: event.to,
       label: event.text,
-      y,
+      y: y + lead,
       kind: event.arrow,
       order,
       sourceRange: event.range,
     },
     height,
+    lead,
   };
+}
+
+function messageLineStep(theme: DiagramTheme): number {
+  return (theme.fontSize - 1) * LINE_HEIGHT;
+}
+
+export function messageLabelRows(
+  label: string,
+  y: number,
+  theme: DiagramTheme,
+): Array<{ text: string; y: number }> {
+  const lines = label.split("\n");
+  const step = messageLineStep(theme);
+  return lines.map((text, i) => ({ text, y: y - 7 - (lines.length - 1 - i) * step }));
 }
 
 function placeNote(

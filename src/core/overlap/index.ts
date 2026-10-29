@@ -1,7 +1,6 @@
 import { overlapArea, rectCenter, rectsOverlap, type Point, type Rect } from "../model/geometry";
 import type { Diagnostic, GraphScene } from "../model/scene";
 
-
 const MIN_AREA = 4;
 
 export interface OverlapPair {
@@ -13,7 +12,6 @@ export interface OverlapPair {
 export function findOverlaps(scene: GraphScene): OverlapPair[] {
   const pairs: OverlapPair[] = [];
   const nodes = scene.nodes;
-
 
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
@@ -48,7 +46,6 @@ export function overlapDiagnostics(scene: GraphScene): Diagnostic[] {
   ];
 }
 
-
 export function separateNodes(
   scene: GraphScene,
   ids: readonly string[],
@@ -75,7 +72,6 @@ export function separateNodes(
         const ca = rectCenter(a);
         const cb = rectCenter(b);
 
-
         let dx = 0;
         let dy = 0;
         if (overlapX < overlapY) {
@@ -87,7 +83,6 @@ export function separateNodes(
         const aMovable = movable.has(aId);
         const bMovable = movable.has(bId);
         if (!aMovable && !bMovable) continue;
-
 
         const scale = aMovable && bMovable ? 1 : 2;
         if (aMovable) {

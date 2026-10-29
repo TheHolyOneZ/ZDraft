@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 
 import { parseSidecar, SidecarError } from "./read";
 
-
 const WRITTEN = readFileSync("tests/fixtures/sidecar/full.zlayout.toml", "utf8");
 
 describe("reading a sidecar", () => {
@@ -73,7 +72,6 @@ y = 40
     expect(empty.theme).toBeNull();
   });
 });
-
 
 describe("a sidecar somebody broke", () => {
   it("drops a pin with a coordinate that is not a number", () => {

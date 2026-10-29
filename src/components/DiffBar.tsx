@@ -6,7 +6,6 @@ import { DIFF_MOVED } from "./scene/GraphLayers";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { IconButton, Tooltip } from "./ui";
 
-
 export function DiffBar() {
   const diffMode = useDocumentStore((s) => s.diffMode);
   const headScene = useDocumentStore((s) => s.headScene);
@@ -25,7 +24,6 @@ export function DiffBar() {
       }),
     [headScene, scene, headPinned, pins],
   );
-
 
   const ambiguous = useMemo(() => {
     const seen = new Map<string, number>();
@@ -86,7 +84,6 @@ export function DiffBar() {
               onClick={() => node.rect && select([node.id], false)}
               clickable={Boolean(node.rect)}
 
-
               id={ambiguous.has(node.label || node.id) ? node.id : undefined}
             >
               {node.label || node.id}
@@ -123,7 +120,6 @@ function Bar({ children }: { children: React.ReactNode }) {
   );
 }
 
-
 function Label({ head }: { head?: string | null }) {
   return (
     <span className="flex shrink-0 items-center gap-1.5" style={{ color: "var(--accent)" }}>
@@ -133,7 +129,6 @@ function Label({ head }: { head?: string | null }) {
     </span>
   );
 }
-
 
 const RANK: Record<NodeChange, number> = {
   added: 0,

@@ -5,6 +5,7 @@ import { layoutSequence } from "../sequence/layout";
 import type { LocateIndex } from "../locate/types";
 import { lineColumnAt, offsetOfLine } from "../locate/types";
 import type { Point, Rect } from "../model/geometry";
+import { unionRects } from "../model/geometry";
 import type {
   ArrowKind,
   Cluster,
@@ -19,7 +20,8 @@ import type {
   Scene,
 } from "../model/scene";
 import { edgeId } from "../model/scene";
-import { themeByName, type DiagramTheme } from "../theme";
+import { LINE_HEIGHT } from "../render/text";
+import { DEFAULT_FONT_SIZE, themeByName, type DiagramTheme } from "../theme";
 import { MERMAID_CONFIG, mermaidThemeVariables } from "./mermaidConfig";
 import {
   nearestNode,
@@ -29,17 +31,14 @@ import {
 } from "./mermaidReadback";
 import { makeFingerprinter, type EngineAdapter, type LayoutOpts } from "./types";
 
-
 type MermaidModule = typeof import("mermaid")["default"];
 
 let mermaidPromise: Promise<MermaidModule> | null = null;
-
 
 async function loadMermaid(): Promise<MermaidModule> {
   mermaidPromise ??= import("mermaid").then((m) => m.default);
   return mermaidPromise;
 }
-
 
 let configuredTheme: string | null = null;
 
@@ -54,12 +53,11 @@ function configure(mermaid: MermaidModule, theme: DiagramTheme | undefined): voi
   configuredTheme = key;
 }
 
-
 let renderCounter = 0;
 
+const CLUSTER_TITLE_STEP = (DEFAULT_FONT_SIZE - 1) * LINE_HEIGHT;
 
 const MODELLED: ReadonlySet<Family> = new Set<Family>(["graph", "sequence"]);
-
 
 interface Rendered {
   svg: Element;
@@ -81,7 +79,6 @@ async function renderToDom(source: string, theme?: DiagramTheme): Promise<Render
   return { svg: doc.documentElement, renderId, raw };
 }
 
-
 export function diagnosticFromMermaidError(err: unknown, source: string): Diagnostic {
   const message = err instanceof Error ? err.message : String(err);
   const line = Number(/line[:\s]+(\d+)/i.exec(message)?.[1]);
@@ -102,11 +99,9 @@ export function diagnosticFromMermaidError(err: unknown, source: string): Diagno
   };
 }
 
-
 function arrowFor(model: { arrowEnd: boolean }): ArrowKind {
   return model.arrowEnd ? "arrow" : "none";
 }
-
 
 export function buildGraphScene(
   model: MermaidModel,
@@ -125,7 +120,6 @@ export function buildGraphScene(
 
     nodes.push({
       id: read.id,
-
 
       body: parsed?.sections?.length
         ? {
@@ -146,17 +140,18 @@ export function buildGraphScene(
 
   const clusters: Cluster[] = geo.clusters.map((read) => {
     const sub = subById.get(read.id);
+    const label = sub?.title ?? read.label;
+
+    const extra = label ? (label.split("\n").length - 1) * CLUSTER_TITLE_STEP : 0;
     return {
       id: read.id,
-      label: sub?.title ?? read.label,
-
+      label,
 
       parent: sub?.parent && geo.clusters.some((c) => c.id === sub.parent) ? sub.parent : undefined,
-      rect: read.rect,
+      rect: extra > 0 ? { ...read.rect, y: read.rect.y - extra, h: read.rect.h + extra } : read.rect,
       sourceRange: locate.nodes.get(read.id),
     };
   });
-
 
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
   const depthOf = (id: string): number => {
@@ -191,7 +186,7 @@ export function buildGraphScene(
     nodes,
     edges,
     clusters,
-    bounds: geo.bounds,
+    bounds: clusters.length > 0 ? unionRects([geo.bounds, ...clusters.map((c) => c.rect)]) : geo.bounds,
   };
 }
 
@@ -204,7 +199,6 @@ function buildEdges(
   const known = new Set(byId.keys());
   const pairSeen = new Map<string, number>();
 
-
   const unclaimed = [...model.edges];
 
   return geo.edges.flatMap((read): GraphEdge[] => {
@@ -212,7 +206,6 @@ function buildEdges(
     if (!resolved) return [];
 
     const { from, to } = resolved;
-
 
     const matchIndex = unclaimed.findIndex((e) => e.from === from && e.to === to);
     const parsed = matchIndex >= 0 ? unclaimed.splice(matchIndex, 1)[0]! : undefined;
@@ -244,7 +237,6 @@ function buildEdges(
     ];
   });
 }
-
 
 function resolveEndpoints(
   read: ReadEdge,
@@ -291,7 +283,6 @@ function emptyScene(type: string): GraphScene {
   };
 }
 
-
 function viewBoxOf(svg: Element): Rect {
   const parts = (svg.getAttribute("viewBox") ?? "").split(/[\s,]+/).map(Number);
   if (parts.length === 4 && parts.every(Number.isFinite)) {
@@ -299,7 +290,6 @@ function viewBoxOf(svg: Element): Rect {
   }
   return { x: 0, y: 0, w: Number(svg.getAttribute("width")) || 0, h: Number(svg.getAttribute("height")) || 0 };
 }
-
 
 export const mermaidAdapter: EngineAdapter = {
   id: "mermaid",
@@ -317,8 +307,6 @@ export const mermaidAdapter: EngineAdapter = {
     const diagnostics: Diagnostic[] = [];
 
     if (model.family === "sequence") {
-
-
       const parsed = parseSequence(source);
       const scene = layoutSequence(parsed, {
         theme: opts.theme ?? themeByName(null),
@@ -339,8 +327,6 @@ export const mermaidAdapter: EngineAdapter = {
     }
 
     if (!MODELLED.has(model.family)) {
-
-
       const reason = `ZDraft does not model ${model.type} diagrams, so this renders read-only. The source is untouched and still yours.`;
 
       return {
@@ -355,7 +341,6 @@ export const mermaidAdapter: EngineAdapter = {
     if (geo.nodes.length === 0) {
       diagnostics.push({ severity: "info", message: "This diagram has no nodes yet." });
     }
-
 
     const drawn = new Set(geo.nodes.map((n) => n.id));
     const missing = [...model.nodes.keys()].filter((id) => !drawn.has(id));
@@ -372,7 +357,6 @@ export const mermaidAdapter: EngineAdapter = {
   edit: mermaidEditor,
 
   locate(source: string): LocateIndex {
-
     return parseMermaid(source).family === "sequence"
       ? locateSequence(source)
       : locateMermaid(source);

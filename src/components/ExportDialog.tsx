@@ -14,7 +14,6 @@ import { Button, Checkbox, Field, Modal, SegmentedControl, Select, Slider } from
 
 type Format = "svg" | "png" | "pdf";
 
-
 type TextMode = "keep" | "embed" | "outline";
 
 const TEXT_MODES: readonly { value: TextMode; label: string; description: string }[] = [
@@ -35,13 +34,11 @@ const TEXT_MODES: readonly { value: TextMode; label: string; description: string
   },
 ];
 
-
 const FORMAT_NOTE: Record<Format, string> = {
   svg: "Vector and still text. Scales forever, and the labels stay searchable.",
   png: "A picture. Everything pastes it; nothing can edit it afterwards.",
   pdf: "Vector, one page the size of the diagram, with the type drawn as outlines \u2014 it prints the same on any machine.",
 };
-
 
 export function ExportDialog({
   open,
@@ -64,9 +61,7 @@ export function ExportDialog({
   const [text, setText] = useState<TextMode>("keep");
   const [busy, setBusy] = useState(false);
 
-
   const exportable = scene ?? null;
-
 
   const annotations = useDocumentStore((s) => s.layout.annotations);
   const passthrough = Boolean(scene && isPassthrough(scene));
@@ -84,7 +79,6 @@ export function ExportDialog({
         : "",
     [exportable, theme, padding, background, name, annotations],
   );
-
 
   const rasterSvg = () =>
     exportable
@@ -111,7 +105,6 @@ export function ExportDialog({
         });
         if (!target) return;
 
-
         await api.writeFile(target, await svgForExport());
         toast.success("Exported", target);
       } else if (format === "png") {
@@ -133,7 +126,6 @@ export function ExportDialog({
         });
         if (!target) return;
 
-
         await api.writePdf(target, svg);
         toast.success("Exported", target);
       }
@@ -146,7 +138,6 @@ export function ExportDialog({
       setBusy(false);
     }
   };
-
 
   const textMode: TextMode = passthrough && text === "embed" ? "keep" : text;
 
@@ -163,7 +154,6 @@ export function ExportDialog({
       toast.error("Could not copy the SVG", describeError(e).message);
     }
   };
-
 
   const copyImage = async () => {
     if (!exportable) return;
@@ -289,8 +279,6 @@ export function ExportDialog({
                 value={textMode}
                 onChange={setText}
                 options={
-
-
                   (passthrough ? TEXT_MODES.filter((m) => m.value !== "embed") : TEXT_MODES).map(
                     ({ value, label }) => ({ value, label }),
                   )
@@ -332,14 +320,12 @@ export function ExportDialog({
 
 let fontCss: string | null = null;
 
-
 async function loadFontCss(): Promise<string> {
   if (fontCss !== null) return fontCss;
 
   try {
     const bytes = await (await fetch(interFontUrl)).arrayBuffer();
     const view = new Uint8Array(bytes);
-
 
     let binary = "";
     const CHUNK = 0x8000;
@@ -353,14 +339,11 @@ async function loadFontCss(): Promise<string> {
       `@font-face{font-family:"Inter Variable";font-style:normal;font-weight:100 900;` +
       `src:url(data:font/woff2;base64,${btoa(binary)}) format("woff2");}`;
   } catch {
-
-
     fontCss = "";
   }
 
   return fontCss;
 }
-
 
 async function rasterise(svg: string): Promise<Uint8Array> {
   const withFonts = await embedFontsInto(svg);
@@ -391,12 +374,10 @@ async function rasterise(svg: string): Promise<Uint8Array> {
   }
 }
 
-
 export async function embedFontsInto(svg: string): Promise<string> {
   const css = await loadFontCss();
   return css ? svg.replace(/(<svg[^>]*>)/, `$1<style>${css}</style>`) : svg;
 }
-
 
 export async function fontsAvailable(): Promise<boolean> {
   return (await loadFontCss()) !== "";

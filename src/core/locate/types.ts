@@ -1,13 +1,10 @@
 import type { SourceRange } from "../model/scene";
 
-
 export interface LocateIndex {
-
   nodes: ReadonlyMap<string, SourceRange>;
 
   edges: ReadonlyMap<string, SourceRange>;
 }
-
 
 export function idAt(index: LocateIndex, offset: number): string | undefined {
   let best: string | undefined;
@@ -16,7 +13,6 @@ export function idAt(index: LocateIndex, offset: number): string | undefined {
   for (const [id, range] of index.nodes) {
     if (offset >= range.from && offset <= range.to) {
       const size = range.to - range.from;
-
 
       if (size < bestSize) {
         best = id;
@@ -27,7 +23,6 @@ export function idAt(index: LocateIndex, offset: number): string | undefined {
 
   return best;
 }
-
 
 export function edgeAt(index: LocateIndex, offset: number): string | undefined {
   let best: string | undefined;
@@ -48,7 +43,6 @@ export function edgeAt(index: LocateIndex, offset: number): string | undefined {
 
 export const EMPTY_INDEX: LocateIndex = { nodes: new Map(), edges: new Map() };
 
-
 export function lineColumnAt(source: string, offset: number): { line: number; column: number } {
   let line = 1;
   let lineStart = 0;
@@ -62,7 +56,6 @@ export function lineColumnAt(source: string, offset: number): { line: number; co
 
   return { line, column: offset - lineStart + 1 };
 }
-
 
 export function offsetOfLine(source: string, line: number): number {
   if (line <= 1) return 0;

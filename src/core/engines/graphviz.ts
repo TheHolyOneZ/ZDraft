@@ -23,15 +23,12 @@ import type {
 import { edgeId } from "../model/scene";
 import { makeFingerprinter, type EngineAdapter, type LayoutOpts } from "./types";
 
-
 let graphvizPromise: Promise<Graphviz> | null = null;
-
 
 export function loadGraphviz(): Promise<Graphviz> {
   graphvizPromise ??= Graphviz.load();
   return graphvizPromise;
 }
-
 
 interface GvObject {
   _gvid: number;
@@ -80,7 +77,6 @@ interface GvGraph {
   edges?: GvEdge[];
 }
 
-
 const POINTS_PER_INCH = 72;
 
 function parseNumbers(s: string | undefined): number[] {
@@ -90,7 +86,6 @@ function parseNumbers(s: string | undefined): number[] {
     .map((v) => Number(v.trim()))
     .filter((v) => Number.isFinite(v));
 }
-
 
 function makeFlip(bb: number[]): (y: number) => number {
   const [, y0 = 0, , y1 = 0] = bb;
@@ -103,7 +98,6 @@ function parsePoint(token: string, flip: (y: number) => number): Point | null {
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
   return { x: x as number, y: flip(y as number) };
 }
-
 
 function parseEdgePos(
   pos: string | undefined,
@@ -124,12 +118,10 @@ function parseEdgePos(
     }
   }
 
-
   const kind: EdgeRoute["kind"] = points.length >= 4 && (points.length - 1) % 3 === 0 ? "spline" : "poly";
 
   return { route: { kind, points }, arrowStart, arrowEnd };
 }
-
 
 function resolveLabel(raw: string | undefined, name: string): string {
   if (raw === undefined) return name;
@@ -177,11 +169,9 @@ const SHAPE_MAP: Record<string, NodeShape> = {
 };
 
 function mapShape(shape: string | undefined): NodeShape {
-
   if (!shape) return "ellipse";
   return SHAPE_MAP[shape.toLowerCase()] ?? "rect";
 }
-
 
 export function parseRecordLabel(raw: string): NodeBody {
   let body = raw.trim();
@@ -273,10 +263,8 @@ function styleOf(o: {
     className: o.class,
   };
 
-
   return Object.values(style).some((v) => v !== undefined && v !== false) ? style : undefined;
 }
-
 
 export function diagnosticFromError(err: unknown, source: string): Diagnostic {
   const message = err instanceof Error ? err.message : String(err);
@@ -291,7 +279,6 @@ export function diagnosticFromError(err: unknown, source: string): Diagnostic {
   };
 }
 
-
 function directionOf(rankdir: string | undefined): Direction {
   switch ((rankdir ?? "TB").toUpperCase()) {
     case "LR":
@@ -304,7 +291,6 @@ function directionOf(rankdir: string | undefined): Direction {
       return "TB";
   }
 }
-
 
 export function sceneFromGraphvizJson(raw: GvGraph, source: string): GraphScene {
   const bb = parseNumbers(raw.bb);
@@ -327,7 +313,6 @@ export function sceneFromGraphvizJson(raw: GvGraph, source: string): GraphScene 
   const locate = locateDot(source);
 
   for (const o of objects) {
-
     if (o.bb !== undefined && o.pos === undefined) {
       const cb = parseNumbers(o.bb);
       const [cx0 = 0, cy0 = 0, cx1 = 0, cy1 = 0] = cb;
@@ -365,7 +350,6 @@ export function sceneFromGraphvizJson(raw: GvGraph, source: string): GraphScene 
     });
   }
 
-
   const clusterByName = new Map(clusters.map((c) => [c.id, c]));
   for (const o of objects) {
     if (!o.subgraphs) continue;
@@ -375,7 +359,6 @@ export function sceneFromGraphvizJson(raw: GvGraph, source: string): GraphScene 
       if (cluster) cluster.parent = o.name;
     }
   }
-
 
   const depths = new Map<string, number>();
   for (const cluster of clusters) {
@@ -406,7 +389,6 @@ export function sceneFromGraphvizJson(raw: GvGraph, source: string): GraphScene 
 
   const edges: GraphEdge[] = [];
   const pairSeen = new Map<string, number>();
-
 
   const sortedEdges = [...(raw.edges ?? [])].sort((a, b) => a._gvid - b._gvid);
 
@@ -460,7 +442,6 @@ export const graphvizAdapter: EngineAdapter = {
   label: "Graphviz",
   extensions: [".dot", ".gv"],
 
-
   detectFamily(): Family {
     return "graph";
   },
@@ -511,7 +492,6 @@ export const graphvizAdapter: EngineAdapter = {
 
   edit: dotEditor,
 };
-
 
 export function contentAfterFirstGraph(source: string): SourceRange | null {
   const tokens = tokenizeDot(source);

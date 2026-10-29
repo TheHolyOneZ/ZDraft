@@ -1,9 +1,7 @@
 import { edgeId, type Compartment, type NodeShape, type SourceRange } from "../model/scene";
 import type { LocateIndex } from "./types";
 
-
 export interface PumlEntity {
-
   id: string;
   label: string;
   shape: NodeShape;
@@ -34,13 +32,11 @@ export interface PumlLink {
 }
 
 export interface PumlModel {
-
   kind: string;
   entities: Map<string, PumlEntity>;
   packages: Map<string, PumlPackage>;
   links: PumlLink[];
 }
-
 
 export const KEYWORD_SHAPES: Record<string, NodeShape> = {
   rectangle: "rect",
@@ -76,7 +72,6 @@ export const KEYWORD_SHAPES: Record<string, NodeShape> = {
   archimate: "rect",
 };
 
-
 export const CONTAINER_KEYWORDS = new Set(["package", "namespace", "together", "partition"]);
 
 const DECLARATION = new RegExp(
@@ -85,7 +80,6 @@ const DECLARATION = new RegExp(
     String.raw`)\s+(.*)$`,
   "i",
 );
-
 
 export const LINK = new RegExp(
   String.raw`^(?<a>"[^"]+"|\[[^\]]+\]|\([^)]+\)|:[^:]+:|[\w.$]+)\s*` +
@@ -112,7 +106,6 @@ export function parsePlantUml(source: string): PumlModel {
   for (const { text, offset } of lines) {
     const line = stripComment(text).trim();
     if (line === "") continue;
-
 
     if (openBody) {
       if (line === "}" || line.startsWith("}")) {
@@ -172,7 +165,6 @@ export function parsePlantUml(source: string): PumlModel {
     if (link) {
       model.links.push(link);
 
-
       for (const end of [link.from, link.to]) {
         if (!model.entities.has(end)) {
           model.entities.set(end, {
@@ -189,7 +181,6 @@ export function parsePlantUml(source: string): PumlModel {
 
   return model;
 }
-
 
 export function locatePlantUml(source: string): LocateIndex {
   const model = parsePlantUml(source);
@@ -210,12 +201,10 @@ export function locatePlantUml(source: string): LocateIndex {
   return { nodes, edges };
 }
 
-
 export function detectPumlKind(source: string): string {
   const match = /^\s*@start(\w+)/im.exec(source);
   return match ? match[1]!.toLowerCase() : "uml";
 }
-
 
 export function matchContainer(line: string): { name: string; label: string } | null {
   const match = /^(package|namespace|together|partition)\b\s*(.*)$/i.exec(line);
@@ -224,7 +213,6 @@ export function matchContainer(line: string): { name: string; label: string } | 
   let rest = match[2]!.trim();
   if (!rest.endsWith("{")) return null;
   rest = rest.slice(0, -1).trim();
-
 
   const aliased = /^(?:"([^"]*)"|(\S+))\s+as\s+(\S+)$/.exec(rest);
   if (aliased) {
@@ -253,7 +241,6 @@ export function matchDeclaration(line: string): Declaration | null {
     return fromRest(keyworded[3]!, shape);
   }
 
-
   const bracketed = /^(\[[^\]]+\]|\([^)]+\)|:[^:\n]+:)\s*(.*)$/.exec(line);
   if (bracketed) {
     const raw = bracketed[1]!;
@@ -278,7 +265,6 @@ export function matchDeclaration(line: string): Declaration | null {
   return null;
 }
 
-
 function fromRest(rest: string, shape: NodeShape): Declaration | null {
   let body = rest.trim();
   const opensBody = body.endsWith("{");
@@ -290,7 +276,6 @@ function fromRest(rest: string, shape: NodeShape): Declaration | null {
     return " ";
   });
 
-
   body = body.replace(/#[\w[\]:;,.-]+\s*$/g, "").trim();
   if (body === "") return null;
 
@@ -298,7 +283,6 @@ function fromRest(rest: string, shape: NodeShape): Declaration | null {
   if (aliased) {
     const first = aliased[1] ?? aliased[2]!;
     const second = aliased[3] ?? aliased[4]!;
-
 
     const nameIsSecond = aliased[1] !== undefined || aliased[4] !== undefined;
     return nameIsSecond
@@ -333,7 +317,6 @@ function matchLink(
 
   const connector = match.groups.line!;
 
-
   if (!/[\w"\][):]/.test(match.groups.a ?? "")) return null;
 
   const from = qualify(scope, cleanEnd(match.groups.a!));
@@ -353,13 +336,11 @@ function matchLink(
   };
 }
 
-
 function cleanEnd(text: string): string {
   const trimmed = text.trim();
   if (/^(\[.*\]|\(.*\)|:.*:|".*")$/.test(trimmed)) return trimmed.slice(1, -1).trim();
   return trimmed;
 }
-
 
 function headOf(connector: string, end: "start" | "end"): string {
   const token = end === "start" ? connector.slice(0, 2) : connector.slice(-2);
@@ -379,11 +360,9 @@ function headOf(connector: string, end: "start" | "end"): string {
   return "none";
 }
 
-
 function addMember(entity: PumlEntity, line: string): void {
   const text = line.replace(/\{(field|method|static|abstract)\}/gi, "").trim();
   if (text === "" || text === "--" || /^\.\.+$/.test(text)) return;
-
 
   if (/^(-{2,}|={2,}|\.{2,}|_{2,})/.test(text)) {
     entity.sections.push({ items: [] });
@@ -396,7 +375,6 @@ function addMember(entity: PumlEntity, line: string): void {
   while (entity.sections.length <= wanted) entity.sections.push({ items: [] });
   entity.sections[wanted]!.items.push(text);
 }
-
 
 export function qualify(scope: readonly string[], name: string): string {
   return scope.length > 0 ? `${scope.join(".")}.${name}` : name;
@@ -412,7 +390,6 @@ export function splitLines(source: string): Array<{ text: string; offset: number
   return out;
 }
 
-
 export function stripComment(line: string): string {
   const block = line.indexOf("/'");
   if (block >= 0) return line.slice(0, block);
@@ -425,7 +402,6 @@ export function stripComment(line: string): string {
   }
   return line;
 }
-
 
 function rangeOf(text: string, offset: number, needle: string): SourceRange {
   const at = needle ? text.indexOf(needle) : -1;

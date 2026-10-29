@@ -1,10 +1,4 @@
-/**
- * @vitest-environment node
- *
- * A directive, not a comment: D2's WASM wants a real worker and
- * `URL.createObjectURL`, and jsdom has neither. Do not let a tidy pass
- * take this out.
- */
+/** @vitest-environment node */
 import { describe, expect, it } from "vitest";
 
 import { d2Adapter } from "../engines/d2";
@@ -43,10 +37,8 @@ describe("renaming a D2 node", () => {
   it("leaves a label that merely says the same word alone", () => {
     const edit = d2Editor.rename("orders: orders\norders -> db\n", "orders", "billing")!;
 
-
     expect(edit.source).toBe("billing: orders\nbilling -> db\n");
   });
-
 
   it("follows a node across the scope it is written in", () => {
     const edit = d2Editor.rename(NESTED, "services.orders", "services.billing")!;
@@ -95,7 +87,6 @@ describe("relabelling", () => {
     expect(edit.source).toContain('orders: "reads: writes"');
   });
 
-
   it("changes an explicit label key rather than adding a second one", () => {
     const source = "orders: Orders\norders.label: Order service\n";
     const edit = d2Editor.setLabel(source, "orders", "Billing")!;
@@ -117,7 +108,6 @@ describe("reshaping", () => {
     expect(edit.source).toContain("{shape: queue}");
     expect(edit.source).not.toContain("cylinder");
   });
-
 
   it("adds a sibling key rather than rewriting the declaration", () => {
     const edit = d2Editor.setShape(FLAT, "orders", "cylinder")!;
@@ -163,7 +153,6 @@ describe("D2's layout parameters", () => {
     expect(tuner.read("grid: {direction: right}\n")).toEqual({});
   });
 });
-
 
 describe("what D2 makes of the result", () => {
   async function nodes(source: string) {

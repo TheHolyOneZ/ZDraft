@@ -23,7 +23,6 @@ import {
 } from "./scene/SequenceLayers";
 import { usePrefersReducedMotion } from "./ui";
 
-
 export function Presentation({
   open,
   onClose,
@@ -47,14 +46,11 @@ export function Presentation({
 
   const steps = useMemo(() => revealSteps(scene), [scene]);
 
-
   const covers = useMemo(() => coverage(annotations, scene), [annotations, scene]);
   const last = Math.max(steps.length - 1, 0);
 
-
   const at = blocks.findIndex((b) => b.id === activeBlock);
   const deck = blocks.length > 1 && at >= 0;
-
 
   const landing = useRef<"start" | "end" | null>(null);
 
@@ -69,8 +65,6 @@ export function Presentation({
   const back = useCallback(() => {
     if (index > 0) return setIndex((i) => i - 1);
     if (deck && at > 0) {
-
-
       landing.current = "end";
       selectBlock(blocks[at - 1]!.id);
     }
@@ -81,7 +75,6 @@ export function Presentation({
     setIndex(landing.current === "end" ? Math.max(steps.length - 1, 0) : 0);
     landing.current = null;
   }, [steps]);
-
 
   const settled = useRef(0);
   const shownAt = Math.min(settled.current, index);
@@ -95,8 +88,6 @@ export function Presentation({
   }, [open]);
 
   const exit = useCallback(() => {
-
-
     setFullscreen((on) => {
       if (on) void appWindow()?.setFullscreen(false);
       return false;
@@ -110,7 +101,6 @@ export function Presentation({
       return !on;
     });
   }, []);
-
 
   useEffect(() => {
     if (!open) return;
@@ -136,7 +126,6 @@ export function Presentation({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [open, last, exit, toggleFullscreen, next, back]);
 
-
   useEffect(() => {
     if (!open) return;
     let timer = 0;
@@ -157,7 +146,6 @@ export function Presentation({
 
   if (!open || !scene) return null;
 
-
   const box = withMarks(scene.bounds, annotationsBounds(annotations));
   const pad = Math.max(40, Math.max(box.w, box.h) * 0.06);
   const viewBox = `${box.x - pad} ${box.y - pad} ${box.w + pad * 2} ${box.h + pad * 2}`;
@@ -168,8 +156,6 @@ export function Presentation({
       style={{ background: theme.background, cursor: chrome ? "default" : "none" }}
       onClick={(e) => (e.shiftKey ? back() : next())}
       onContextMenu={(e) => {
-
-
         e.preventDefault();
         back();
       }}
@@ -281,7 +267,6 @@ export function Presentation({
   );
 }
 
-
 function withMarks(scene: Rect, marks: Rect | null): Rect {
   if (!marks) return scene;
 
@@ -294,7 +279,6 @@ function withMarks(scene: Rect, marks: Rect | null): Rect {
     h: Math.max(scene.y + scene.h, marks.y + marks.h) - y,
   };
 }
-
 
 function coverage(
   annotations: Readonly<Record<string, Annotation>> | undefined,
@@ -335,8 +319,6 @@ function Stage({
   annotations?: Readonly<Record<string, Annotation>>;
   covers: Map<string, Set<string>>;
 }) {
-
-
   const shown = useMemo(() => {
     if (!annotations) return undefined;
     const here = new Set(isGraph(scene) ? scene.nodes.map((node) => node.id) : []);
@@ -380,7 +362,6 @@ function Stage({
     </>
   );
 }
-
 
 function Progress({ index, count }: { index: number; count: number }) {
   return (

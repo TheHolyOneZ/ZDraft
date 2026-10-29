@@ -17,12 +17,10 @@ import { useSettingsStore } from "../store/useSettingsStore";
 import { useTourStore } from "../store/useTourStore";
 import { Button, IconButton, SPRING, usePrefersReducedMotion } from "./ui";
 
-
 interface Gauge {
   pins: string;
   selection: number;
 }
-
 
 interface Facts {
   name: string;
@@ -38,7 +36,6 @@ interface Step {
 
   anchor?: string;
   place?: Placement;
-
 
   task?: {
     prompt: string;
@@ -207,16 +204,9 @@ function Chip({ icon, keys, children }: { icon: ReactNode; keys: string; childre
 
 const round = (n: number) => (Math.round(n * 10) / 10).toString();
 
-/* -------------------------------------------------------------------------- */
-/* Placement                                                                  */
-/* -------------------------------------------------------------------------- */
-
-/** Air between the card and the window edge, and between the card and its anchor. */
 const MARGIN = 20;
 const GAP = 16;
-/** The titlebar's height, which is the window's close button and not free space. */
 const TITLEBAR = 36;
-/** How far the spotlight opens beyond the thing it is lighting. */
 const HALO = 6;
 
 const CARD_WIDTH = 344;
@@ -237,9 +227,6 @@ function place(
     return { left: (W - card.width) / 2, top: clampY((H - card.height) / 2) };
   }
 
-  /* The card sits *in* the region it is describing rather than beside it. The
-     only thing that works when the region is most of the window: there is no
-     "beside" for a canvas that runs to three edges. */
   if (mode === "inside") {
     return {
       left: clampX(anchor.right - card.width - GAP * 1.5),
@@ -300,10 +287,6 @@ const sameBox = (a: Box | null, b: Box | null) =>
     Math.abs(a.width - b.width) < 0.5 &&
     Math.abs(a.height - b.height) < 0.5);
 
-/* -------------------------------------------------------------------------- */
-/* The overlay                                                                */
-/* -------------------------------------------------------------------------- */
-
 export function Tour() {
   const running = useTourStore((s) => s.running);
   const index = useTourStore((s) => s.step);
@@ -318,9 +301,6 @@ export function Tour() {
 
   const pinsKey = useMemo(() => JSON.stringify(pinMap ?? {}), [pinMap]);
 
-  /* Which pin the sidecar step shows. Set to whatever the drag step's own drag
-     produced, so the TOML on screen is the move the reader just made rather
-     than an arbitrary one from further up the file. */
   const [shown, setShown] = useState<string | null>(null);
   const facts = useMemo<Facts>(() => {
     const table = pinMap ?? {};
@@ -330,8 +310,6 @@ export function Tour() {
 
   const step = STEPS[Math.min(index, STEPS.length - 1)]!;
   const last = index >= STEPS.length - 1;
-
-  /* -- what the step is waiting for --------------------------------------- */
 
   const gauge = useMemo<Gauge>(() => ({ pins: pinsKey, selection }), [pinsKey, selection]);
   const gaugeRef = useRef(gauge);
@@ -345,8 +323,6 @@ export function Tour() {
     setDone(false);
   }, [index, running]);
 
-  /* The pin table as it was when the step opened, kept beside the gauge so the
-     step that follows can name the box that moved. */
   const startPins = useRef(pinMap);
   const pinMapRef = useRef(pinMap);
   pinMapRef.current = pinMap;
@@ -369,8 +345,6 @@ export function Tour() {
     if (moved) setShown(moved);
   }, [running, done, step, gauge, pinMap]);
 
-  /* -- where to point ------------------------------------------------------ */
-
   const [anchor, setAnchor] = useState<Box | null>(null);
 
   useLayoutEffect(() => {
@@ -384,11 +358,6 @@ export function Tour() {
 
     measure();
     window.addEventListener("resize", measure);
-    /* Panels open, the diagnostics strip is dragged, a diagram re-lays out —
-       none of which fires an event this component could listen for. Polling a
-       single `getBoundingClientRect` is cheaper than the machinery that would
-       catch every one of them, and the equality check above means an unchanged
-       rect costs no render. */
     const timer = window.setInterval(measure, 300);
     return () => {
       window.removeEventListener("resize", measure);
@@ -401,11 +370,6 @@ export function Tour() {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const [at, setAt] = useState<{ left: number; top: number } | null>(null);
 
-  /* Observed rather than measured once per step: the card's height changes when
-     a task is satisfied and when its copy is swapped, and a card measured
-     before either has happened is a card placed half off the bottom of the
-     window. `offsetHeight` and not `getBoundingClientRect`, because the card
-     scales as it appears and a rect would report the scaled size. */
   useLayoutEffect(() => {
     if (!card) return;
 
@@ -438,27 +402,11 @@ export function Tour() {
     nextRef.current?.querySelector("button")?.focus();
   }, [running, step]);
 
-  /* -- getting out --------------------------------------------------------- */
-
   const next = useCallback(() => {
     if (last) end();
     else go(index + 1);
   }, [last, end, go, index]);
 
-  /**
-   * Escape leaves the tour, and does only that.
-   *
-   * On `window` and bubbling, like the app's own key handling, for two
-   * reasons. A modal or the command palette opened over the tour dismisses on
-   * Escape in the capture phase and stops the event there, so it never reaches
-   * this — one Escape closes one thing, and the innermost thing wins. And
-   * because a child's effect runs before its parent's, this listener is
-   * registered ahead of App's, so stopping the rest of the chain here means
-   * leaving the tour does not also clear the selection behind it.
-   *
-   * Nothing else is bound. The arrow keys nudge a node and Space pans the
-   * canvas; a tour is not worth breaking either, and the card has buttons.
-   */
   useEffect(() => {
     if (!running) return;
     const onKey = (e: KeyboardEvent) => {
@@ -471,8 +419,6 @@ export function Tour() {
     return () => window.removeEventListener("keydown", onKey);
   }, [running, end]);
 
-  /* The pins panel and the diagnostics strip are two of the seven stops, and a
-     tour pointing at something that is not on screen is worse than no tour. */
   useEffect(() => {
     if (!running) return;
     const settings = useSettingsStore.getState();
@@ -495,8 +441,6 @@ export function Tour() {
 
   return createPortal(
     <div className="pointer-events-none fixed inset-0 z-[380]">
-      {/* The dim is this element's shadow, so it costs nothing to draw and takes
-          no clicks — the app stays usable through the whole tour. */}
       <motion.div
         className="absolute"
         initial={false}
@@ -515,10 +459,6 @@ export function Tour() {
         }}
       />
 
-      {/* One card for the whole tour, moved rather than replaced. Replacing it
-          per step meant measuring the outgoing element — which is how a card
-          ends up clamped against a height it no longer has. The travelling is
-          the spotlight's job; the card cuts, and only its contents fade. */}
       <motion.div
         ref={setCard}
         role="dialog"
@@ -537,14 +477,8 @@ export function Tour() {
         animate={{ opacity: 1, scale: 1 }}
         transition={reduced ? { duration: 0.1 } : { type: "spring", stiffness: 260, damping: 26 }}
       >
-        {/* A hairline of accent along the top: the one piece of colour on a
-            deliberately quiet card, and what makes it read as ZDraft's rather
-            than the operating system's. */}
         <div className="h-[2px] shrink-0" style={{ background: "var(--accent)" }} />
 
-        {/* Keyed on the step, so React replaces the copy outright and the fade
-            below plays for the new one. No exit animation: an emptying card
-            collapses, and a collapsing card is measured and re-placed. */}
         <motion.div
           key={step.id}
           className="px-4 pt-3.5 pb-3"
@@ -563,9 +497,6 @@ export function Tour() {
               <span className="tnum text-[11px]" style={{ color: "var(--text-3)" }}>
                 {index + 1}/{STEPS.length}
               </span>
-              {/* In the card rather than floating over the app: anywhere else it
-                  eventually lands on top of the card, because the card goes
-                  wherever the step it is describing is. */}
               <IconButton
                 icon={<X size={14} strokeWidth={1.75} />}
                 onClick={end}
@@ -602,8 +533,6 @@ export function Tour() {
                     <Check size={11} strokeWidth={3} color="var(--accent-text)" />
                   </motion.span>
                 ) : (
-                  /* The one thing on screen that keeps moving while the tour
-                     waits, so an unfinished step never reads as a frozen app. */
                   <motion.span
                     className="block h-1.5 w-1.5 rounded-full"
                     style={{ background: "rgba(0,0,0,0.55)" }}
@@ -631,9 +560,6 @@ export function Tour() {
             {waiting ? (
               <Button onClick={next}>Skip this</Button>
             ) : (
-              /* Focused on arrival for the steps that only ask you to read, so
-                 Enter carries on. Never during a task — the point of one is
-                 that the app underneath has the focus. */
               <span ref={nextRef}>
                 <Button variant="primary" onClick={next}>
                   {last ? "Start drawing" : index === 0 ? "Show me" : "Next"}
@@ -649,13 +575,6 @@ export function Tour() {
   );
 }
 
-/**
- * The progress dots, which are also the fastest way back to a step.
- *
- * The current one is a pill rather than a bigger dot: it reads as a position on
- * a line instead of a decoration, and it animates its width, which is the one
- * piece of motion in the card that says "you moved".
- */
 function Dots({
   count,
   at,

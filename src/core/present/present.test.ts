@@ -13,7 +13,6 @@ async function graph(source: string): Promise<GraphScene> {
   return result.scene;
 }
 
-
 function visible(scene: GraphScene, steps: ReturnType<typeof revealSteps>, index: number) {
   const at = sceneAtStep(scene, steps, index);
   if (!isGraph(at)) throw new Error("expected a graph scene");
@@ -51,7 +50,6 @@ describe("revealSteps, on a graph", () => {
     expect(revealSteps(scene)[0]!.title).toBe("Ingress");
   });
 
-
   it("finds a way into a cycle rather than omitting it", async () => {
     const scene = await graph("digraph d { a -> b; b -> c; c -> a; }");
     const steps = revealSteps(scene);
@@ -75,7 +73,6 @@ describe("sceneAtStep, on a graph", () => {
   it("keeps the finished diagram's bounds at every step", async () => {
     const scene = await graph(CHAIN);
     const steps = revealSteps(scene);
-
 
     for (let i = 0; i < steps.length; i += 1) {
       expect(visible(scene, steps, i).bounds).toEqual(scene.bounds);

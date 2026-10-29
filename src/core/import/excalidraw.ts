@@ -6,13 +6,11 @@ import {
   type ImportedNode,
 } from "./types";
 
-
 const SHAPES: Record<string, NodeShape> = {
   rectangle: "rect",
   ellipse: "ellipse",
   diamond: "diamond",
 };
-
 
 const BIND_SLACK = 24;
 
@@ -41,7 +39,6 @@ export function parseExcalidraw(text: string): ImportedModel {
       Boolean(el) && typeof el === "object" && !(el as { isDeleted?: boolean }).isDeleted,
   );
 
-
   const boxes = new Map<string, ImportedNode>();
   for (const el of live) {
     const shape = SHAPES[String(el.type)];
@@ -60,7 +57,6 @@ export function parseExcalidraw(text: string): ImportedModel {
       h: num(el.height, 60),
     });
   }
-
 
   const onEdges = new Set<string>();
   for (const el of live) {
@@ -96,7 +92,6 @@ export function parseExcalidraw(text: string): ImportedModel {
     });
   }
 
-
   let adopted = 0;
   const standalone: typeof loose = [];
 
@@ -111,7 +106,6 @@ export function parseExcalidraw(text: string): ImportedModel {
       standalone.push(label);
     }
   }
-
 
   for (const label of standalone) {
     boxes.set(label.id, {
@@ -129,7 +123,6 @@ export function parseExcalidraw(text: string): ImportedModel {
     if (!box.label) box.label = box.id.slice(0, 6);
   }
 
-
   let guessed = 0;
   let dangling = 0;
 
@@ -138,7 +131,6 @@ export function parseExcalidraw(text: string): ImportedModel {
 
     const start = binding(el.startBinding, boxes);
     const end = binding(el.endBinding, boxes);
-
 
     const ends = arrowEnds(el);
     const from = start ?? (ends && nearest(boxes, ends.from));
@@ -159,7 +151,6 @@ export function parseExcalidraw(text: string): ImportedModel {
   }
 
   model.nodes = [...boxes.values()];
-
 
   const freehand = live.filter((el) => el.type === "freedraw").length;
   const images = live.filter((el) => el.type === "image").length;
@@ -207,7 +198,6 @@ function binding(value: unknown, boxes: Map<string, ImportedNode>): string | nul
   return boxes.has(id) ? id : null;
 }
 
-
 function arrowEnds(
   el: Record<string, unknown>,
 ): { from: { x: number; y: number }; to: { x: number; y: number } } | null {
@@ -227,7 +217,6 @@ function arrowEnds(
   };
 }
 
-
 function nearest(boxes: Map<string, ImportedNode>, at: { x: number; y: number }): string | null {
   let best: string | null = null;
   let bestDistance = Infinity;
@@ -245,7 +234,6 @@ function nearest(boxes: Map<string, ImportedNode>, at: { x: number; y: number })
 
   return best;
 }
-
 
 function arrowLabel(el: Record<string, unknown>, all: Array<Record<string, unknown>>): string {
   const bound = el.boundElements;

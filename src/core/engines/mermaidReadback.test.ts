@@ -13,7 +13,6 @@ import {
   readMermaidGeometry,
 } from "./mermaidReadback";
 
-
 const FIXTURES = resolve(__dirname, "../../../tests/fixtures/mermaid");
 
 function fixture(name: string): { svg: Element; renderId: string } {
@@ -54,8 +53,6 @@ describe("pathPoints", () => {
   });
 
   it("does not mistake an arc's radii for a coordinate", () => {
-
-
     const points = pathPoints("M 0 0 A 500 500 0 0 1 10 10");
     expect(points).toEqual([
       { x: 0, y: 0 },
@@ -139,8 +136,6 @@ describe("id recovery", () => {
   });
 
   it("gives up rather than guessing when the id carries no endpoints", () => {
-
-
     expect(edgeEndpointsFromDomId("edge3", "", new Set(["a"]))).toBeNull();
   });
 });
@@ -212,7 +207,6 @@ describe("readMermaidGeometry — other families", () => {
       expect.arrayContaining(["Idle", "Running", "Paused", "Done"]),
     );
     expect(geo.edges.length).toBeGreaterThanOrEqual(5);
-
 
     const first = geo.edges[0]!;
     expect(nearestNode(first.points[0]!, geo.nodes)).toBeTruthy();

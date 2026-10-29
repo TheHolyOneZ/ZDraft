@@ -1,5 +1,3 @@
-
-
 export type { Annotation } from "../../lib/bindings/Annotation";
 export type { AnnotationKind } from "../../lib/bindings/AnnotationKind";
 export type { Conflict } from "../../lib/bindings/Conflict";

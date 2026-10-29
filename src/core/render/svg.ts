@@ -1,10 +1,10 @@
 import type { Rect } from "../model/geometry";
 import type { GraphEdge, GraphScene, PassthroughScene, Scene, SequenceScene } from "../model/scene";
-import { ACTIVATION_STEP, ACTIVATION_WIDTH } from "../sequence/layout";
+import { ACTIVATION_STEP, ACTIVATION_WIDTH, messageLabelRows } from "../sequence/layout";
 import type { DiagramTheme } from "../theme";
 import { arrowGeometry, edgePathD, headArrow, tailArrow } from "./edges";
 import { nodeTextColors, renderCluster, renderNode } from "./node";
-import { measureText, type TextLine } from "./text";
+import { labelBlock, type LabelBlock, type TextLine } from "./text";
 import {
   ANNOTATION_STROKE,
   HIGHLIGHT_OPACITY,
@@ -13,15 +13,12 @@ import {
 } from "./annotations";
 import type { Annotation } from "../sidecar/types";
 
-
 const ARROW_SIZE = 11;
 
 export interface SvgExportOptions {
-
   padding?: number;
 
   background?: boolean;
-
 
   embedFonts?: string;
 
@@ -29,10 +26,8 @@ export interface SvgExportOptions {
 
   title?: string;
 
-
   annotations?: Readonly<Record<string, Annotation>>;
 }
-
 
 function union(a: Rect, b: Rect | null): Rect {
   if (!b) return a;
@@ -45,7 +40,6 @@ function union(a: Rect, b: Rect | null): Rect {
     h: Math.max(a.y + a.h, b.y + b.h) - y,
   };
 }
-
 
 function annotationElements(
   annotations: Readonly<Record<string, Annotation>> | undefined,
@@ -126,6 +120,11 @@ function attr(name: string, value: string | number | undefined | null): string {
   return value === undefined || value === null || value === "" ? "" : ` ${name}="${value}"`;
 }
 
+function tspans(rows: LabelBlock["rows"], x: number): string {
+  if (rows.length === 1) return esc(rows[0]!.text);
+  return rows.map((row) => `<tspan x="${n(x)}" y="${n(row.y)}">${esc(row.text)}</tspan>`).join("");
+}
+
 function textElement(line: TextLine, color: string, muted: string, family: string): string {
   return (
     `<text x="${n(line.x)}" y="${n(line.y)}" text-anchor="${line.anchor}" ` +
@@ -160,25 +159,20 @@ function edgeElement(edge: GraphEdge, theme: DiagramTheme): string {
     const size = theme.fontSize - 1;
     const x = edge.label.at.x + (edge.label.offset?.x ?? 0);
     const cy = edge.label.at.y + (edge.label.offset?.y ?? 0);
-    const y = cy + size * 0.34;
-
-
-    const boxW = measureText(edge.label.text, size, 500) + 5;
-    const boxH = size + 4;
+    const { rows, box } = labelBlock(edge.label.text, { x, y: cy }, size, 500);
 
     parts.push(
-      `<rect x="${n(x - boxW / 2)}" y="${n(cy - boxH / 2)}" width="${n(boxW)}" height="${n(boxH)}" ` +
+      `<rect x="${n(box.x)}" y="${n(box.y)}" width="${n(box.w)}" height="${n(box.h)}" ` +
         `rx="3" fill="${theme.edgeTextHalo}"/>`,
-      `<text x="${n(x)}" y="${n(y)}" text-anchor="middle" font-family="${esc(theme.fontFamily)}" ` +
+      `<text x="${n(x)}" y="${n(rows[0]!.y)}" text-anchor="middle" font-family="${esc(theme.fontFamily)}" ` +
         `font-size="${n(size)}" font-weight="500" fill="${theme.edgeText}" ` +
         `stroke="${theme.edgeTextHalo}" stroke-width="2" paint-order="stroke" ` +
-        `stroke-linejoin="round" xml:space="preserve">${esc(edge.label.text)}</text>`,
+        `stroke-linejoin="round" xml:space="preserve">${tspans(rows, x)}</text>`,
     );
   }
 
   return parts.join("");
 }
-
 
 export function sceneToSvg(
   scene: Scene,
@@ -189,7 +183,6 @@ export function sceneToSvg(
   if (scene.family === "sequence") return sequenceToSvg(scene, theme, options);
   return graphToSvg(scene, theme, options);
 }
-
 
 function passthroughToSvg(
   scene: PassthroughScene,
@@ -248,13 +241,12 @@ function graphToSvg(
     );
   }
 
-
   for (const cluster of scene.clusters) {
     const r = renderCluster(cluster, theme);
     const inner = [
       `<path d="${r.path}" fill="${r.fill}" stroke="${r.stroke}" ` +
         `stroke-width="${n(theme.strokeWidth)}" stroke-dasharray="6 4"/>`,
-      r.label ? textElement(r.label, theme.clusterText, theme.clusterText, theme.fontFamily) : "",
+      ...r.labels.map((line) => textElement(line, theme.clusterText, theme.clusterText, theme.fontFamily)),
     ].join("");
     parts.push(`<g transform="translate(${n(cluster.rect.x)},${n(cluster.rect.y)})">${inner}</g>`);
   }
@@ -293,15 +285,12 @@ function graphToSvg(
   );
 }
 
-
 export function githubReadySource(source: string): string {
   return source;
 }
 
-
 const SEQ_ARROW = 10;
 const SELF_LOOP_WIDTH = 44;
-
 
 export function sequenceToSvg(
   scene: SequenceScene,
@@ -338,7 +327,6 @@ export function sequenceToSvg(
   ) =>
     `<text x="${n(x)}" y="${n(y)}" text-anchor="${anchor}" font-family="${esc(theme.fontFamily)}" ` +
     `font-size="${n(size)}" font-weight="${weight}" fill="${fill}" xml:space="preserve">${esc(content)}</text>`;
-
 
   for (const fragment of scene.fragments) {
     const { x, y, w, h } = fragment.rect;
@@ -431,11 +419,12 @@ export function sequenceToSvg(
     }
     if (message.label) {
       const lx = selfLoop ? from + SELF_LOOP_WIDTH + 8 : (from + to) / 2;
+      const rows = messageLabelRows(message.label, message.y, theme);
       parts.push(
-        `<text x="${n(lx)}" y="${n(message.y - 7)}" text-anchor="${selfLoop ? "start" : "middle"}" ` +
+        `<text x="${n(lx)}" y="${n(rows[0]!.y)}" text-anchor="${selfLoop ? "start" : "middle"}" ` +
           `font-family="${esc(theme.fontFamily)}" font-size="${n(theme.fontSize - 1)}" font-weight="500" ` +
           `fill="${theme.edgeText}" stroke="${theme.edgeTextHalo}" stroke-width="3.5" paint-order="stroke" ` +
-          `stroke-linejoin="round" xml:space="preserve">${esc(message.label)}</text>`,
+          `stroke-linejoin="round" xml:space="preserve">${tspans(rows, lx)}</text>`,
       );
     }
   }

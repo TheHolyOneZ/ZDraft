@@ -1,19 +1,14 @@
 import type { NodeShape, SourceRange } from "../model/scene";
 
-
 export interface SourceEdit {
-
   source: string;
-
 
   changed: SourceRange[];
 
   label: string;
 }
 
-
 export interface LayoutKnob {
-
   id: string;
   label: string;
 
@@ -27,7 +22,6 @@ export interface LayoutKnob {
   fallback: string;
 }
 
-
 export interface LayoutTuner {
   knobs: readonly LayoutKnob[];
 
@@ -36,31 +30,21 @@ export interface LayoutTuner {
   set(source: string, knob: string, value: string): SourceEdit | null;
 }
 
-
 export interface SemanticEditor {
-
-
   rename(source: string, id: string, next: string): SourceEdit | null;
-
 
   setLabel(source: string, id: string, next: string): SourceEdit | null;
 
-
   setShape(source: string, id: string, next: NodeShape): SourceEdit | null;
-
 
   group?(source: string, ids: readonly string[], title: string): SourceEdit | null;
 
-
   shapes: readonly NodeShape[];
-
 
   tuning?: LayoutTuner;
 
-
   idProblem(name: string): string | null;
 }
-
 
 export function splice(
   source: string,
@@ -72,7 +56,6 @@ export function splice(
     changed: { from: range.from, to: range.from + text.length },
   };
 }
-
 
 export function spliceAll(
   source: string,

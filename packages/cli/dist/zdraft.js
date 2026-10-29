@@ -113,7 +113,6 @@ var mono = {
   clusterStroke: "#000000",
   clusterText: "#000000",
   accent: "#000000",
-  // Greys, not hues: the categorical channel still works in one ink.
   series: ["#FFFFFF", "#E4E4E4", "#C9C9C9", "#AEAEAE", "#939393", "#787878", "#5D5D5D", "#424242"],
   strokeWidth: 1.75,
   printSafe: true
@@ -292,6 +291,39 @@ var RESERVED = /* @__PURE__ */ new Set([
   "vars"
 ]);
 var ARROWS = ["<->", "-->", "->", "<-", "--"];
+function scanD2(source) {
+  const out = [];
+  const scope = [];
+  for (const statement of scan(source)) {
+    if (statement === "close") {
+      scope.pop();
+      continue;
+    }
+    const isEdge = statement.arrows.length > 0 && statement.keys.length >= 2;
+    const prefix = scope.length > 0 ? scope.join(".") + "." : "";
+    statement.keys.forEach((key, i) => {
+      const path = absolute(scope, key.path);
+      out.push({
+        path,
+        text: key.path,
+        range: key.range,
+        value: !isEdge && i === statement.keys.length - 1 ? statement.value : null,
+        isEdgeEnd: isEdge
+      });
+    });
+    if (statement.keys.length === 1 && !isEdge) {
+      const key = statement.keys[0];
+      const path = absolute(scope, key.path);
+      const last = path.slice(path.lastIndexOf(".") + 1);
+      if (statement.opensBlock) {
+        scope.push(RESERVED.has(last) ? last : path.slice(prefix.length));
+      }
+    } else if (statement.opensBlock) {
+      scope.push("");
+    }
+  }
+  return out;
+}
 function locateD2(source) {
   const nodes = /* @__PURE__ */ new Map();
   const edges = /* @__PURE__ */ new Map();
@@ -352,6 +384,7 @@ function* scan(source) {
   const n4 = source.length;
   let keys = [];
   let arrows = [];
+  let value = null;
   let start = 0;
   let pending = null;
   const flushKey = () => {
@@ -367,10 +400,11 @@ function* scan(source) {
   const emit = function* (end, opensBlock) {
     flushKey();
     if (keys.length > 0) {
-      yield { keys, arrows, range: { from: start, to: end }, opensBlock };
+      yield { keys, arrows, value, range: { from: start, to: end }, opensBlock };
     }
     keys = [];
     arrows = [];
+    value = null;
   };
   const reset = (at) => {
     start = at;
@@ -428,7 +462,13 @@ function* scan(source) {
         continue;
       }
       if (source[i] === "{") continue;
-      while (i < n4 && source[i] !== "\n" && source[i] !== ";" && source[i] !== "}") i += 1;
+      const from = i;
+      while (i < n4 && source[i] !== "\n" && source[i] !== ";" && source[i] !== "}" && source[i] !== "{") {
+        i += 1;
+      }
+      let to = i;
+      while (to > from && /\s/.test(source[to - 1])) to -= 1;
+      value = { from, to };
       continue;
     }
     const arrow = ARROWS.find((a) => source.startsWith(a, i));
@@ -453,6 +493,230 @@ function* scan(source) {
   }
   yield* emit(n4, false);
 }
+
+// ../../src/core/edit/types.ts
+function spliceAll(source, edits) {
+  const ordered = [...edits].sort((a, b) => a.range.from - b.range.from);
+  let out = source;
+  let shift = 0;
+  const changed = [];
+  for (const edit of ordered) {
+    const from = edit.range.from + shift;
+    const to = edit.range.to + shift;
+    out = out.slice(0, from) + edit.text + out.slice(to);
+    changed.push({ from, to: from + edit.text.length });
+    shift += edit.text.length - (edit.range.to - edit.range.from);
+  }
+  return { source: out, changed };
+}
+
+// ../../src/core/edit/d2.ts
+var SHAPE_WORDS = {
+  rect: "rectangle",
+  round: "rectangle",
+  stadium: "oval",
+  circle: "circle",
+  ellipse: "oval",
+  diamond: "diamond",
+  hexagon: "hexagon",
+  parallelogram: "parallelogram",
+  cylinder: "cylinder",
+  queue: "queue",
+  package: "package",
+  step: "step",
+  callout: "callout",
+  stored: "stored_data",
+  person: "person",
+  doc: "document",
+  page: "page",
+  cloud: "cloud",
+  text: "text"
+};
+var SHAPES = Object.keys(SHAPE_WORDS);
+var RESERVED2 = /* @__PURE__ */ new Set([
+  "shape",
+  "label",
+  "icon",
+  "style",
+  "near",
+  "direction",
+  "constraint",
+  "width",
+  "height",
+  "top",
+  "left",
+  "link",
+  "tooltip",
+  "class",
+  "classes",
+  "layers",
+  "scenarios",
+  "steps",
+  "vars",
+  "grid-rows",
+  "grid-columns"
+]);
+function segmentsFor(source, id) {
+  const wanted = id.split(".");
+  const out = [];
+  for (const key of scanD2(source)) {
+    const resolved = key.path.split(".");
+    const written = key.text.split(".");
+    const offset = resolved.length - written.length;
+    if (offset < 0) continue;
+    const at = wanted.length - 1;
+    if (at < offset) continue;
+    if (resolved.slice(0, wanted.length).join(".") !== id) continue;
+    const local = at - offset;
+    if (local >= written.length) continue;
+    let from = key.range.from;
+    for (let i = 0; i < local; i += 1) from += written[i].length + 1;
+    out.push({ from, to: from + written[local].length });
+  }
+  return out;
+}
+function declarationOf(source, id) {
+  for (const key of scanD2(source)) {
+    if (key.path === id && !key.isEdgeEnd) return key;
+  }
+  return null;
+}
+function settingOf(source, path, name) {
+  const wanted = path ? `${path}.${name}` : name;
+  for (const key of scanD2(source)) {
+    if (key.path !== wanted || key.value === null) continue;
+    return { value: key.value, whole: { from: key.range.from, to: key.value.to } };
+  }
+  return null;
+}
+function indentAt(source, at) {
+  const lineStart = source.lastIndexOf("\n", Math.max(0, at - 1)) + 1;
+  return /^[ \t]*/.exec(source.slice(lineStart))?.[0] ?? "";
+}
+function endOfLine(source, at) {
+  const nl = source.indexOf("\n", at);
+  return nl === -1 ? source.length : nl;
+}
+function asLabel(text) {
+  const trimmed = text.replace(/\n/g, "\\n");
+  return /[{}:;#|<>&"'\n]|->|--/.test(trimmed) || trimmed !== trimmed.trim() ? `"${trimmed.replace(/"/g, '\\"')}"` : trimmed;
+}
+var D2_KNOBS = [
+  {
+    id: "direction",
+    label: "Direction",
+    note: "Which way the diagram flows. The single biggest change to how it reads.",
+    kind: "choice",
+    fallback: "down",
+    choices: [
+      { value: "down", label: "Top down" },
+      { value: "right", label: "Left to right" },
+      { value: "up", label: "Bottom to top" },
+      { value: "left", label: "Right to left" }
+    ]
+  }
+];
+var d2Tuner = {
+  knobs: D2_KNOBS,
+  read(source) {
+    const out = {};
+    for (const knob of D2_KNOBS) {
+      const found = settingOf(source, "", knob.id);
+      if (found) out[knob.id] = source.slice(found.value.from, found.value.to).trim();
+    }
+    return out;
+  },
+  set(source, knob, value) {
+    const spec = D2_KNOBS.find((k) => k.id === knob);
+    if (!spec) return null;
+    const existing = settingOf(source, "", knob);
+    if (value === spec.fallback) {
+      if (!existing) return { source, changed: [], label: `Set ${knob}` };
+      const to = Math.min(endOfLine(source, existing.whole.to) + 1, source.length);
+      const from = source.lastIndexOf("\n", existing.whole.from - 1) + 1;
+      const { source: out2, changed: changed2 } = spliceAll(source, [{ range: { from, to }, text: "" }]);
+      return { source: out2, changed: changed2, label: `Reset ${knob}` };
+    }
+    if (existing) {
+      const { source: out2, changed: changed2 } = spliceAll(source, [{ range: existing.value, text: value }]);
+      return { source: out2, changed: changed2, label: `Set ${knob} to ${value}` };
+    }
+    const { source: out, changed } = spliceAll(source, [
+      { range: { from: 0, to: 0 }, text: `${knob}: ${value}
+` }
+    ]);
+    return { source: out, changed, label: `Set ${knob} to ${value}` };
+  }
+};
+var d2Editor = {
+  shapes: SHAPES,
+  tuning: d2Tuner,
+  idProblem(name) {
+    const trimmed = name.trim();
+    if (trimmed === "") return "A name is needed.";
+    if (/->|--|<-/.test(trimmed)) return "That looks like a connection, not a name.";
+    for (const segment of trimmed.split(".")) {
+      if (segment === "") return "A name cannot have an empty part between dots.";
+      if (RESERVED2.has(segment)) return `\u201C${segment}\u201D configures a shape in D2.`;
+      if (/[{}:;#|<>]/.test(segment)) return "A D2 id cannot contain { } : ; # | < or >.";
+    }
+    return null;
+  },
+  rename(source, id, next) {
+    const problem = d2Editor.idProblem(next);
+    if (problem) return null;
+    const parent = id.slice(0, id.lastIndexOf(".") + 1);
+    if (!next.startsWith(parent) || next.slice(parent.length).includes(".")) return null;
+    const ranges = segmentsFor(source, id);
+    if (ranges.length === 0) return null;
+    const local = next.slice(parent.length);
+    const { source: out, changed } = spliceAll(
+      source,
+      ranges.map((range) => ({ range, text: local }))
+    );
+    return { source: out, changed, label: `Rename ${id} to ${next}` };
+  },
+  setLabel(source, id, next) {
+    const declaration = declarationOf(source, id);
+    if (!declaration) return null;
+    const text = asLabel(next);
+    const explicit = settingOf(source, id, "label");
+    if (explicit) {
+      const { source: out2, changed: changed2 } = spliceAll(source, [{ range: explicit.value, text }]);
+      return { source: out2, changed: changed2, label: `Relabel ${id}` };
+    }
+    if (declaration.value) {
+      const { source: out2, changed: changed2 } = spliceAll(source, [
+        { range: declaration.value, text }
+      ]);
+      return { source: out2, changed: changed2, label: `Relabel ${id}` };
+    }
+    const at = declaration.range.to;
+    const { source: out, changed } = spliceAll(source, [
+      { range: { from: at, to: at }, text: `: ${text}` }
+    ]);
+    return { source: out, changed, label: `Relabel ${id}` };
+  },
+  setShape(source, id, next) {
+    const word = SHAPE_WORDS[next];
+    if (!word) return null;
+    const declaration = declarationOf(source, id);
+    if (!declaration) return null;
+    const existing = settingOf(source, id, "shape");
+    if (existing) {
+      const { source: out2, changed: changed2 } = spliceAll(source, [{ range: existing.value, text: word }]);
+      return { source: out2, changed: changed2, label: `Reshape ${id}` };
+    }
+    const line = endOfLine(source, declaration.range.to);
+    const indent = indentAt(source, declaration.range.from);
+    const local = id.slice(id.lastIndexOf(".") + 1);
+    const { source: out, changed } = spliceAll(source, [
+      { range: { from: line, to: line }, text: `
+${indent}${local}.shape: ${word}` }
+    ]);
+    return { source: out, changed, label: `Reshape ${id}` };
+  }
+};
 
 // ../../src/core/locate/types.ts
 function lineColumnAt(source, offset) {
@@ -575,6 +839,18 @@ function fitLabel(text, box, baseSize, weight = 500, minScale = 0.78, maxLines =
   }
   return { lines: wrapText(text, box.w, size, weight, maxLines), size };
 }
+function labelBlock(text, center, size, weight = 500) {
+  const lines = text.split("\n");
+  const step = size * LINE_HEIGHT;
+  const spread = (lines.length - 1) * step;
+  const first = center.y - spread / 2 + size * 0.34;
+  const w = Math.max(...lines.map((l) => measureText(l, size, weight))) + 5;
+  const h = spread + size + 4;
+  return {
+    rows: lines.map((line, i) => ({ text: line, y: first + i * step })),
+    box: { x: center.x - w / 2, y: center.y - h / 2, w, h }
+  };
+}
 
 // ../../src/core/render/shapes.ts
 function n(v) {
@@ -652,8 +928,6 @@ function shapeGeometry(shape, r2, cornerRadius) {
       return {
         path: ellipsePath(r2),
         details: [],
-        // An ellipse's text box is its inscribed rectangle, which is narrower
-        // than the bounding box by a factor of √2 on each axis.
         boundary: "ellipse",
         textInset: { x: w * 0.146, y: h * 0.146 }
       };
@@ -903,7 +1177,6 @@ function shapeGeometry(shape, r2, cornerRadius) {
         details: [],
         boundary: "rect",
         textInset: { x: 8, y: 5 },
-        // The tail is not somewhere text can live.
         textBox: { x: 8, y: 5, w: Math.max(w - 16, 4), h: Math.max(bodyBottom - y - 10, 4) }
       };
     }
@@ -948,7 +1221,6 @@ function shapeGeometry(shape, r2, cornerRadius) {
         ]),
         details: [],
         boundary: "rect",
-        // A triangle's usable width is only the lower half of it.
         textInset: { x: w * 0.24, y: h * 0.42 }
       };
     }
@@ -1045,9 +1317,6 @@ var ARROW_MAP = {
   box: "odot",
   "filled-box": "dot",
   line: "open",
-  // Crow's-foot notation, which ZDraft does not draw natively. An open head is
-  // the honest approximation: it says "this end is not a plain arrow" without
-  // pretending to a cardinality it cannot show.
   "cf-one": "open",
   "cf-many": "open",
   "cf-one-required": "open",
@@ -1316,9 +1585,6 @@ var d2Adapter = {
   id: "d2",
   label: "D2",
   extensions: [".d2"],
-  /* D2 has one renderer for everything it draws. Its `shape: sequence_diagram`
-     is laid out by D2 itself as boxes and arrows, so it arrives here as a
-     graph — which is what it is, geometrically. */
   detectFamily() {
     return "graph";
   },
@@ -1327,8 +1593,6 @@ var d2Adapter = {
     let compiled;
     try {
       compiled = await d2.compile(source, {
-        // ELK is the better router for anything with containers; dagre is
-        // faster and is what D2 itself defaults to.
         layout: opts.layoutProgram === "elk" ? "elk" : "dagre",
         pad: 0
       });
@@ -1344,7 +1608,8 @@ var d2Adapter = {
   },
   locate(source) {
     return locateD2(source);
-  }
+  },
+  edit: d2Editor
 };
 
 // ../../src/core/engines/graphviz.ts
@@ -1551,26 +1816,10 @@ function locateDot(source) {
   return { nodes, edges };
 }
 
-// ../../src/core/edit/types.ts
-function spliceAll(source, edits) {
-  const ordered = [...edits].sort((a, b) => a.range.from - b.range.from);
-  let out = source;
-  let shift = 0;
-  const changed = [];
-  for (const edit of ordered) {
-    const from = edit.range.from + shift;
-    const to = edit.range.to + shift;
-    out = out.slice(0, from) + edit.text + out.slice(to);
-    changed.push({ from, to: from + edit.text.length });
-    shift += edit.text.length - (edit.range.to - edit.range.from);
-  }
-  return { source: out, changed };
-}
-
 // ../../src/core/edit/dot.ts
 var KEYWORDS2 = /* @__PURE__ */ new Set(["graph", "digraph", "subgraph", "node", "edge", "strict"]);
 var ID_VALUED = /* @__PURE__ */ new Set(["ltail", "lhead", "root"]);
-var SHAPE_WORDS = {
+var SHAPE_WORDS2 = {
   rect: "box",
   round: "box",
   stadium: "box",
@@ -1590,7 +1839,7 @@ var SHAPE_WORDS = {
   package: "box3d",
   text: "plaintext"
 };
-var SHAPES = Object.keys(SHAPE_WORDS);
+var SHAPES2 = Object.keys(SHAPE_WORDS2);
 function idOccurrences(source, id) {
   const tokens = tokenizeDot(source);
   const out = [];
@@ -1679,7 +1928,7 @@ function insertAttribute(source, id, text) {
   if (!first) return null;
   return { range: { from: first.to, to: first.to }, text: ` [${text}]` };
 }
-function indentAt(source, at) {
+function indentAt2(source, at) {
   const lineStart = source.lastIndexOf("\n", Math.max(0, at - 1)) + 1;
   return /^[ \t]*/.exec(source.slice(lineStart))?.[0] ?? "";
 }
@@ -1800,7 +2049,7 @@ var dotTuner = {
     }
     const open = source.indexOf("{");
     if (open < 0) return null;
-    const indent = indentAt(source, source.indexOf("\n", open) + 1) || "  ";
+    const indent = indentAt2(source, source.indexOf("\n", open) + 1) || "  ";
     const { source: out, changed } = spliceAll(source, [
       { range: { from: open + 1, to: open + 1 }, text: `
 ${indent}${knob}=${text};` }
@@ -1829,7 +2078,7 @@ function unquote(value) {
   return trimmed.startsWith('"') && trimmed.endsWith('"') ? trimmed.slice(1, -1).replace(/\\"/g, '"') : trimmed;
 }
 var dotEditor = {
-  shapes: SHAPES,
+  shapes: SHAPES2,
   tuning: dotTuner,
   idProblem(name) {
     const trimmed = name.trim();
@@ -1872,7 +2121,7 @@ var dotEditor = {
     const close = source.lastIndexOf("}");
     if (close < 0) return null;
     const name = freeClusterName(source, title);
-    const indent = indentAt(source, close) + "  ";
+    const indent = indentAt2(source, close) + "  ";
     const inner = ids.map((id) => `${indent}  ${asId(id)};`).join("\n");
     const block = `
 ${indent}subgraph ${name} {
@@ -1886,7 +2135,7 @@ ${indent}}
     return { source: out, changed, label: `Group ${ids.length} nodes` };
   },
   setShape(source, id, next) {
-    const word = SHAPE_WORDS[next];
+    const word = SHAPE_WORDS2[next];
     if (!word) return null;
     const list = attrListOf(source, id);
     if (list) {
@@ -2204,7 +2453,6 @@ var graphvizAdapter = {
   id: "graphviz",
   label: "Graphviz",
   extensions: [".dot", ".gv"],
-  // DOT describes a graph and nothing else; there is no family to detect.
   detectFamily() {
     return "graph";
   },
@@ -2290,7 +2538,7 @@ var FENCE_ENGINES = {
   puml: "plantuml",
   uml: "plantuml"
 };
-var MARKER = /^[ \t]*<!--\s*zdraft:\s*([^\s>-][^>]*?)\s*-->[ \t]*$/;
+var MARKER = /^[ \t]*<!--\s*zdraft:\s*([^\s>-][^>]*?)\s*-->[ \t]*\r?$/;
 function isMarkdown(name) {
   return /\.(md|markdown|mdx)$/i.test(name);
 }
@@ -2323,8 +2571,6 @@ function parseMarkdownBlocks(source) {
       marked: Boolean(name),
       engine,
       info: fence.info,
-      // The trailing newline before the closing fence is not part of the
-      // diagram, and keeping it would make every round trip grow the file.
       source: trimTrailingNewline(source.slice(bodyFrom, bodyTo)),
       body: { from: bodyFrom, to: bodyTo },
       whole: {
@@ -2340,7 +2586,7 @@ function parseMarkdownBlocks(source) {
   return blocks;
 }
 function openingFence(text) {
-  const match = /^( {0,3})(`{3,}|~{3,})(.*)$/.exec(text);
+  const match = /^( {0,3})(`{3,}|~{3,})(.*)\r?$/.exec(text);
   if (!match) return null;
   const marker = match[2];
   const info = match[3].trim();
@@ -2350,7 +2596,7 @@ function openingFence(text) {
 function closeOf(lines, open, fence) {
   const char = fence.marker[0];
   for (let i = open + 1; i < lines.length; i += 1) {
-    const match = /^( {0,3})(`{3,}|~{3,})[ \t]*$/.exec(lines[i].text);
+    const match = /^( {0,3})(`{3,}|~{3,})[ \t]*\r?$/.exec(lines[i].text);
     if (!match) continue;
     if (match[2][0] === char && match[2].length >= fence.marker.length) return i;
   }
@@ -2366,6 +2612,7 @@ function splitLines(source) {
   return out;
 }
 function trimTrailingNewline(text) {
+  if (text.endsWith("\r\n")) return text.slice(0, -2);
   return text.endsWith("\n") ? text.slice(0, -1) : text;
 }
 
@@ -2586,9 +2833,7 @@ function rerouteEdges(edges, ctx) {
   };
   return edges.map((edge) => {
     const manual = ctx.waypoints?.get(edge.id);
-    const touched = ctx.moved.has(edge.from) || ctx.moved.has(edge.to) || manual !== void 0 || // A node dragged on top of this edge is reason enough to redraw it, even
-    // though neither of its own endpoints moved.
-    crossesAny(edge, movedRects, ctx.moved);
+    const touched = ctx.moved.has(edge.from) || ctx.moved.has(edge.to) || manual !== void 0 || crossesAny(edge, movedRects, ctx.moved);
     if (!touched) return edge;
     const from = ctx.nodes.get(edge.from);
     const to = ctx.nodes.get(edge.to);
@@ -2649,7 +2894,6 @@ function labelAnchor(route) {
       const t = seg === 0 ? 0 : remaining / seg;
       return {
         x: a.x + (b.x - a.x) * t,
-        // Lift the label clear of the line it sits on.
         y: a.y + (b.y - a.y) * t - 8
       };
     }
@@ -2743,9 +2987,6 @@ function applyPins(scene, layout) {
     nodes: nodeMap,
     moved,
     waypoints,
-    // Obstacle avoidance needs somewhere to build its grid. The engine's own
-    // bounds are the right extent: a pin can push a node outside them, and
-    // `boundsOf` below widens the scene afterwards.
     bounds: scene.bounds
   });
   edges = edges.map((edge) => {
@@ -2843,6 +3084,14 @@ function boundsOf2(nodes, clusters, scene, edges) {
 // ../../src/core/sequence/layout.ts
 var ACTIVATION_WIDTH = 10;
 var ACTIVATION_STEP = 5;
+function messageLineStep(theme) {
+  return (theme.fontSize - 1) * LINE_HEIGHT;
+}
+function messageLabelRows(label, y, theme) {
+  const lines = label.split("\n");
+  const step = messageLineStep(theme);
+  return lines.map((text, i) => ({ text, y: y - 7 - (lines.length - 1 - i) * step }));
+}
 
 // ../../src/core/render/edges.ts
 function n2(v) {
@@ -3010,9 +3259,6 @@ function renderNode(node, theme) {
       for (const item of section.items) {
         y += rowSize * LINE_HEIGHT;
         lines.push({
-          // Rows are left-aligned and clipped rather than wrapped: a method
-          // signature broken across two lines is harder to read than one that
-          // ends in an ellipsis.
           text: truncateToWidth(item, inner.w, rowSize, 400),
           x: inner.x,
           y: y - rowSize * 0.3,
@@ -3046,15 +3292,15 @@ function renderCluster(cluster, theme) {
     path: shapeGeometry("rect", local, theme.cornerRadius).path,
     fill: cluster.style?.fill ?? theme.clusterFill,
     stroke: cluster.style?.stroke ?? theme.clusterStroke,
-    label: cluster.label ? {
-      text: truncateToWidth(cluster.label, local.w - PAD_X * 2, size, 600),
+    labels: cluster.label ? cluster.label.split("\n").map((row, i) => ({
+      text: truncateToWidth(row, local.w - PAD_X * 2, size, 600),
       x: PAD_X,
-      y: size + PAD_Y,
+      y: size + PAD_Y + i * size * LINE_HEIGHT,
       anchor: "start",
       size,
       weight: 600,
       muted: true
-    } : void 0
+    })) : []
   };
 }
 function round(v) {
@@ -3286,6 +3532,10 @@ function n3(v) {
 function attr(name, value) {
   return value === void 0 || value === null || value === "" ? "" : ` ${name}="${value}"`;
 }
+function tspans(rows, x) {
+  if (rows.length === 1) return esc(rows[0].text);
+  return rows.map((row) => `<tspan x="${n3(x)}" y="${n3(row.y)}">${esc(row.text)}</tspan>`).join("");
+}
 function textElement(line, color, muted, family) {
   return `<text x="${n3(line.x)}" y="${n3(line.y)}" text-anchor="${line.anchor}" font-family="${esc(family)}" font-size="${n3(line.size)}" font-weight="${line.weight}"` + attr("font-style", line.italic ? "italic" : void 0) + ` fill="${line.muted ? muted : color}" xml:space="preserve">${esc(line.text)}</text>`;
 }
@@ -3308,12 +3558,10 @@ function edgeElement(edge, theme) {
     const size = theme.fontSize - 1;
     const x = edge.label.at.x + (edge.label.offset?.x ?? 0);
     const cy = edge.label.at.y + (edge.label.offset?.y ?? 0);
-    const y = cy + size * 0.34;
-    const boxW = measureText(edge.label.text, size, 500) + 5;
-    const boxH = size + 4;
+    const { rows, box } = labelBlock(edge.label.text, { x, y: cy }, size, 500);
     parts.push(
-      `<rect x="${n3(x - boxW / 2)}" y="${n3(cy - boxH / 2)}" width="${n3(boxW)}" height="${n3(boxH)}" rx="3" fill="${theme.edgeTextHalo}"/>`,
-      `<text x="${n3(x)}" y="${n3(y)}" text-anchor="middle" font-family="${esc(theme.fontFamily)}" font-size="${n3(size)}" font-weight="500" fill="${theme.edgeText}" stroke="${theme.edgeTextHalo}" stroke-width="2" paint-order="stroke" stroke-linejoin="round" xml:space="preserve">${esc(edge.label.text)}</text>`
+      `<rect x="${n3(box.x)}" y="${n3(box.y)}" width="${n3(box.w)}" height="${n3(box.h)}" rx="3" fill="${theme.edgeTextHalo}"/>`,
+      `<text x="${n3(x)}" y="${n3(rows[0].y)}" text-anchor="middle" font-family="${esc(theme.fontFamily)}" font-size="${n3(size)}" font-weight="500" fill="${theme.edgeText}" stroke="${theme.edgeTextHalo}" stroke-width="2" paint-order="stroke" stroke-linejoin="round" xml:space="preserve">${tspans(rows, x)}</text>`
     );
   }
   return parts.join("");
@@ -3362,7 +3610,7 @@ function graphToSvg(scene, theme, options = {}) {
     const r2 = renderCluster(cluster, theme);
     const inner = [
       `<path d="${r2.path}" fill="${r2.fill}" stroke="${r2.stroke}" stroke-width="${n3(theme.strokeWidth)}" stroke-dasharray="6 4"/>`,
-      r2.label ? textElement(r2.label, theme.clusterText, theme.clusterText, theme.fontFamily) : ""
+      ...r2.labels.map((line) => textElement(line, theme.clusterText, theme.clusterText, theme.fontFamily))
     ].join("");
     parts.push(`<g transform="translate(${n3(cluster.rect.x)},${n3(cluster.rect.y)})">${inner}</g>`);
   }
@@ -3475,8 +3723,9 @@ function sequenceToSvg(scene, theme, options = {}) {
     }
     if (message.label) {
       const lx = selfLoop ? from + SELF_LOOP_WIDTH + 8 : (from + to) / 2;
+      const rows = messageLabelRows(message.label, message.y, theme);
       parts.push(
-        `<text x="${n3(lx)}" y="${n3(message.y - 7)}" text-anchor="${selfLoop ? "start" : "middle"}" font-family="${esc(theme.fontFamily)}" font-size="${n3(theme.fontSize - 1)}" font-weight="500" fill="${theme.edgeText}" stroke="${theme.edgeTextHalo}" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round" xml:space="preserve">${esc(message.label)}</text>`
+        `<text x="${n3(lx)}" y="${n3(rows[0].y)}" text-anchor="${selfLoop ? "start" : "middle"}" font-family="${esc(theme.fontFamily)}" font-size="${n3(theme.fontSize - 1)}" font-weight="500" fill="${theme.edgeText}" stroke="${theme.edgeTextHalo}" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round" xml:space="preserve">${tspans(rows, lx)}</text>`
       );
     }
   }

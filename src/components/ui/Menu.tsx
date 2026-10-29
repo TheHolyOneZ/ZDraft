@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 
 import { useDismiss, usePrefersReducedMotion } from "./hooks";
 
-
 export interface MenuItem {
   id: string;
   label: ReactNode;
@@ -43,7 +42,6 @@ export function ContextMenu({
   );
 
   useDismiss(anchor !== null, onClose, useMemo(() => [panelRef], []));
-
 
   useEffect(() => {
     if (!anchor) {
@@ -153,7 +151,6 @@ export function ContextMenu({
     document.body,
   );
 }
-
 
 export function useContextMenu() {
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);

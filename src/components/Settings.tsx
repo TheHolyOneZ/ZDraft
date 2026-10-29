@@ -33,13 +33,11 @@ import {
   type SelectOption,
 } from "./ui";
 
-
 type Tab = "settings" | "about";
 
 export function Settings({ open, onClose }: { open: boolean; onClose(): void }) {
   const s = useSettingsStore();
   const [tab, setTab] = useState<Tab>("settings");
-
 
   useEffect(() => {
     if (open) setTab("settings");
@@ -163,6 +161,13 @@ export function Settings({ open, onClose }: { open: boolean; onClose(): void }) 
             <Field label="Minimap" description="An overview in the corner for large diagrams.">
               <Switch checked={s.showMinimap} onChange={(v) => s.set("showMinimap", v)} />
             </Field>
+
+            <Field
+              label="Save layout as you go"
+              description="Drags and pins go to the .zlayout.toml at once. Off holds them until Ctrl+S, like the source."
+            >
+              <Switch checked={s.autoSaveLayout} onChange={(v) => s.set("autoSaveLayout", v)} />
+            </Field>
           </Section>
 
           <Section title="Editor">
@@ -203,7 +208,6 @@ export function Settings({ open, onClose }: { open: boolean; onClose(): void }) 
   );
 }
 
-
 function PlantUmlSection() {
   const jar = useSettingsStore((s) => s.plantumlJar);
   const setJar = useSettingsStore((s) => s.setPlantumlJar);
@@ -229,7 +233,6 @@ function PlantUmlSection() {
     void check(false);
   }, [check, jar]);
 
-
   useEffect(() => {
     if (!isTauri()) return;
     void api.plantumlInstallDir().then(setInstallDir, () => setInstallDir(null));
@@ -241,9 +244,7 @@ function PlantUmlSection() {
     try {
       const path = await api.plantumlInstall();
 
-
       await check(true);
-
 
       const doc = useDocumentStore.getState();
       if (doc.engine === "plantuml") doc.setSource(doc.source, true);
@@ -328,8 +329,6 @@ function PlantUmlSection() {
       {!ready && (
         <div className="mb-3 flex flex-col gap-2">
           {probe?.java === null ? (
-
-
             <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-2)" }}>
               Install a Java runtime first — <Code>sudo pacman -S jre-openjdk</Code> on Arch,{" "}
               <Code>sudo apt install default-jre</Code> on Debian or Ubuntu, or{" "}
@@ -413,7 +412,6 @@ function PlantUmlSection() {
   );
 }
 
-
 function Code({ children }: { children: React.ReactNode }) {
   return (
     <code
@@ -437,7 +435,6 @@ function sourceLabel(probe: PlantUmlProbe): string {
       return "";
   }
 }
-
 
 function missingPart(probe: PlantUmlProbe | null, configured: string): string {
   if (!probe) return "PlantUML needs the desktop app.";

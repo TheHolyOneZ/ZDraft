@@ -1,9 +1,7 @@
 import { edgeId, type SourceRange } from "../model/scene";
 import type { LocateIndex } from "./types";
 
-
 interface Key {
-
   path: string;
 
   range: SourceRange;
@@ -20,7 +18,6 @@ interface Statement {
 
   opensBlock: boolean;
 }
-
 
 const RESERVED = new Set([
   "shape",
@@ -53,9 +50,7 @@ const RESERVED = new Set([
 
 const ARROWS = ["<->", "-->", "->", "<-", "--"];
 
-
 export interface D2Key {
-
   path: string;
 
   text: string;
@@ -65,7 +60,6 @@ export interface D2Key {
 
   isEdgeEnd: boolean;
 }
-
 
 export function scanD2(source: string): D2Key[] {
   const out: D2Key[] = [];
@@ -92,7 +86,6 @@ export function scanD2(source: string): D2Key[] {
       });
     });
 
-
     if (statement.keys.length === 1 && !isEdge) {
       const key = statement.keys[0]!;
       const path = absolute(scope, key.path);
@@ -114,12 +107,9 @@ export function locateD2(source: string): LocateIndex {
   const edges = new Map<string, SourceRange>();
   const pairSeen = new Map<string, number>();
 
-
   const scope: string[] = [];
 
   const declare = (path: string, range: SourceRange) => {
-
-
     if (!nodes.has(path)) nodes.set(path, range);
   };
 
@@ -134,7 +124,6 @@ export function locateD2(source: string): LocateIndex {
 
     if (statement.arrows.length > 0 && resolved.length >= 2) {
       for (const key of resolved) declare(key.path, key.range);
-
 
       for (let i = 0; i + 1 < resolved.length; i += 1) {
         const arrow = statement.arrows[i] ?? "->";
@@ -152,15 +141,12 @@ export function locateD2(source: string): LocateIndex {
       if (statement.opensBlock && !RESERVED.has(last)) scope.push(key.path.slice(prefix.length));
       else if (statement.opensBlock) scope.push(last);
     } else if (statement.opensBlock) {
-
-
       scope.push("");
     }
   }
 
   return { nodes, edges };
 }
-
 
 function absolute(scope: readonly string[], path: string): string {
   let up = 0;
@@ -179,11 +165,9 @@ function absolute(scope: readonly string[], path: string): string {
   return rest === "" ? base.join(".") : prefix + rest;
 }
 
-
 function orient(arrow: string, a: string, b: string): [string, string] {
   return arrow === "<-" ? [b, a] : [a, b];
 }
-
 
 function* scan(source: string): Generator<Statement | "close"> {
   let i = 0;
@@ -197,7 +181,6 @@ function* scan(source: string): Generator<Statement | "close"> {
 
   const flushKey = () => {
     if (!pending) return;
-
 
     const lead = pending.text.length - pending.text.trimStart().length;
     const trail = pending.text.length - pending.text.trimEnd().length;
@@ -225,7 +208,6 @@ function* scan(source: string): Generator<Statement | "close"> {
   while (i < n) {
     const ch = source[i]!;
 
-
     if (ch === "#" && pending === null) {
       while (i < n && source[i] !== "\n") i += 1;
       continue;
@@ -234,7 +216,6 @@ function* scan(source: string): Generator<Statement | "close"> {
       while (i < n && source[i] !== "\n") i += 1;
       continue;
     }
-
 
     if ((ch === '"' || ch === "'") && pending === null) {
       const from = i;
@@ -270,13 +251,11 @@ function* scan(source: string): Generator<Statement | "close"> {
       continue;
     }
 
-
     if (ch === ":") {
       flushKey();
       i += 1;
 
       while (i < n && (source[i] === " " || source[i] === "\t")) i += 1;
-
 
       if (source[i] === "|") {
         let bars = 0;
@@ -288,7 +267,6 @@ function* scan(source: string): Generator<Statement | "close"> {
       }
 
       if (source[i] === "{") continue;
-
 
       const from = i;
       while (
@@ -307,7 +285,6 @@ function* scan(source: string): Generator<Statement | "close"> {
       continue;
     }
 
-
     const arrow = ARROWS.find((a) => source.startsWith(a, i));
     if (arrow) {
       flushKey();
@@ -317,8 +294,6 @@ function* scan(source: string): Generator<Statement | "close"> {
     }
 
     if (/\s/.test(ch)) {
-
-
       if (pending) pending.text += ch;
       i += 1;
       if (pending) pending.to = i;

@@ -1,16 +1,13 @@
 import type { Annotation, AnnotationKind } from "../sidecar/types";
 import { rectCenter, type Point, type Rect } from "../model/geometry";
 
-
 export type { Annotation, AnnotationKind };
-
 
 export interface AnnotationColor {
   id: string;
   label: string;
   value: string;
 }
-
 
 export const ANNOTATION_COLORS: readonly AnnotationColor[] = [
   { id: "rose", label: "Rose", value: "#f43f5e" },
@@ -29,12 +26,9 @@ export function annotationColor(name: string | null | undefined): string {
   );
 }
 
-
 const MIN_DRAG = 6;
 
-
 const NOTE_DEFAULT = { w: 190, h: 68 };
-
 
 export function annotationFromDrag(
   kind: AnnotationKind,
@@ -45,7 +39,6 @@ export function annotationFromDrag(
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const dragged = Math.hypot(dx, dy) >= MIN_DRAG;
-
 
   const boxed = Math.abs(dx) >= MIN_DRAG && Math.abs(dy) >= MIN_DRAG;
 
@@ -105,13 +98,11 @@ export function annotationFromDrag(
   }
 }
 
-
 export function nextAnnotationId(existing: Readonly<Record<string, unknown>>): string {
   let n = 1;
   while (`a${n}` in existing) n += 1;
   return `a${n}`;
 }
-
 
 export function annotationBounds(mark: Annotation): Rect {
   const [x, y] = mark.at;
@@ -138,7 +129,6 @@ export function annotationBounds(mark: Annotation): Rect {
   return { x: x + minX, y: y + minY, w: maxX - minX, h: maxY - minY };
 }
 
-
 export function annotationPath(mark: Annotation): Point[] {
   const [x, y] = mark.at;
   return (mark.points ?? []).map(([px, py]) => ({ x: x + px, y: y + py }));
@@ -150,7 +140,6 @@ export function moveAnnotation(mark: Annotation, dx: number, dy: number): Annota
     at: [Math.round(mark.at[0] + dx), Math.round(mark.at[1] + dy)],
   };
 }
-
 
 export function annotationAt(
   annotations: Readonly<Record<string, Annotation>>,
@@ -184,14 +173,12 @@ export function annotationAt(
   return null;
 }
 
-
 export function byCreation(a: string, b: string): number {
   const n = (id: string) => Number.parseInt(id.replace(/^\D+/, ""), 10);
   const [x, y] = [n(a), n(b)];
   if (Number.isNaN(x) || Number.isNaN(y)) return a.localeCompare(b);
   return x - y || a.localeCompare(b);
 }
-
 
 export const HIGHLIGHT_GRAB = 8;
 
@@ -224,7 +211,6 @@ function distanceToSegment(p: Point, a: Point, b: Point): number {
   return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }
 
-
 export function leaderLine(
   mark: Annotation,
   target: Rect,
@@ -244,7 +230,6 @@ function overlaps(a: Rect, b: Rect): boolean {
   );
 }
 
-
 function clipToRect(centre: Point, toward: Point, rect: Rect): Point {
   const dx = toward.x - centre.x;
   const dy = toward.y - centre.y;
@@ -253,7 +238,6 @@ function clipToRect(centre: Point, toward: Point, rect: Rect): Point {
   const halfW = rect.w / 2;
   const halfH = rect.h / 2;
 
-
   const scale = Math.min(
     dx === 0 ? Infinity : halfW / Math.abs(dx),
     dy === 0 ? Infinity : halfH / Math.abs(dy),
@@ -261,7 +245,6 @@ function clipToRect(centre: Point, toward: Point, rect: Rect): Point {
 
   return { x: centre.x + dx * scale, y: centre.y + dy * scale };
 }
-
 
 export function retargetAnnotations(
   annotations: Readonly<Record<string, Annotation>> | undefined,
@@ -277,7 +260,6 @@ export function retargetAnnotations(
   for (const [id, mark] of affected) next[id] = { ...mark, anchor: to };
   return next;
 }
-
 
 export function simplify(points: readonly Point[], epsilon: number): Point[] {
   if (points.length < 3) return [...points];

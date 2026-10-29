@@ -75,7 +75,6 @@ describe("applyPins", () => {
     const before = scene.edges.find((e) => e.id === "c->d")!;
     const applied = applyPins(scene, { pins: { a: { x: 900, y: 900 } } });
 
-
     expect(applied.scene.edges.find((e) => e.id === "c->d")).toBe(before);
   });
 
@@ -117,7 +116,6 @@ describe("applyPins", () => {
   it("refuses to guess when two nodes share a fingerprint", async () => {
     const scene = await layout('digraph { p [label="Step"]; q [label="Step"]; }');
 
-
     const applied = applyPins(scene, {
       pins: { gone: { x: 1, y: 2, fingerprint: "not-a-real-fingerprint" } },
     });
@@ -128,7 +126,6 @@ describe("applyPins", () => {
   it("flags a pin the layout has since moved a long way from", async () => {
     const scene = await layout("digraph { a -> b; }");
     const applied = applyPins(scene, {
-
       pins: { a: { x: 5000, y: 5000, auto: [5000, 5000] } },
     });
 
@@ -138,7 +135,6 @@ describe("applyPins", () => {
   it("says nothing about a drag, however far it went", async () => {
     const scene = await layout("digraph { a -> b; }");
     const node = scene.nodes.find((n) => n.id === "a")!;
-
 
     const applied = applyPins(scene, { pins: { a: pinFor(node, { x: 5000, y: 5000 }) } });
 
@@ -227,8 +223,6 @@ describe("pin editing", () => {
 
 describe("the round-trip, as a property", () => {
   it("reproduces pinned positions exactly after a reload", async () => {
-
-
     const source = "digraph { rankdir=LR; a -> b -> c; a -> c; d -> b; }";
     const scene = await layout(source);
 
@@ -241,7 +235,6 @@ describe("the round-trip, as a property", () => {
       saved = withPin(saved, node.id, pinFor(node, center));
     });
 
-
     const reloaded = await layout(source);
     const applied = applyPins(reloaded, saved);
 
@@ -253,7 +246,6 @@ describe("the round-trip, as a property", () => {
   it("keeps pins stable when an unrelated part of the source changes", async () => {
     const before = await layout("digraph { a -> b; }");
     const pinned = withPin({}, "a", pinFor(before.nodes.find((n) => n.id === "a")!, { x: 250, y: 60 }));
-
 
     const after = await layout("digraph { a -> b; x -> y -> z; }");
     const applied = applyPins(after, pinned);

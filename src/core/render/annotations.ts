@@ -14,7 +14,6 @@ import { arrowGeometry } from "./edges";
 import { shapeGeometry } from "./shapes";
 import { wrapText } from "./text";
 
-
 export interface AnnotationText {
   text: string;
   x: number;
@@ -39,10 +38,8 @@ export interface AnnotationRender {
   leader?: { from: Point; to: Point };
 }
 
-
 const NOTE_PAD = 10;
 const ARROW_SIZE = 13;
-
 
 export const ANNOTATION_STROKE = 2.5;
 export const HIGHLIGHT_OPACITY = 0.16;
@@ -109,7 +106,6 @@ export function renderAnnotation(
   }
 }
 
-
 function noteLines(mark: Annotation, bounds: Rect, theme: DiagramTheme): AnnotationText[] {
   const text = mark.text?.trim();
   if (!text) return [];
@@ -131,7 +127,6 @@ function leaderFor(mark: Annotation, bounds: Rect, scene: GraphScene | null) {
 
   const node = scene.nodes.find((n) => n.id === mark.anchor);
 
-
   if (!node) return null;
 
   return leaderLine({ ...mark, at: [bounds.x, bounds.y] }, node.rect);
@@ -141,7 +136,6 @@ function polyline(points: readonly Point[]): string {
   if (points.length === 0) return "";
   return points.map((p, i) => `${i === 0 ? "M" : "L"}${r(p.x)},${r(p.y)}`).join(" ");
 }
-
 
 function smoothed(points: readonly Point[]): string {
   if (points.length < 3) return polyline(points);
@@ -165,7 +159,6 @@ function smoothed(points: readonly Point[]): string {
 function r(v: number): number {
   return Math.round(v * 100) / 100;
 }
-
 
 export function annotationsBounds(
   annotations: Readonly<Record<string, Annotation>> | undefined,

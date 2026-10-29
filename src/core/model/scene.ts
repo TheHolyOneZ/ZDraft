@@ -1,6 +1,5 @@
 import type { Point, Rect } from "./geometry";
 
-
 export interface SourceRange {
   from: number;
   to: number;
@@ -8,16 +7,12 @@ export interface SourceRange {
 
 export type EngineId = "graphviz" | "mermaid" | "d2" | "plantuml";
 
-
 export type Family = "graph" | "sequence" | "passthrough";
 
-
 export interface Compartment {
-
   label?: string;
   items: string[];
 }
-
 
 export type NodeBody =
   | { kind: "label"; text: string }
@@ -28,7 +23,6 @@ export type NodeBody =
       stereotype?: string;
       sections: Compartment[];
     };
-
 
 export type NodeShape =
   | "rect"
@@ -73,7 +67,6 @@ export interface GraphNode {
 
   rect: Rect;
 
-
   fingerprint: string;
 
   parent?: string;
@@ -90,9 +83,7 @@ export interface Cluster {
   sourceRange?: SourceRange;
 }
 
-
 export type ArrowKind = "none" | "arrow" | "open" | "dot" | "odot" | "diamond" | "odiamond" | "cross";
-
 
 export type EdgeRoute =
   | { kind: "spline"; points: Point[] }
@@ -112,7 +103,6 @@ export interface GraphEdge {
   to: string;
   route: EdgeRoute;
 
-
   arrowStart?: Point;
   arrowEnd?: Point;
   startArrow: ArrowKind;
@@ -123,7 +113,6 @@ export interface GraphEdge {
 
   rerouted?: boolean;
 }
-
 
 export type Direction = "TB" | "BT" | "LR" | "RL";
 
@@ -138,7 +127,6 @@ export interface GraphScene {
   clusters: Cluster[];
   bounds: Rect;
 }
-
 
 export interface Lifeline {
   id: string;
@@ -206,7 +194,6 @@ export interface SequenceScene {
   bounds: Rect;
 }
 
-
 export interface PassthroughScene {
   family: "passthrough";
   engine: EngineId;
@@ -220,7 +207,6 @@ export interface PassthroughScene {
 
 export type Scene = GraphScene | SequenceScene | PassthroughScene;
 
-
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
 export interface Diagnostic {
@@ -232,7 +218,6 @@ export interface Diagnostic {
   range?: SourceRange;
 
   nodes?: string[];
-
 
   fix?: DiagnosticFix;
 }
@@ -247,7 +232,6 @@ export interface LayoutResult {
   diagnostics: Diagnostic[];
 }
 
-
 export function isGraph(scene: Scene): scene is GraphScene {
   return scene.family === "graph";
 }
@@ -260,11 +244,9 @@ export function isPassthrough(scene: Scene): scene is PassthroughScene {
   return scene.family === "passthrough";
 }
 
-
 export function isPinnable(scene: Scene): boolean {
   return scene.family !== "passthrough";
 }
-
 
 export function nodesIn(scene: GraphScene, selection: ReadonlySet<string>): GraphNode[] {
   if (selection.size === 0) return [];
@@ -273,7 +255,6 @@ export function nodesIn(scene: GraphScene, selection: ReadonlySet<string>): Grap
   for (const cluster of scene.clusters) {
     if (selection.has(cluster.id)) clusters.add(cluster.id);
   }
-
 
   if (clusters.size > 0) {
     for (let pass = 0; pass < scene.clusters.length; pass += 1) {
@@ -297,7 +278,6 @@ export function nodeText(body: NodeBody): string {
   return body.kind === "label" ? body.text : body.title;
 }
 
-
 export function routeEnd(route: EdgeRoute): Point | undefined {
   return route.points[route.points.length - 1];
 }
@@ -305,7 +285,6 @@ export function routeEnd(route: EdgeRoute): Point | undefined {
 export function routeStart(route: EdgeRoute): Point | undefined {
   return route.points[0];
 }
-
 
 export function edgeId(from: string, to: string, ordinal = 0): string {
   return ordinal === 0 ? `${from}->${to}` : `${from}->${to}#${ordinal}`;

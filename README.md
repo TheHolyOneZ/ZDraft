@@ -104,6 +104,10 @@ see it again later, press `Ctrl+K` and choose **Take the tour**.
    you do.
 5. **Save with `Ctrl+S`.** Your drag was already saved, separately.
 
+Switch to another file, start a new one, or close the window with unsaved edits
+and ZDraft asks first — **Save**, **Don't save** or **Cancel** — rather than
+quietly dropping them.
+
 Pointed at an empty folder, ZDraft offers to create the first file rather than
 showing you an empty grid.
 
@@ -178,6 +182,10 @@ The two panes are wired together in both directions.
 It works in all four languages — none of which hand back source positions, so
 ZDraft scans for them itself.
 
+Line breaks come through the way each language writes them — `<br/>` in
+Mermaid, `\n` in Graphviz — on nodes, **edge labels**, subgraph titles and
+sequence messages alike, on the canvas and in every export.
+
 ZDraft also reopens whatever you had open last, at the zoom and position you
 left it, so launching it puts you back where you were rather than at a blank
 grid.
@@ -200,6 +208,9 @@ ghost to snap the node back.**
 - **Arrow keys** nudge by 1 px, `Shift` for 10 — never snapped to the grid.
 - **`Alt`** while dragging ignores the grid.
 - **`P`** pins or releases the selection.
+- **Release all pins** (the button on the Pins list, or the command palette)
+  asks before it clears anything, and the toast it leaves has an **Undo** —
+  so does `Ctrl+Z`.
 - Select several and use the **align and distribute** buttons in the bar at the
   bottom.
 
@@ -244,7 +255,12 @@ rather than inside a binary blob.
 afternoon of nudging shows an unchanged `.dot` file and a small `.zlayout.toml`.
 
 Delete the layout file and the diagram goes back to pure auto-layout. Nothing
-else has to be cleaned up.
+else has to be cleaned up. **Back to auto-layout** on a file's right-click menu
+does exactly that, after asking.
+
+Layout changes are written as you make them. If you would rather they waited for
+`Ctrl+S` like the source does, turn off **Save layout as you go** in Settings;
+the title bar then shows `•` until you save, and switching files asks first.
 
 > If a merge does go wrong, ZDraft detects the conflict markers and offers to
 > resolve it visually — mine, theirs, or both side by side on the canvas.
@@ -548,6 +564,7 @@ to. Drag its top edge to make it taller.
 | **Animate layout changes** | Nodes glide when the layout re-runs, so you can see what moved. Dragging is never animated. |
 | **Dim unrelated edges** | With something selected, edges that do not touch it fade back. |
 | **Minimap** | An overview in the corner for large diagrams. |
+| **Save layout as you go** | On, drags and pins are written to the `.zlayout.toml` at once. Off, they wait for `Ctrl+S` with the source. |
 | **Re-render as you type** | Off means the canvas updates on `Ctrl+Enter`. |
 | **Line numbers**, **Wrap long lines** | In the source editor. |
 | **Layout** | Where the source sits relative to the canvas. |
@@ -573,7 +590,7 @@ typefaces that travel inside the installer.
 | `Ctrl` `N` | New diagram |
 | `Ctrl` `⇧` `N` | New from a template |
 | `Ctrl` `⇧` `O` | Import from draw.io or Excalidraw |
-| `Ctrl` `S` | Save the source |
+| `Ctrl` `S` | Save the source, and any layout changes still waiting |
 | `Ctrl` `E` | Export |
 | `Ctrl` `K` | Command palette |
 | `Ctrl` `,` | Settings |
@@ -741,6 +758,9 @@ Entirely.
 **What about macOS?**
 Not a target. Linux and Windows are.
 
+**What changed in this version?**
+See [CHANGELOG.md](CHANGELOG.md).
+
 **How do several people work on one diagram?**
 Normally, through git. The source is text and the layout is text, so both merge.
 When two people move the same node, you get a four-line conflict you can read —
@@ -761,6 +781,9 @@ Requires Node 22+, pnpm 10, Rust 1.85+, and the
 pnpm install
 pnpm tauri dev
 ```
+
+On a Wayland desktop, `GDK_BACKEND=x11 pnpm tauri dev` runs the window under
+XWayland, which is handy when you want X11 tools to script or screenshot it.
 
 ```sh
 cargo test            # Rust: layout files, atomic writes, folder walk, git blobs

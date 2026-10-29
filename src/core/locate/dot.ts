@@ -1,7 +1,6 @@
 import { edgeId, type SourceRange } from "../model/scene";
 import type { LocateIndex } from "./types";
 
-
 export type DotTokenKind = "id" | "edgeop" | "punct";
 
 export interface DotToken {
@@ -12,7 +11,6 @@ export interface DotToken {
 }
 
 const KEYWORDS = new Set(["graph", "digraph", "subgraph", "node", "edge", "strict"]);
-
 
 const ID_START = /[A-Za-z_-￿]/;
 const ID_CHAR = /[A-Za-z0-9_-￿]/;
@@ -29,7 +27,6 @@ export function tokenizeDot(source: string): DotToken[] {
       continue;
     }
 
-
     if (ch === "/" && source[i + 1] === "/") {
       while (i < source.length && source[i] !== "\n") i++;
       continue;
@@ -44,7 +41,6 @@ export function tokenizeDot(source: string): DotToken[] {
       i += 2;
       continue;
     }
-
 
     if (ch === '"') {
       const from = i;
@@ -64,7 +60,6 @@ export function tokenizeDot(source: string): DotToken[] {
       continue;
     }
 
-
     if (ch === "<") {
       const from = i;
       let depth = 0;
@@ -83,13 +78,11 @@ export function tokenizeDot(source: string): DotToken[] {
       continue;
     }
 
-
     if (ch === "-" && (source[i + 1] === ">" || source[i + 1] === "-")) {
       tokens.push({ kind: "edgeop", value: source.slice(i, i + 2), from: i, to: i + 2 });
       i += 2;
       continue;
     }
-
 
     if (/[0-9]/.test(ch) || (ch === "." && /[0-9]/.test(source[i + 1] ?? ""))) {
       const from = i;
@@ -111,7 +104,6 @@ export function tokenizeDot(source: string): DotToken[] {
 
   return tokens;
 }
-
 
 function skipAttrList(tokens: DotToken[], start: number): { next: number; end: number } {
   let depth = 0;
@@ -138,11 +130,9 @@ export function locateDot(source: string): LocateIndex {
   const edges = new Map<string, SourceRange>();
   const pairSeen = new Map<string, number>();
 
-
   const declare = (name: string, from: number, to: number) => {
     if (!nodes.has(name)) nodes.set(name, { from, to });
   };
-
 
   const skipPorts = (i: number): number => {
     while (tokens[i]?.value === ":" && tokens[i + 1]?.kind === "id") i += 2;
@@ -152,7 +142,6 @@ export function locateDot(source: string): LocateIndex {
   let i = 0;
   while (i < tokens.length) {
     const t = tokens[i]!;
-
 
     if (t.kind === "punct" && t.value === "[") {
       i = skipAttrList(tokens, i).next;
@@ -166,7 +155,6 @@ export function locateDot(source: string): LocateIndex {
 
     const lower = t.value.toLowerCase();
 
-
     if (lower === "subgraph") {
       const next = tokens[i + 1];
       if (next?.kind === "id") {
@@ -178,10 +166,7 @@ export function locateDot(source: string): LocateIndex {
       continue;
     }
 
-
     if (KEYWORDS.has(lower)) {
-
-
       if ((lower === "graph" || lower === "digraph") && tokens[i + 1]?.kind === "id") {
         i += 2;
         continue;
@@ -189,7 +174,6 @@ export function locateDot(source: string): LocateIndex {
       i++;
       continue;
     }
-
 
     if (tokens[i + 1]?.value === "=") {
       i += 3;
@@ -204,7 +188,6 @@ export function locateDot(source: string): LocateIndex {
     let sawEdge = false;
     const chain: Array<{ from: string; to: string }> = [];
 
-
     while (tokens[i]?.kind === "edgeop") {
       const target = tokens[i + 1];
       if (!target || (target.kind !== "id" && target.value !== "{")) {
@@ -212,7 +195,6 @@ export function locateDot(source: string): LocateIndex {
         break;
       }
       sawEdge = true;
-
 
       if (target.value === "{") {
         i += 2;
@@ -237,7 +219,6 @@ export function locateDot(source: string): LocateIndex {
       i = skipPorts(i + 2);
     }
 
-
     let statementTo = prev.to;
     if (tokens[i]?.value === "[") {
       const skipped = skipAttrList(tokens, i);
@@ -253,8 +234,6 @@ export function locateDot(source: string): LocateIndex {
         edges.set(edgeId(link.from, link.to, ordinal), { from: statementFrom, to: statementTo });
       }
     } else {
-
-
       const existing = nodes.get(t.value);
       if (existing && existing.from === statementFrom && statementTo > existing.to) {
         nodes.set(t.value, { from: statementFrom, to: statementTo });

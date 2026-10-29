@@ -1,6 +1,5 @@
 import type { Point, Rect } from "../core/model/geometry";
 
-
 export interface Viewport {
   x: number;
   y: number;
@@ -24,7 +23,6 @@ export function screenToWorld(v: Viewport, p: Point): Point {
   return { x: (p.x - v.x) / v.zoom, y: (p.y - v.y) / v.zoom };
 }
 
-
 export function zoomAt(v: Viewport, at: Point, factor: number): Viewport {
   const zoom = clampZoom(v.zoom * factor);
   if (zoom === v.zoom) return v;
@@ -37,7 +35,6 @@ export function pan(v: Viewport, dx: number, dy: number): Viewport {
   return { ...v, x: v.x + dx, y: v.y + dy };
 }
 
-
 export function visibleWorldRect(v: Viewport, width: number, height: number): Rect {
   const topLeft = screenToWorld(v, { x: 0, y: 0 });
   const bottomRight = screenToWorld(v, { x: width, y: height });
@@ -49,9 +46,7 @@ export function visibleWorldRect(v: Viewport, width: number, height: number): Re
   };
 }
 
-
-export const MAX_FIT_ZOOM = 2.6;
-
+export const MAX_FIT_ZOOM = 1.6;
 
 export function fitBox(box: Rect, width: number, height: number, padding = 56): Viewport {
   const bw = Math.max(box.w, 1);
@@ -68,11 +63,9 @@ export function fitBox(box: Rect, width: number, height: number, padding = 56): 
   };
 }
 
-
 export function centerOn(v: Viewport, p: Point, width: number, height: number): Viewport {
   return { ...v, x: width / 2 - p.x * v.zoom, y: height / 2 - p.y * v.zoom };
 }
-
 
 export function scrollIntoView(
   v: Viewport,
@@ -96,11 +89,9 @@ export function scrollIntoView(
   return dx === 0 && dy === 0 ? v : pan(v, dx, dy);
 }
 
-
 export function screenPerWorld(v: Viewport): number {
   return v.zoom;
 }
-
 
 export function worldTolerance(v: Viewport, screenPx: number): number {
   return screenPx / Math.max(v.zoom, 1e-6);

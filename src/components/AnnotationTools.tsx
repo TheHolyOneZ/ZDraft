@@ -4,7 +4,6 @@ import { ANNOTATION_COLORS, type AnnotationKind } from "../core/annotate";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { IconButton, Tooltip } from "./ui";
 
-
 const TOOLS: Array<{ kind: AnnotationKind; icon: React.ReactNode; label: string; key: string }> = [
   {
     kind: "note",

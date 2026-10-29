@@ -33,12 +33,9 @@ import type { SourceRange } from "../../core/model/scene";
 import { useHistoryStore } from "../../store/useHistoryStore";
 import { languageFor } from "./language";
 
-
 const externalSync = Annotation.define<boolean>();
 
-
 const setLocated = StateEffect.define<(SourceRange & { fading?: boolean }) | null>();
-
 
 const FLASH_MS = 900;
 const FADE_MS = 400;
@@ -94,7 +91,6 @@ const editorTheme = EditorView.theme({
   ".cm-activeLineGutter": { backgroundColor: "transparent", color: "var(--text-2)" },
   ".cm-activeLine": { backgroundColor: "var(--row-hover)" },
 
-
   ".cm-selectionBackground": { backgroundColor: "var(--selection)" },
   "&.cm-focused .cm-selectionBackground": { backgroundColor: "var(--selection)" },
   "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
@@ -109,7 +105,6 @@ const editorTheme = EditorView.theme({
     outline: "1px solid var(--accent-line)",
   },
 
-
   ".cm-located": {
     backgroundColor: "var(--accent-soft)",
     boxShadow: "inset 2px 0 0 var(--accent)",
@@ -122,7 +117,6 @@ const editorTheme = EditorView.theme({
   },
   ".cm-line": { padding: "0 12px" },
 });
-
 
 export interface EditorHandle {
   undo(): void;
@@ -140,10 +134,8 @@ export interface EditorProps {
   readOnly?: boolean;
   handle?: Ref<EditorHandle>;
 
-
   valueOrigin?: "file" | "edit";
 }
-
 
 const EDITOR_SEARCH_KEYMAP = searchKeymap.filter(
   (binding) => binding.key !== "Mod-g" && binding.key !== "Mod-Shift-g",
@@ -163,12 +155,10 @@ export function Editor({
   const viewRef = useRef<EditorView | null>(null);
   const languageRef = useRef(new Compartment());
 
-
   const onChangeRef = useRef(onChange);
   const onCursorRef = useRef(onCursor);
   onChangeRef.current = onChange;
   onCursorRef.current = onCursor;
-
 
   const depthRef = useRef(0);
   const originRef = useRef(valueOrigin);
@@ -218,14 +208,13 @@ export function Editor({
               onChangeRef.current(update.state.doc.toString());
             }
 
-
             const depth = undoDepth(update.state);
             if (!external && depth > depthRef.current) {
               useHistoryStore.getState().record({ kind: "source", label: "Undo typing" });
             }
             depthRef.current = depth;
 
-            if (update.selectionSet) {
+            if (update.selectionSet && update.view.hasFocus) {
               onCursorRef.current?.(update.state.selection.main.head);
             }
           }),
@@ -242,7 +231,6 @@ export function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
   useEffect(() => {
     const view = viewRef.current;
     if (!view || view.state.doc.toString() === value) return;
@@ -251,7 +239,6 @@ export function Editor({
 
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: value },
-
 
       annotations: fromApp
         ? [externalSync.of(true)]
@@ -267,7 +254,6 @@ export function Editor({
       return;
     }
 
-
     depthRef.current = undoDepth(view.state);
   }, [value]);
 
@@ -277,7 +263,6 @@ export function Editor({
     view.dispatch({ effects: languageRef.current.reconfigure(languageFor(engine)) });
   }, [engine]);
 
-
   useEffect(() => {
     const view = viewRef.current;
     if (!view || !locate) return;
@@ -285,14 +270,12 @@ export function Editor({
     const to = Math.min(locate.to, view.state.doc.length);
     const from = Math.min(locate.from, to);
 
-
     const editorHasFocus = view.hasFocus;
 
     view.dispatch({
       effects: [setLocated.of(locate), EditorView.scrollIntoView(from, { y: "center" })],
       ...(editorHasFocus ? {} : { selection: { anchor: from, head: to } }),
     });
-
 
     const fade = window.setTimeout(() => {
       viewRef.current?.dispatch({ effects: setLocated.of({ ...locate, fading: true }) });

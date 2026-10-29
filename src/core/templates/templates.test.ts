@@ -1,10 +1,4 @@
-/**
- * @vitest-environment node
- *
- * A directive, not a comment: D2's WASM wants a real worker and
- * `URL.createObjectURL`, and jsdom has neither. Do not let a tidy pass
- * take this out.
- */
+/** @vitest-environment node */
 import { describe, expect, it } from "vitest";
 
 import { d2Adapter } from "../engines/d2";
@@ -36,14 +30,12 @@ describe("the template catalogue", () => {
     }
   });
 
-
   it("is a worked example rather than a stub", () => {
     for (const template of TEMPLATES) {
       const lines = template.source.trim().split("\n").filter((l) => l.trim() !== "");
       expect(lines.length, template.id).toBeGreaterThan(10);
     }
   });
-
 
   it("does not turn a box into a container by accident", async () => {
     for (const template of TEMPLATES.filter((t) => t.engine === "d2")) {
@@ -56,7 +48,6 @@ describe("the template catalogue", () => {
       }
     }
   }, 60000);
-
 
   it("never shows an escape sequence where a line break was meant", async () => {
     for (const template of TEMPLATES) {
@@ -80,7 +71,6 @@ describe("the template catalogue", () => {
     }
   });
 });
-
 
 describe("every template renders", () => {
   it("lays out the Graphviz ones without an error", async () => {
@@ -116,7 +106,6 @@ describe("every template renders", () => {
       }
     }
   });
-
 
   it("ships no warnings either", async () => {
     for (const template of TEMPLATES.filter((t) => t.engine === "graphviz")) {

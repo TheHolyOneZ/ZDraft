@@ -24,7 +24,6 @@ import { personRect } from "../render/shapes";
 import { DEFAULT_FONT_SIZE } from "../theme";
 import { makeFingerprinter, type EngineAdapter, type LayoutOpts } from "./types";
 
-
 interface D2Point {
   x: number;
   y: number;
@@ -104,9 +103,7 @@ interface D2Instance {
   compile(source: string, options?: Record<string, unknown>): Promise<D2Compiled>;
 }
 
-
 let instance: Promise<D2Instance> | null = null;
-
 
 async function loadD2(): Promise<D2Instance> {
   if (!instance) {
@@ -115,11 +112,9 @@ async function loadD2(): Promise<D2Instance> {
   return instance;
 }
 
-
 export function resetD2(): void {
   instance = null;
 }
-
 
 const SHAPE_MAP: Record<string, NodeShape> = {
   rectangle: "rect",
@@ -147,7 +142,6 @@ const SHAPE_MAP: Record<string, NodeShape> = {
   sequence_diagram: "rect",
 };
 
-
 const ARROW_MAP: Record<string, ArrowKind> = {
   none: "none",
   arrow: "arrow",
@@ -161,7 +155,6 @@ const ARROW_MAP: Record<string, ArrowKind> = {
   "filled-box": "dot",
   line: "open",
 
-
   "cf-one": "open",
   "cf-many": "open",
   "cf-one-required": "open",
@@ -171,7 +164,6 @@ const ARROW_MAP: Record<string, ArrowKind> = {
 function mapArrow(name: string | undefined): ArrowKind {
   return ARROW_MAP[name ?? "none"] ?? "arrow";
 }
-
 
 function visibilityMark(visibility: string): string {
   switch (visibility) {
@@ -221,7 +213,6 @@ function bodyFor(shape: D2Shape): NodeBody {
   return { kind: "label", text: label };
 }
 
-
 function explicitColor(value: string | undefined): string | undefined {
   if (!value) return undefined;
   if (/^(N|B|AA|AB)\d+$/.test(value)) return undefined;
@@ -238,12 +229,10 @@ function styleOf(shape: D2Shape | D2Connection): GraphNode["style"] {
   return { fill, stroke, dashed: dashed || undefined, className };
 }
 
-
 function rectOf(shape: D2Shape, label: string): Rect {
   const base = { x: shape.pos.x, y: shape.pos.y, w: shape.width, h: shape.height };
   return shape.type === "person" ? personRect(base, label, DEFAULT_FONT_SIZE) : base;
 }
-
 
 function containerIds(shapes: readonly D2Shape[]): Set<string> {
   const ids = new Set(shapes.map((s) => s.id));
@@ -266,7 +255,6 @@ function parentOf(id: string, containers: ReadonlySet<string>): string | undefin
   return containers.has(parent) ? parent : undefined;
 }
 
-
 export function sceneFromD2(diagram: D2Diagram, source: string): GraphScene {
   const locate = locateD2(source);
   const fp = makeFingerprinter();
@@ -278,8 +266,6 @@ export function sceneFromD2(diagram: D2Diagram, source: string): GraphScene {
   const clusters: Cluster[] = [];
 
   for (const shape of shapes) {
-
-
     if (/-lifeline-end-\d+$/.test(shape.id)) continue;
 
     const parent = parentOf(shape.id, containers);
@@ -323,7 +309,6 @@ export function sceneFromD2(diagram: D2Diagram, source: string): GraphScene {
     pairSeen.set(pair, ordinal + 1);
     const id = edgeId(connection.src, connection.dst, ordinal);
 
-
     const spline = connection.isCurve !== false && points.length >= 4 && points.length % 3 === 1;
 
     edges.push({
@@ -354,7 +339,6 @@ export function sceneFromD2(diagram: D2Diagram, source: string): GraphScene {
     bounds: boundsOf(nodes, clusters, edges),
   };
 }
-
 
 function labelPoint(points: readonly Point[], percentage: number | undefined): Point {
   const t = percentage && percentage > 0 && percentage <= 1 ? percentage : 0.5;
@@ -397,7 +381,6 @@ function boundsOf(
   return { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 };
 }
 
-
 function detectDirection(source: string): Direction {
   const match = /^\s*direction\s*:\s*(right|left|down|up)\b/m.exec(source);
   switch (match?.[1]) {
@@ -411,7 +394,6 @@ function detectDirection(source: string): Direction {
       return "TB";
   }
 }
-
 
 export function diagnosticsFromD2Error(err: unknown, source: string): Diagnostic[] {
   const raw = err instanceof Error ? err.message : String(err);
@@ -436,7 +418,6 @@ export function diagnosticsFromD2Error(err: unknown, source: string): Diagnostic
     };
   });
 }
-
 
 function lineStarts(source: string): number[] {
   const starts = [0];
@@ -488,7 +469,6 @@ function parseD2Errors(raw: string): Array<{ message: string; at?: D2Position }>
     .map((e) => ({ message: e.errmsg!, at: parsePosition(e.range) }));
 }
 
-
 function parsePosition(range: string | undefined): D2Position | undefined {
   if (!range) return undefined;
   const match = /(\d+):(\d+):\d+-(\d+):(\d+):\d+$/.exec(range);
@@ -502,11 +482,9 @@ function parsePosition(range: string | undefined): D2Position | undefined {
   };
 }
 
-
 function cleanMessage(message: string): string {
   return message.replace(/^[^:]*:\d+:\d+:\s*/, "").trim() || message.trim();
 }
-
 
 function emptyScene(): GraphScene {
   return {
@@ -526,7 +504,6 @@ export const d2Adapter: EngineAdapter = {
   label: "D2",
   extensions: [".d2"],
 
-
   detectFamily(): Family {
     return "graph";
   },
@@ -537,8 +514,6 @@ export const d2Adapter: EngineAdapter = {
     let compiled: D2Compiled;
     try {
       compiled = await d2.compile(source, {
-
-
         layout: opts.layoutProgram === "elk" ? "elk" : "dagre",
         pad: 0,
       });

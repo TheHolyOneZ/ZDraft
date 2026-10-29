@@ -1,8 +1,6 @@
 import type { NodeShape } from "../model/scene";
 
-
 export interface ImportedNode {
-
   id: string;
   label: string;
   shape: NodeShape;
@@ -22,18 +20,15 @@ export interface ImportedEdge {
   dashed?: boolean;
 }
 
-
 export interface ImportedGroup {
   id: string;
   label: string;
 }
 
-
 export interface ImportedModel {
   nodes: ImportedNode[];
   edges: ImportedEdge[];
   groups: ImportedGroup[];
-
 
   warnings: string[];
 }
@@ -41,7 +36,6 @@ export interface ImportedModel {
 export function emptyModel(): ImportedModel {
   return { nodes: [], edges: [], groups: [], warnings: [] };
 }
-
 
 export class ImportError extends Error {
   constructor(
