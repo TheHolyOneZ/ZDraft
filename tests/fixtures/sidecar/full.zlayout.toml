@@ -14,6 +14,13 @@ y = 210
 waypoints = [[500, 240], [520, 260]]
 label_offset = [4, -8]
 
+[styles.api]
+fill = "#fde68a"
+outline = "#b45309"
+
+[styles.cluster_core]
+fill = "#1e3a5f"
+
 [annotations.a1]
 kind = "note"
 at = [631, 185]

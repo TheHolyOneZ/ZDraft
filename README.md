@@ -74,11 +74,10 @@ GitHub. This repository is the source code; the installers are on the site.
 
 | System | File |
 |---|---|
-| Linux | `.AppImage` (make it executable and run it), `.deb`, or `.rpm` |
+| Linux | `.deb` (Debian, Ubuntu, Mint) or `.rpm` (Fedora, openSUSE) |
 | Windows | `.exe` installer — installs for the current user, no administrator prompt |
 
-Every download has a SHA-256 beside it. The Windows installer is still being
-packaged; the Linux three are ready.
+Every download has a SHA-256 beside it.
 
 Nothing else is required. Graphviz, Mermaid and D2 are built in — there is
 nothing to install for them and nothing is downloaded. (PlantUML is the one
@@ -221,6 +220,18 @@ ghost to snap the node back.**
 - **Drag an edge label** to nudge it out of the way. Double-click puts it back.
 - Edges reroute automatically around the nodes you move.
 
+### Colours
+
+Select a node or a subgraph and the bar at the bottom shows its **fill** and
+**outline**. Click either swatch to pick a colour; the arrow beside it puts the
+theme's colour back. Like a drag, it goes into the layout file, never your
+source.
+
+A subgraph's colours carry down to everything inside it, so colouring a
+container colours its members, and a node's own colour wins over its
+container's. Text switches to dark or light by itself when a fill would
+otherwise make it hard to read.
+
 ### Pins are never lost quietly
 
 A pin belongs to a node's **id**, not its position — so editing an unrelated
@@ -250,6 +261,20 @@ auto = [48, 269]
 That is the whole format. One field per line, integer coordinates, sorted — so
 when two people move the same node, git shows a conflict in four readable lines
 rather than inside a binary blob.
+
+`x` and `y` are where you put the node. `auto` is where auto-layout had it at
+the moment you pinned it, and `fingerprint` is what the node looked like then.
+ZDraft uses `auto` to tell you when the layout has since moved a long way and
+the pin may be fighting it, and `fingerprint` to recognise a pinned node you
+renamed.
+
+Colours sit in their own table, so colouring a node never pins it:
+
+```toml
+[styles.db]
+fill = "#fde68a"
+outline = "#b45309"
+```
 
 **Your diagram source is never touched by a drag.** `git diff` after an
 afternoon of nudging shows an unchanged `.dot` file and a small `.zlayout.toml`.

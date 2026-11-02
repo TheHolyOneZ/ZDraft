@@ -15,7 +15,7 @@ pub use plantuml::{
 };
 pub use sidecar::{
     detect_conflict, is_sidecar, sidecar_path_for, Conflict, EdgeHint, Layout, Pin, SequenceHints,
-    Sidecar, ThemeRef, SIDECAR_VERSION,
+    Sidecar, StyleHint, ThemeRef, SIDECAR_VERSION,
 };
 pub use tree::{engine_for_extension, list_folder, DirEntryKind, FolderEntry};
 pub use vector::{outline_text, to_pdf, VectorError};

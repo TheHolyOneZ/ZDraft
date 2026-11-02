@@ -31,6 +31,21 @@ pub struct EdgeHint {
     pub label_offset: Option<[f64; 2]>,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct StyleHint {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fill: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub outline: Option<String>,
+}
+
+impl StyleHint {
+    pub fn is_empty(&self) -> bool {
+        self.fill.is_none() && self.outline.is_none()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[ts(export)]
 #[serde(rename_all = "lowercase")]
@@ -102,6 +117,8 @@ pub struct Layout {
     pub pins: BTreeMap<String, Pin>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub edges: BTreeMap<String, EdgeHint>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub styles: BTreeMap<String, StyleHint>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sequence: Option<SequenceHints>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
@@ -112,6 +129,7 @@ impl Layout {
     pub fn is_empty(&self) -> bool {
         self.pins.is_empty()
             && self.edges.is_empty()
+            && self.styles.values().all(StyleHint::is_empty)
             && self.annotations.is_empty()
             && self.sequence.as_ref().is_none_or(SequenceHints::is_empty)
             && self.theme.is_none()
@@ -313,6 +331,29 @@ fn write_layout(table: &mut Table, layout: &Layout) {
                     entry.remove("label_offset");
                 }
             }
+        }
+    }
+
+    let styles: Vec<(&String, &StyleHint)> = layout
+        .styles
+        .iter()
+        .filter(|(_, s)| !s.is_empty())
+        .collect();
+    if styles.is_empty() {
+        table.remove("styles");
+    } else {
+        let table = ensure_table(table, "styles");
+        retain_keys(
+            table,
+            &styles
+                .iter()
+                .map(|(id, _)| (*id).clone())
+                .collect::<Vec<_>>(),
+        );
+        for (id, style) in styles {
+            let entry = ensure_table(table, id);
+            set_or_remove_str(entry, "fill", style.fill.as_deref());
+            set_or_remove_str(entry, "outline", style.outline.as_deref());
         }
     }
 
@@ -846,6 +887,55 @@ y = 288
     fn a_file_of_only_annotations_is_worth_keeping() {
         let mut side = Sidecar::new();
         side.root.annotations.insert("a1".into(), note("keep me"));
+
+        assert!(!side.is_empty());
+    }
+
+    fn style(fill: Option<&str>, outline: Option<&str>) -> StyleHint {
+        StyleHint {
+            fill: fill.map(Into::into),
+            outline: outline.map(Into::into),
+        }
+    }
+
+    #[test]
+    fn styles_round_trip_in_a_readable_table() {
+        let mut side = Sidecar::new();
+        side.root
+            .styles
+            .insert("db".into(), style(Some("#1e3a5f"), Some("#38bdf8")));
+        side.root
+            .styles
+            .insert("core".into(), style(Some("#fde68a"), None));
+
+        let text = to_toml_string(&side, None);
+        assert!(text.contains("[styles.db]"), "{text}");
+        assert!(text.contains("fill = \"#1e3a5f\""), "{text}");
+        assert!(text.contains("outline = \"#38bdf8\""), "{text}");
+        assert_eq!(parse(&text, "a.toml").unwrap(), side);
+    }
+
+    #[test]
+    fn a_style_with_no_colours_left_is_not_written() {
+        let mut side = Sidecar::new();
+        side.root
+            .styles
+            .insert("db".into(), style(Some("#123456"), None));
+        let with = to_toml_string(&side, None);
+
+        side.root.styles.insert("db".into(), style(None, None));
+        let without = to_toml_string(&side, Some(&with));
+
+        assert!(!without.contains("styles"), "{without}");
+        assert!(side.is_empty());
+    }
+
+    #[test]
+    fn a_file_of_only_styles_is_worth_keeping() {
+        let mut side = Sidecar::new();
+        side.root
+            .styles
+            .insert("db".into(), style(None, Some("#ff0000")));
 
         assert!(!side.is_empty());
     }

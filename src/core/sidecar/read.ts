@@ -1,6 +1,6 @@
 import { parse as parseToml } from "smol-toml";
 
-import type { Annotation, EdgeHint, Layout, Pin, Sidecar } from "./types";
+import type { Annotation, EdgeHint, Layout, Pin, Sidecar, StyleHint } from "./types";
 
 export class SidecarError extends Error {
   constructor(
@@ -49,6 +49,7 @@ function readLayout(table: Record<string, unknown>): Layout {
     theme: readTheme(table.theme),
     pins: mapValues(asTable(table.pins), readPin),
     edges: mapValues(asTable(table.edges), readEdge),
+    styles: mapValues(asTable(table.styles), readStyle),
     sequence: readSequence(table.sequence),
     annotations: mapValues(asTable(table.annotations), readAnnotation),
   };
@@ -80,6 +81,15 @@ function readEdge(value: unknown): EdgeHint | null {
 
   if (waypoints.length === 0 && !offset) return null;
   return { waypoints, label_offset: offset };
+}
+
+function readStyle(value: unknown): StyleHint | null {
+  const table = asTable(value);
+  const fill = str(table.fill);
+  const outline = str(table.outline);
+
+  if (!fill && !outline) return null;
+  return { fill, outline };
 }
 
 function readSequence(value: unknown): Layout["sequence"] {

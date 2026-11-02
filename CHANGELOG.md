@@ -4,6 +4,40 @@ Every release of ZDraft, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] — 2026-11-02
+
+### Added
+
+- **Colours for nodes and subgraphs** ([#4]). Select one, or several, and the
+  bar at the bottom shows its fill and outline; click a swatch to pick a colour
+  and the arrow beside it to go back to the theme's. The colours are stored in
+  the layout file under a new `[styles.<id>]` table with `fill` and `outline`,
+  never in your source, and are undone with `Ctrl+Z` like any other layout
+  change.
+- A subgraph's colours carry down to everything inside it, nearest container
+  first, and a node's own colour wins over its container's.
+- Text on a coloured fill switches to dark or light by itself when the theme's
+  text would be hard to read on it. This also helps fills the source sets.
+- Colours follow a node through a rename, show in the comparison with the last
+  commit, and appear in every export and in the command-line renderer.
+
+### Fixed
+
+- A one-word label in a narrow shape — `Redis` in a cylinder — was split
+  across two lines mid-word. It now shrinks to fit first and only breaks a word
+  that cannot fit even small.
+- A cylinder's label no longer sits on the rim of its top; it is centred in the
+  body below it.
+- A test that looks for PlantUML in the user's folder set the Linux variable on
+  Windows too. It now sets `LOCALAPPDATA` there, where ZDraft actually looks.
+
+### Changed
+
+- The installer workflow no longer builds an AppImage. One built on a hosted
+  runner did not start on current desktops; the `.deb` and `.rpm` are built as
+  before.
+- The README explains what a pin's `auto` and `fingerprint` fields are for.
+
 ## [0.2.0] — 2026-10-29
 
 ### Fixed
@@ -51,8 +85,8 @@ Every release of ZDraft, newest first. The format follows
 - Dialogs, menus and toasts are a little more opaque, so the canvas behind them
   stays out of the way on Linux, where WebKitGTK does not always blur it.
 - The command-line renderer's bundle is rebuilt from the current source.
-- The installer workflow builds the Linux AppImage, `.deb` and `.rpm` alongside
-  the Windows installer, runs the test suite first, checks the Linux binary
+- The installer workflow builds the Linux packages alongside the Windows
+  installer, runs the test suite first, checks the Linux binary
   needs no newer glibc than Ubuntu 22.04's, and runs on its own when a `v*` tag
   is pushed.
 
@@ -63,5 +97,7 @@ First public release.
 [#1]: https://github.com/TheHolyOneZ/ZDraft/issues/1
 [#2]: https://github.com/TheHolyOneZ/ZDraft/issues/2
 [#3]: https://github.com/TheHolyOneZ/ZDraft/issues/3
+[#4]: https://github.com/TheHolyOneZ/ZDraft/issues/4
+[0.3.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/TheHolyOneZ/ZDraft/compare/b514f26...v0.2.0
 [0.1.0]: https://github.com/TheHolyOneZ/ZDraft/commit/b514f26

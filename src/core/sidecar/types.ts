@@ -5,5 +5,6 @@ export type { EdgeHint } from "../../lib/bindings/EdgeHint";
 export type { Layout } from "../../lib/bindings/Layout";
 export type { Pin } from "../../lib/bindings/Pin";
 export type { SequenceHints } from "../../lib/bindings/SequenceHints";
+export type { StyleHint } from "../../lib/bindings/StyleHint";
 export type { Sidecar } from "../../lib/bindings/Sidecar";
 export type { ThemeRef } from "../../lib/bindings/ThemeRef";

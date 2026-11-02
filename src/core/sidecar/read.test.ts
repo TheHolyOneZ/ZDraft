@@ -36,6 +36,13 @@ describe("reading a sidecar", () => {
     });
   });
 
+  it("reads the colours, leaving an unset one absent", () => {
+    expect(sidecar.styles).toEqual({
+      api: { fill: "#fde68a", outline: "#b45309" },
+      cluster_core: { fill: "#1e3a5f", outline: null },
+    });
+  });
+
   it("reads an annotation", () => {
     expect(sidecar.annotations!.a1!.text).toBe("why two writers?");
     expect(sidecar.annotations!.a1!.anchor).toBe("api");

@@ -246,7 +246,7 @@ function graphToSvg(
     const inner = [
       `<path d="${r.path}" fill="${r.fill}" stroke="${r.stroke}" ` +
         `stroke-width="${n(theme.strokeWidth)}" stroke-dasharray="6 4"/>`,
-      ...r.labels.map((line) => textElement(line, theme.clusterText, theme.clusterText, theme.fontFamily)),
+      ...r.labels.map((line) => textElement(line, r.text, r.text, theme.fontFamily)),
     ].join("");
     parts.push(`<g transform="translate(${n(cluster.rect.x)},${n(cluster.rect.y)})">${inner}</g>`);
   }

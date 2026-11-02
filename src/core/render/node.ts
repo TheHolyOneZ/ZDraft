@@ -1,6 +1,7 @@
 import type { Rect } from "../model/geometry";
 import type { Cluster, GraphNode } from "../model/scene";
 import { seriesColor, type DiagramTheme } from "../theme";
+import { readableOn } from "../styles";
 import { isUnpainted, shapeGeometry, type ShapeGeometry } from "./shapes";
 import {
   centeredLines,
@@ -121,8 +122,13 @@ export function nodeTextColors(
   node: GraphNode,
   theme: DiagramTheme,
 ): { text: string; muted: string } {
-  const text = node.style?.text ?? theme.nodeText;
-  return { text, muted: node.style?.text ?? theme.nodeTextMuted };
+  if (node.style?.text) return { text: node.style.text, muted: node.style.text };
+
+  const fill = node.style?.fill;
+  if (!fill) return { text: theme.nodeText, muted: theme.nodeTextMuted };
+
+  const text = readableOn(fill, theme.nodeText);
+  return { text, muted: text === theme.nodeText ? readableOn(fill, theme.nodeTextMuted) : text };
 }
 
 export interface ClusterRender {
@@ -130,6 +136,7 @@ export interface ClusterRender {
   labels: TextLine[];
   fill: string;
   stroke: string;
+  text: string;
 }
 
 export function renderCluster(cluster: Cluster, theme: DiagramTheme): ClusterRender {
@@ -141,6 +148,7 @@ export function renderCluster(cluster: Cluster, theme: DiagramTheme): ClusterRen
     path: shapeGeometry("rect", local, theme.cornerRadius).path,
     fill: cluster.style?.fill ?? theme.clusterFill,
     stroke: cluster.style?.stroke ?? theme.clusterStroke,
+    text: cluster.style?.fill ? readableOn(cluster.style.fill, theme.clusterText) : theme.clusterText,
     labels: cluster.label
       ? cluster.label.split("\n").map((row, i) => ({
           text: truncateToWidth(row, local.w - PAD_X * 2, size, 600),

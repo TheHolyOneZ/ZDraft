@@ -15,6 +15,7 @@ import { annotationFromDrag, moveAnnotation } from "../core/annotate";
 import { annotationsBounds, renderAnnotation } from "../core/render/annotations";
 import type { Annotation, AnnotationKind } from "../core/sidecar/types";
 import { applyPins } from "../core/pins";
+import { applyStyles } from "../core/styles";
 import type { DiagramTheme } from "../core/theme";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { useSettingsStore } from "../store/useSettingsStore";
@@ -891,7 +892,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       };
     }
 
-    return applyPins(raw, { ...layout, pins, edges }).scene;
+    return applyStyles(applyPins(raw, { ...layout, pins, edges }).scene, layout.styles);
   }, [scene, drag, waypointDrag, labelDrag, raw, layout]);
 
   const diff = useMemo(() => {

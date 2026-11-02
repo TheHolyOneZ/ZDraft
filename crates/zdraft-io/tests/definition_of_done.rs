@@ -163,7 +163,8 @@ fn a_second_drag_rewrites_only_the_lines_that_moved() {
 fn the_writer_still_produces_the_fixture_the_cli_reads() {
     use std::collections::BTreeMap;
     use zdraft_io::sidecar::{
-        to_toml_string, Annotation, AnnotationKind, EdgeHint, Pin, SequenceHints, Sidecar, ThemeRef,
+        to_toml_string, Annotation, AnnotationKind, EdgeHint, Pin, SequenceHints, Sidecar,
+        StyleHint, ThemeRef,
     };
 
     let mut side = Sidecar::new();
@@ -193,6 +194,20 @@ fn the_writer_still_produces_the_fixture_the_cli_reads() {
         EdgeHint {
             waypoints: vec![[500.0, 240.0], [520.0, 260.0]],
             label_offset: Some([4.0, -8.0]),
+        },
+    );
+    side.root.styles.insert(
+        "api".into(),
+        StyleHint {
+            fill: Some("#fde68a".into()),
+            outline: Some("#b45309".into()),
+        },
+    );
+    side.root.styles.insert(
+        "cluster_core".into(),
+        StyleHint {
+            fill: Some("#1e3a5f".into()),
+            outline: None,
         },
     );
     side.root.annotations.insert(

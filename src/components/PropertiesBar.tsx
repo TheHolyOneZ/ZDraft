@@ -18,7 +18,7 @@ import {
   Spline,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { align, distribute, placed, type AlignEdge } from "../core/align";
 
@@ -29,10 +29,14 @@ import {
   isSequence,
   nodesIn,
   nodeText,
+  type Cluster,
   type GraphNode,
   type NodeShape,
 } from "../core/model/scene";
+import { toHex } from "../core/styles";
+import { themeByName } from "../core/theme";
 import { adapterFor, useDocumentStore } from "../store/useDocumentStore";
+import { useSettingsStore } from "../store/useSettingsStore";
 import { IconButton, Select, TextInput, Tooltip } from "./ui";
 
 export function PropertiesBar() {
@@ -221,6 +225,10 @@ export function PropertiesBar() {
           )}
         </Group>
 
+        <div className="h-4 w-px" style={{ background: "var(--border)" }} />
+
+        <ColorTools targets={clusters} kind="cluster" />
+
         <span className="ml-auto text-[11px]" style={{ color: "var(--text-3)" }}>
           Dragging the box moves everything in it
         </span>
@@ -249,6 +257,10 @@ export function PropertiesBar() {
         <div className="h-4 w-px" style={{ background: "var(--border)" }} />
 
         <AlignTools nodes={nodes} />
+
+        <div className="h-4 w-px" style={{ background: "var(--border)" }} />
+
+        <ColorTools targets={nodes} kind="node" />
 
         <span className="ml-auto text-[11px]" style={{ color: "var(--text-3)" }}>
           Arrow keys nudge · Shift+arrows ×10 · Alt+drag ignores the grid
@@ -292,6 +304,10 @@ export function PropertiesBar() {
           <span style={{ color: "var(--text-3)" }}>auto</span>
         )}
       </Group>
+
+      <div className="h-4 w-px" style={{ background: "var(--border)" }} />
+
+      <ColorTools targets={[node]} kind="node" />
 
       <span className="ml-auto truncate text-[11px]" style={{ color: "var(--text-3)" }}>
         {pinned ? `${name}.zlayout.toml` : name}
@@ -513,6 +529,108 @@ const ALIGNMENTS: Array<{ edge: AlignEdge; icon: React.ReactNode; title: string 
   },
   { edge: "bottom", icon: <AlignEndHorizontal size={13} strokeWidth={1.75} />, title: "Align bottoms" },
 ];
+
+function ColorTools({
+  targets,
+  kind,
+}: {
+  targets: ReadonlyArray<GraphNode | Cluster>;
+  kind: "node" | "cluster";
+}) {
+  const styles = useDocumentStore((s) => s.layout.styles);
+  const themeName = useDocumentStore((s) => s.layout.theme?.name);
+  const fallbackTheme = useSettingsStore((s) => s.diagramTheme);
+  const setStyle = useDocumentStore((s) => s.setStyle);
+
+  const theme = themeByName(themeName ?? fallbackTheme);
+  const ids = targets.map((t) => t.id);
+  const first = targets[0];
+  if (!first) return null;
+
+  const defaults =
+    kind === "node"
+      ? { fill: theme.nodeFill, outline: theme.nodeStroke }
+      : { fill: theme.clusterFill, outline: theme.clusterStroke };
+
+  const channel = (key: "fill" | "outline") => ({
+    shown: (key === "fill" ? first.style?.fill : first.style?.stroke) ?? defaults[key],
+    own: ids.some((id) => Boolean(styles?.[id]?.[key])),
+    pick: (color: string) => setStyle(ids, { [key]: color }),
+    reset: () => setStyle(ids, { [key]: null }),
+  });
+
+  return (
+    <Group icon="layout" label="colour">
+      <ColorSwatch label="fill" {...channel("fill")} />
+      <ColorSwatch label="outline" {...channel("outline")} />
+    </Group>
+  );
+}
+
+function ColorSwatch({
+  label,
+  shown,
+  own,
+  pick,
+  reset,
+}: {
+  label: string;
+  shown: string;
+  own: boolean;
+  pick(color: string): void;
+  reset(): void;
+}) {
+  const input = useRef<HTMLInputElement | null>(null);
+  const pickRef = useRef(pick);
+  pickRef.current = pick;
+
+  useEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    const commit = () => pickRef.current(el.value);
+    el.addEventListener("change", commit);
+    return () => el.removeEventListener("change", commit);
+  }, []);
+
+  const hex = toHex(shown) ?? "#888888";
+
+  useEffect(() => {
+    if (input.current) input.current.value = hex;
+  }, [hex]);
+
+  return (
+    <span className="flex items-center gap-1">
+      <span className="text-[10px]" style={{ color: "var(--text-3)" }}>
+        {label}
+      </span>
+      <Tooltip label={own ? `${label} ${shown} — set in the layout file` : `${label} from the theme — click to choose`}>
+        <label
+          className="focus-ring relative block h-[16px] w-[16px] cursor-pointer overflow-hidden rounded-[4px]"
+          style={{
+            background: shown,
+            border: `1px solid ${own ? "var(--pin)" : "var(--border-strong)"}`,
+          }}
+        >
+          <input
+            ref={input}
+            type="color"
+            defaultValue={hex}
+            aria-label={`Choose the ${label} colour`}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          />
+        </label>
+      </Tooltip>
+      {own && (
+        <IconButton
+          icon={<RotateCcw size={12} strokeWidth={1.75} />}
+          onClick={reset}
+          title={`Reset the ${label} to the theme colour`}
+          size={20}
+        />
+      )}
+    </span>
+  );
+}
 
 function Bar({ children }: { children: React.ReactNode }) {
   return (

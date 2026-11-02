@@ -511,6 +511,11 @@ mod tests {
         assert_eq!(first_useful_line("   \n"), "PlantUML produced no output");
     }
 
+    #[cfg(unix)]
+    const USER_DATA_VAR: &str = "XDG_DATA_HOME";
+    #[cfg(windows)]
+    const USER_DATA_VAR: &str = "LOCALAPPDATA";
+
     #[test]
     fn looks_where_a_user_can_actually_write() {
         let dir = tempfile::tempdir().unwrap();
@@ -520,7 +525,7 @@ mod tests {
 
         temp_env::with_vars(
             [
-                ("XDG_DATA_HOME", Some(dir.path().as_os_str())),
+                (USER_DATA_VAR, Some(dir.path().as_os_str())),
                 ("PLANTUML_JAR", None),
             ],
             || {
@@ -543,7 +548,7 @@ mod tests {
         let chosen = dir.path().join("chosen.jar");
         std::fs::write(&chosen, b"x").unwrap();
 
-        temp_env::with_var("XDG_DATA_HOME", Some(dir.path().as_os_str()), || {
+        temp_env::with_var(USER_DATA_VAR, Some(dir.path().as_os_str()), || {
             let probe = probe(Some(&chosen));
             assert_eq!(probe.jar.as_deref(), Some(chosen.to_str().unwrap()));
             assert_eq!(probe.jar_source, JarSource::Configured);

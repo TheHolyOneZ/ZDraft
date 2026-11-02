@@ -12,6 +12,7 @@ import type { Diagnostic, EngineId, NodeShape, Scene } from "../core/model/scene
 import { isGraph, nodesIn } from "../core/model/scene";
 import { applyPins, migratePin, pinFor, withoutPins, withPin, type OrphanPin } from "../core/pins";
 import { overlapDiagnostics } from "../core/overlap";
+import { applyStyles, retargetStyles, withStyle } from "../core/styles";
 import {
   isMarkdown,
   parseMarkdownBlocks,
@@ -24,7 +25,14 @@ import {
   nextAnnotationId,
   retargetAnnotations,
 } from "../core/annotate";
-import type { Annotation, AnnotationKind, Conflict, Layout, Sidecar } from "../core/sidecar/types";
+import type {
+  Annotation,
+  AnnotationKind,
+  Conflict,
+  Layout,
+  Sidecar,
+  StyleHint,
+} from "../core/sidecar/types";
 import type { GitStatus } from "../lib/tauri";
 import { themeByName } from "../core/theme";
 import { api, isTauri } from "../lib/tauri";
@@ -175,6 +183,8 @@ export interface DocumentState {
   migrateOrphan(from: string, to: string): void;
   dropOrphans(ids: readonly string[]): void;
   setDiagramTheme(name: string | null): void;
+
+  setStyle(ids: readonly string[], patch: Partial<StyleHint>): void;
 }
 
 function editScope(state: DocumentState): {
@@ -247,9 +257,10 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     }
 
     const applied = applyPins(raw, layout);
+    const scene = applyStyles(applied.scene, layout.styles);
 
     set({
-      scene: applied.scene,
+      scene,
       ghosts: applied.ghosts,
       orphans: applied.orphans,
       diagnostics: [
@@ -878,7 +889,7 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
       const raw = result?.scene ?? null;
       const headScene =
-        raw && isGraph(raw) ? applyPins(raw, headLayout).scene : raw;
+        raw && isGraph(raw) ? applyStyles(applyPins(raw, headLayout).scene, headLayout.styles) : raw;
 
       set({
         diffMode: true,
@@ -997,12 +1008,17 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
       if (change.kind === "rename") {
         const annotations = retargetAnnotations(layout.annotations, id, change.to);
+        const styles = retargetStyles(layout.styles, id, change.to);
         const migrated = layout.pins?.[id] ? migratePin(layout, id, change.to) : layout;
 
-        if (migrated !== layout || annotations !== layout.annotations) {
+        if (
+          migrated !== layout ||
+          annotations !== layout.annotations ||
+          styles !== layout.styles
+        ) {
           useHistoryStore
             .getState()
-            .withApplying(() => mutateLayout({ ...migrated, annotations }, edit.label));
+            .withApplying(() => mutateLayout({ ...migrated, annotations, styles }, edit.label));
         }
       }
 
@@ -1044,6 +1060,16 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
 
     dropOrphans: (ids) =>
       mutateLayout(withoutPins(get().layout, ids), ids.length === 1 ? "Drop an orphan" : "Drop orphans"),
+
+    setStyle: (ids, patch) => {
+      if (ids.length === 0) return;
+      let styles = get().layout.styles;
+      for (const id of ids) styles = withStyle(styles, id, patch);
+
+      const clearing = Object.values(patch).every((v) => !v);
+      const what = ids.length === 1 ? "a colour" : `${ids.length} colours`;
+      mutateLayout({ ...get().layout, styles }, clearing ? `Reset ${what}` : `Change ${what}`);
+    },
 
     setDiagramTheme: (name) => {
       mutateLayout({ ...get().layout, theme: name ? { name } : null }, "Change the theme");

@@ -140,6 +140,8 @@ export interface FittedLabel {
   size: number;
 }
 
+const WORD_FLOOR = 0.6;
+
 export function fitLabel(
   text: string,
   box: { w: number; h: number },
@@ -158,7 +160,14 @@ export function fitLabel(
     if (scaled >= floor) return { lines: [text], size: scaled };
   }
 
-  let size = baseSize;
+  const longest = Math.max(
+    0,
+    ...text.split(/\s+/).filter(Boolean).map((word) => measureText(word, baseSize, weight)),
+  );
+  let size =
+    longest > box.w ? Math.max(baseSize * WORD_FLOOR, baseSize * (box.w / longest)) : baseSize;
+  const lowest = Math.min(floor, size);
+
   for (let attempt = 0; attempt < 4; attempt++) {
     const lines = wrapText(text, box.w, size, weight, maxLines);
     const fitsHeight = lines.length * size * LINE_HEIGHT <= box.h + 2;
@@ -166,7 +175,7 @@ export function fitLabel(
     if (fitsHeight && fitsWidth) return { lines, size };
 
     const next = size * 0.9;
-    if (next < floor) break;
+    if (next < lowest) break;
     size = next;
   }
 

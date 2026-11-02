@@ -819,6 +819,7 @@ function centeredLines(lines, box, size, weight = 500) {
     weight
   }));
 }
+var WORD_FLOOR = 0.6;
 function fitLabel(text, box, baseSize, weight = 500, minScale = 0.78, maxLines = 6) {
   const floor = baseSize * minScale;
   if (!text.includes("\n")) {
@@ -827,14 +828,19 @@ function fitLabel(text, box, baseSize, weight = 500, minScale = 0.78, maxLines =
     const scaled = baseSize * (box.w / width);
     if (scaled >= floor) return { lines: [text], size: scaled };
   }
-  let size = baseSize;
+  const longest = Math.max(
+    0,
+    ...text.split(/\s+/).filter(Boolean).map((word) => measureText(word, baseSize, weight))
+  );
+  let size = longest > box.w ? Math.max(baseSize * WORD_FLOOR, baseSize * (box.w / longest)) : baseSize;
+  const lowest = Math.min(floor, size);
   for (let attempt = 0; attempt < 4; attempt++) {
     const lines = wrapText(text, box.w, size, weight, maxLines);
     const fitsHeight = lines.length * size * LINE_HEIGHT <= box.h + 2;
     const fitsWidth = lines.every((l) => measureText(l, size, weight) <= box.w + 0.5);
     if (fitsHeight && fitsWidth) return { lines, size };
     const next = size * 0.9;
-    if (next < floor) break;
+    if (next < lowest) break;
     size = next;
   }
   return { lines: wrapText(text, box.w, size, weight, maxLines), size };
@@ -1001,7 +1007,13 @@ function shapeGeometry(shape, r2, cornerRadius) {
           `M${n(x)},${n(y + ry)} A${n(w / 2)},${n(ry)} 0 0 0 ${n(right)},${n(y + ry)}`
         ],
         boundary: "rect",
-        textInset: { x: 8, y: ry + 5 }
+        textInset: { x: 8, y: ry + 5 },
+        textBox: {
+          x: x + 8,
+          y: y + ry * 2 + 2,
+          w: Math.max(w - 16, 4),
+          h: Math.max(h - ry * 3 - 4, 4)
+        }
       };
     }
     case "note": {
@@ -3081,6 +3093,78 @@ function boundsOf2(nodes, clusters, scene, edges) {
   return { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 };
 }
 
+// ../../src/core/styles/index.ts
+function resolveStyle(id, parentOf2, styles) {
+  let fill;
+  let outline;
+  const seen = /* @__PURE__ */ new Set();
+  for (let at = id; at !== void 0 && !seen.has(at); at = parentOf2(at)) {
+    seen.add(at);
+    const own = styles[at];
+    fill ??= own?.fill ?? void 0;
+    outline ??= own?.outline ?? void 0;
+    if (fill !== void 0 && outline !== void 0) break;
+  }
+  return { fill, outline };
+}
+function merge(existing, hint) {
+  if (!hint.fill && !hint.outline) return existing;
+  return {
+    ...existing,
+    ...hint.fill ? { fill: hint.fill } : {},
+    ...hint.outline ? { stroke: hint.outline } : {}
+  };
+}
+function applyStyles(scene, styles) {
+  if (!styles || Object.keys(styles).length === 0) return scene;
+  const clusterParent = new Map(scene.clusters.map((c) => [c.id, c.parent]));
+  const nodeParent = new Map(scene.nodes.map((n4) => [n4.id, n4.parent]));
+  const parentOf2 = (id) => nodeParent.has(id) ? nodeParent.get(id) : clusterParent.get(id);
+  const clusters = scene.clusters.map((cluster) => {
+    const style = merge(cluster.style, resolveStyle(cluster.id, parentOf2, styles));
+    return style === cluster.style ? cluster : { ...cluster, style };
+  });
+  const nodes = scene.nodes.map((node) => {
+    const style = merge(node.style, resolveStyle(node.id, parentOf2, styles));
+    return style === node.style ? node : { ...node, style };
+  });
+  return { ...scene, nodes, clusters };
+}
+function toHex(color) {
+  const text = color.trim();
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(text)?.[1];
+  if (hex) return "#" + (hex.length === 3 ? [...hex].map((c) => c + c).join("") : hex).toLowerCase();
+  const rgb = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*[\d.]+\s*)?\)$/i.exec(text);
+  if (!rgb) return null;
+  return "#" + rgb.slice(1, 4).map((v) => Math.min(255, Number(v)).toString(16).padStart(2, "0")).join("");
+}
+function channels(color) {
+  const alpha = /^rgba\([^)]*,\s*([\d.]+)\s*\)$/i.exec(color.trim())?.[1];
+  if (alpha !== void 0 && Number(alpha) < 0.6) return null;
+  const hex = toHex(color);
+  if (!hex) return null;
+  return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+}
+function luminance(color) {
+  const rgb = channels(color);
+  if (!rgb) return null;
+  const [r2, g, b] = rgb.map((c) => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * r2 + 0.7152 * g + 0.0722 * b;
+}
+function contrastRatio(a, b) {
+  const la = luminance(a);
+  const lb = luminance(b);
+  if (la === null || lb === null) return null;
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+function readableOn(fill, preferred) {
+  const ratio = contrastRatio(fill, preferred);
+  if (ratio === null || ratio >= 3) return preferred;
+  const dark = "#0b0f14";
+  const light = "#f8fafc";
+  return (contrastRatio(fill, dark) ?? 0) >= (contrastRatio(fill, light) ?? 0) ? dark : light;
+}
+
 // ../../src/core/sequence/layout.ts
 var ACTIVATION_WIDTH = 10;
 var ACTIVATION_STEP = 5;
@@ -3282,8 +3366,11 @@ function renderNode(node, theme) {
   };
 }
 function nodeTextColors(node, theme) {
-  const text = node.style?.text ?? theme.nodeText;
-  return { text, muted: node.style?.text ?? theme.nodeTextMuted };
+  if (node.style?.text) return { text: node.style.text, muted: node.style.text };
+  const fill = node.style?.fill;
+  if (!fill) return { text: theme.nodeText, muted: theme.nodeTextMuted };
+  const text = readableOn(fill, theme.nodeText);
+  return { text, muted: text === theme.nodeText ? readableOn(fill, theme.nodeTextMuted) : text };
 }
 function renderCluster(cluster, theme) {
   const size = theme.fontSize - 1;
@@ -3292,6 +3379,7 @@ function renderCluster(cluster, theme) {
     path: shapeGeometry("rect", local, theme.cornerRadius).path,
     fill: cluster.style?.fill ?? theme.clusterFill,
     stroke: cluster.style?.stroke ?? theme.clusterStroke,
+    text: cluster.style?.fill ? readableOn(cluster.style.fill, theme.clusterText) : theme.clusterText,
     labels: cluster.label ? cluster.label.split("\n").map((row, i) => ({
       text: truncateToWidth(row, local.w - PAD_X * 2, size, 600),
       x: PAD_X,
@@ -3610,7 +3698,7 @@ function graphToSvg(scene, theme, options = {}) {
     const r2 = renderCluster(cluster, theme);
     const inner = [
       `<path d="${r2.path}" fill="${r2.fill}" stroke="${r2.stroke}" stroke-width="${n3(theme.strokeWidth)}" stroke-dasharray="6 4"/>`,
-      ...r2.labels.map((line) => textElement(line, theme.clusterText, theme.clusterText, theme.fontFamily))
+      ...r2.labels.map((line) => textElement(line, r2.text, r2.text, theme.fontFamily))
     ].join("");
     parts.push(`<g transform="translate(${n3(cluster.rect.x)},${n3(cluster.rect.y)})">${inner}</g>`);
   }
@@ -3775,6 +3863,7 @@ function readLayout(table) {
     theme: readTheme(table.theme),
     pins: mapValues(asTable(table.pins), readPin),
     edges: mapValues(asTable(table.edges), readEdge),
+    styles: mapValues(asTable(table.styles), readStyle),
     sequence: readSequence(table.sequence),
     annotations: mapValues(asTable(table.annotations), readAnnotation)
   };
@@ -3801,6 +3890,13 @@ function readEdge(value) {
   const offset = point(table.label_offset);
   if (waypoints.length === 0 && !offset) return null;
   return { waypoints, label_offset: offset };
+}
+function readStyle(value) {
+  const table = asTable(value);
+  const fill = str(table.fill);
+  const outline = str(table.outline);
+  if (!fill && !outline) return null;
+  return { fill, outline };
 }
 function readSequence(value) {
   const table = asTable(value);
@@ -3966,7 +4062,7 @@ function apply(scene, layout) {
   }
   const applied = applyPins(scene, layout);
   return {
-    scene: applied.scene,
+    scene: applyStyles(applied.scene, layout.styles),
     diagnostics: applied.diagnostics,
     orphans: applied.orphans.map((o) => o.id),
     pinned: Object.keys(layout.pins ?? {}).length - applied.orphans.length

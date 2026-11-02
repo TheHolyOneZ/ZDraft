@@ -182,6 +182,12 @@ export function shapeGeometry(shape: NodeShape, r: Rect, cornerRadius: number): 
         ],
         boundary: "rect",
         textInset: { x: 8, y: ry + 5 },
+        textBox: {
+          x: x + 8,
+          y: y + ry * 2 + 2,
+          w: Math.max(w - 16, 4),
+          h: Math.max(h - ry * 3 - 4, 4),
+        },
       };
     }
 

@@ -7,6 +7,7 @@ import type { EngineAdapter } from "../../../src/core/engines/types";
 import { isMarkdown, parseMarkdownBlocks } from "../../../src/core/markdown";
 import { isGraph, type Diagnostic, type EngineId, type Scene } from "../../../src/core/model/scene";
 import { applyPins } from "../../../src/core/pins";
+import { applyStyles } from "../../../src/core/styles";
 import { sceneToSvg } from "../../../src/core/render/svg";
 import { parseSidecar } from "../../../src/core/sidecar/read";
 import type { Layout, Sidecar } from "../../../src/core/sidecar/types";
@@ -161,7 +162,7 @@ function apply(
 
   const applied = applyPins(scene, layout);
   return {
-    scene: applied.scene,
+    scene: applyStyles(applied.scene, layout.styles),
     diagnostics: applied.diagnostics,
     orphans: applied.orphans.map((o) => o.id),
     pinned: Object.keys(layout.pins ?? {}).length - applied.orphans.length,

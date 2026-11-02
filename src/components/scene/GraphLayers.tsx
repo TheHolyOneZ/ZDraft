@@ -78,8 +78,8 @@ export const ClusterLayer = memo(function ClusterLayer({
             {r.labels.length > 0 && (
               <Lines
                 lines={r.labels}
-                color={theme.clusterText}
-                muted={theme.clusterText}
+                color={r.text}
+                muted={r.text}
                 family={theme.fontFamily}
               />
             )}

@@ -22,10 +22,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          
           - name: Linux
             os: ubuntu-22.04
-            bundles: deb,rpm,appimage
+            bundles: deb,rpm
           - name: Windows
             os: windows-latest
             bundles: nsis
@@ -87,8 +86,6 @@ jobs:
           cargo test --workspace
 
       - name: Build the installers
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: pnpm tauri build --bundles ${{ matrix.bundles }}
 
       - name: Check the glibc requirement
@@ -105,8 +102,7 @@ jobs:
         run: |
           mkdir -p out
           if [ "$RUNNER_OS" = "Linux" ]; then
-            cp target/release/bundle/appimage/*.AppImage \
-               target/release/bundle/deb/*.deb \
+            cp target/release/bundle/deb/*.deb \
                target/release/bundle/rpm/*.rpm out/
           else
             cp target/release/bundle/nsis/*-setup.exe out/
