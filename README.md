@@ -232,6 +232,10 @@ container colours its members, and a node's own colour wins over its
 container's. Text switches to dark or light by itself when a fill would
 otherwise make it hard to read.
 
+Select an edge and the bar shows its **line** colour, which colours the line
+and its arrowheads. Edges keep their own colour; they don't take one from a
+subgraph they pass through.
+
 ### Pins are never lost quietly
 
 A pin belongs to a node's **id**, not its position — so editing an unrelated
@@ -274,7 +278,14 @@ Colours sit in their own table, so colouring a node never pins it:
 [styles.db]
 fill = "#fde68a"
 outline = "#b45309"
+
+[styles."api->db"]
+outline = "#ef4444"
 ```
+
+An edge is named by its two ends, `from->to`, with `#1`, `#2` … for a second
+or third edge between the same pair. For an edge, `outline` is the line colour.
+Renaming a node takes the colours of its edges along.
 
 **Your diagram source is never touched by a drag.** `git diff` after an
 afternoon of nudging shows an unchanged `.dot` file and a small `.zlayout.toml`.

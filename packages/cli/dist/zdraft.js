@@ -3128,7 +3128,11 @@ function applyStyles(scene, styles) {
     const style = merge(node.style, resolveStyle(node.id, parentOf2, styles));
     return style === node.style ? node : { ...node, style };
   });
-  return { ...scene, nodes, clusters };
+  const edges = scene.edges.map((edge) => {
+    const style = merge(edge.style, { outline: styles[edge.id]?.outline ?? void 0 });
+    return style === edge.style ? edge : { ...edge, style };
+  });
+  return { ...scene, nodes, clusters, edges };
 }
 function toHex(color) {
   const text = color.trim();

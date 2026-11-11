@@ -17,7 +17,10 @@ const scene: GraphScene = {
     { id: "b", body: { kind: "label", text: "B" }, shape: "rect", rect: { x: 60, y: 0, w: 40, h: 20 }, fingerprint: "b", parent: "outer" },
     { id: "c", body: { kind: "label", text: "C" }, shape: "rect", rect: { x: 120, y: 0, w: 40, h: 20 }, fingerprint: "c", style: { fill: "#00ff00", dashed: true } },
   ],
-  edges: [],
+  edges: [
+    { id: "a->b", from: "a", to: "b", route: { kind: "poly", points: [{ x: 40, y: 10 }, { x: 60, y: 10 }] }, startArrow: "none", endArrow: "arrow" },
+    { id: "b->c", from: "b", to: "c", route: { kind: "poly", points: [{ x: 100, y: 10 }, { x: 120, y: 10 }] }, startArrow: "none", endArrow: "arrow", style: { dashed: true } },
+  ],
   clusters: [
     { id: "outer", label: "Outer", rect: { x: -20, y: -40, w: 200, h: 100 } },
     { id: "inner", label: "Inner", parent: "outer", rect: { x: -10, y: -20, w: 60, h: 50 } },
@@ -27,6 +30,7 @@ const scene: GraphScene = {
 
 const node = (s: GraphScene, id: string) => s.nodes.find((n) => n.id === id)!;
 const cluster = (s: GraphScene, id: string) => s.clusters.find((c) => c.id === id)!;
+const edge = (s: GraphScene, id: string) => s.edges.find((e) => e.id === id)!;
 
 describe("applyStyles", () => {
   it("leaves the scene alone when nothing is styled", () => {
@@ -56,6 +60,17 @@ describe("applyStyles", () => {
     expect(node(out, "b").style?.fill).toBe("#abcdef");
   });
 
+  it("colours an edge's line with its outline", () => {
+    const out = applyStyles(scene, { "b->c": { outline: "#ef4444" } });
+    expect(edge(out, "b->c").style).toEqual({ stroke: "#ef4444", dashed: true });
+    expect(edge(out, "a->b")).toBe(edge(scene, "a->b"));
+  });
+
+  it("does not pass a container's colours on to edges", () => {
+    const out = applyStyles(scene, { outer: { fill: "#111111", outline: "#222222" }, "a->b": { fill: "#333333" } });
+    expect(edge(out, "a->b").style).toBeUndefined();
+  });
+
   it("overrides what the source set but keeps the rest of its style", () => {
     const out = applyStyles(scene, { c: { outline: "#0000ff" } });
     expect(node(out, "c").style).toEqual({ fill: "#00ff00", stroke: "#0000ff", dashed: true });
@@ -81,6 +96,15 @@ describe("withStyle", () => {
 describe("retargetStyles", () => {
   it("moves the colours along with a rename", () => {
     expect(retargetStyles({ a: { fill: "#111111" } }, "a", "z")).toEqual({ z: { fill: "#111111" } });
+  });
+
+  it("takes the colours of the node's edges along", () => {
+    const styles = { "a->b": { outline: "#111111" }, "b->a#1": { outline: "#222222" }, "ab->c": { outline: "#333333" } };
+    expect(retargetStyles(styles, "a", "z")).toEqual({
+      "z->b": { outline: "#111111" },
+      "b->z#1": { outline: "#222222" },
+      "ab->c": { outline: "#333333" },
+    });
   });
 
   it("returns the same object when the node had no colours", () => {

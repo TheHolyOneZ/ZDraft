@@ -238,7 +238,8 @@ fn the_writer_still_produces_the_fixture_the_cli_reads() {
     }
 
     let expected = std::fs::read_to_string(&fixture)
-        .expect("tests/fixtures/sidecar/full.zlayout.toml — run with ZDRAFT_BLESS=1 to write it");
+        .expect("tests/fixtures/sidecar/full.zlayout.toml — run with ZDRAFT_BLESS=1 to write it")
+        .replace("\r\n", "\n");
 
     assert_eq!(
         written, expected,

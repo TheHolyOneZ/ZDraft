@@ -103,7 +103,8 @@ export const EdgeShape = memo(function EdgeShape({
   highlighted?: boolean;
   draggingLabel?: boolean;
 }) {
-  const stroke = highlighted ? theme.accent : (edge.style?.stroke ?? theme.edge);
+  const own = edge.style?.stroke;
+  const stroke = own ?? (highlighted ? theme.accent : theme.edge);
   const width = (edge.style?.strokeWidth ?? theme.strokeWidth) * (highlighted ? 1.6 : 1);
 
   const head = headArrow(edge.route, edge.arrowEnd, edge.endArrow, ARROW_SIZE);
@@ -122,6 +123,17 @@ export const EdgeShape = memo(function EdgeShape({
         strokeLinecap="round"
         className="edge-hit"
       />
+      {highlighted && own && (
+        <path
+          d={d}
+          fill="none"
+          stroke={theme.accent}
+          strokeOpacity={0.35}
+          strokeWidth={width + 6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
       <path
         d={d}
         fill="none"

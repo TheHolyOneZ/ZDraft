@@ -4,6 +4,24 @@ Every release of ZDraft, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — 2026-11-11
+
+### Added
+
+- **Colours for edges** ([#5]). Select an edge and the bar at the bottom shows
+  its line colour next to the route; click the swatch to pick one and the arrow
+  beside it to go back to the theme's. The colour covers the line and its
+  arrowheads, is stored in the layout file under `[styles."from->to"]` with
+  `outline`, like a node's, and is undone with `Ctrl+Z`.
+- Edge colours appear in every export, in the comparison with the last commit
+  and in the command-line renderer, and follow a node through a rename.
+
+### Changed
+
+- A selected or highlighted edge with its own colour keeps that colour and is
+  marked by a halo in the accent colour instead of being repainted in it. This
+  also applies to edges coloured in the source.
+
 ## [0.3.0] — 2026-11-02
 
 ### Added
@@ -98,6 +116,8 @@ First public release.
 [#2]: https://github.com/TheHolyOneZ/ZDraft/issues/2
 [#3]: https://github.com/TheHolyOneZ/ZDraft/issues/3
 [#4]: https://github.com/TheHolyOneZ/ZDraft/issues/4
+[#5]: https://github.com/TheHolyOneZ/ZDraft/issues/5
+[0.4.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/TheHolyOneZ/ZDraft/compare/b514f26...v0.2.0
 [0.1.0]: https://github.com/TheHolyOneZ/ZDraft/commit/b514f26

@@ -1,4 +1,4 @@
-import type { Cluster, GraphNode, GraphScene, NodeStyle } from "../model/scene";
+import type { Cluster, GraphEdge, GraphNode, GraphScene, NodeStyle } from "../model/scene";
 import type { Layout, StyleHint } from "../sidecar/types";
 
 export type Styles = NonNullable<Layout["styles"]>;
@@ -50,7 +50,12 @@ export function applyStyles(scene: GraphScene, styles: Layout["styles"]): GraphS
     return style === node.style ? node : { ...node, style };
   });
 
-  return { ...scene, nodes, clusters };
+  const edges: GraphEdge[] = scene.edges.map((edge) => {
+    const style = merge(edge.style, { outline: styles[edge.id]?.outline ?? undefined });
+    return style === edge.style ? edge : { ...edge, style };
+  });
+
+  return { ...scene, nodes, clusters, edges };
 }
 
 export function withStyle(
@@ -69,11 +74,27 @@ export function withStyle(
   return next;
 }
 
+function renamedEdge(key: string, from: string, to: string): string | null {
+  const match = /^(.+?)->(.+?)(#\d+)?$/.exec(key);
+  if (!match) return null;
+  const [, tail, head, ordinal = ""] = match;
+  if (tail !== from && head !== from) return null;
+  return `${tail === from ? to : tail}->${head === from ? to : head}${ordinal}`;
+}
+
 export function retargetStyles(styles: Layout["styles"], from: string, to: string): Layout["styles"] {
-  if (!styles?.[from]) return styles;
-  const next: Styles = { ...styles, [to]: styles[from]! };
-  delete next[from];
-  return next;
+  if (!styles) return styles;
+  let next: Styles | null = null;
+
+  for (const key of Object.keys(styles)) {
+    const target = key === from ? to : renamedEdge(key, from, to);
+    if (target === null || target === key) continue;
+    next ??= { ...styles };
+    next[target] = styles[key]!;
+    delete next[key];
+  }
+
+  return next ?? styles;
 }
 
 export function toHex(color: string): string | null {

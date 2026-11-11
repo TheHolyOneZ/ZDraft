@@ -30,6 +30,7 @@ import {
   nodesIn,
   nodeText,
   type Cluster,
+  type GraphEdge,
   type GraphNode,
   type NodeShape,
 } from "../core/model/scene";
@@ -45,6 +46,7 @@ export function PropertiesBar() {
   const selectedEdge = useDocumentStore((s) => s.selectedEdge);
   const pins = useDocumentStore((s) => s.layout.pins);
   const edgeHints = useDocumentStore((s) => s.layout.edges);
+  const styles = useDocumentStore((s) => s.layout.styles);
   const releasePins = useDocumentStore((s) => s.releasePins);
   const setWaypoints = useDocumentStore((s) => s.setWaypoints);
   const setLabelOffset = useDocumentStore((s) => s.setLabelOffset);
@@ -136,6 +138,7 @@ export function PropertiesBar() {
       const hint = edgeHints?.[edge.id];
       const bends = hint?.waypoints?.length ?? 0;
       const nudged = Boolean(hint?.label_offset);
+      const coloured = Boolean(styles?.[edge.id]?.outline);
 
       return (
         <Bar>
@@ -176,8 +179,12 @@ export function PropertiesBar() {
             )}
           </Group>
 
+          <div className="h-4 w-px" style={{ background: "var(--border)" }} />
+
+          <ColorTools targets={[edge]} kind="edge" />
+
           <span className="ml-auto truncate text-[11px]" style={{ color: "var(--text-3)" }}>
-            {bends > 0 || nudged ? `${name}.zlayout.toml` : name}
+            {bends > 0 || nudged || coloured ? `${name}.zlayout.toml` : name}
           </span>
         </Bar>
       );
@@ -534,8 +541,8 @@ function ColorTools({
   targets,
   kind,
 }: {
-  targets: ReadonlyArray<GraphNode | Cluster>;
-  kind: "node" | "cluster";
+  targets: ReadonlyArray<GraphNode | Cluster | GraphEdge>;
+  kind: "node" | "cluster" | "edge";
 }) {
   const styles = useDocumentStore((s) => s.layout.styles);
   const themeName = useDocumentStore((s) => s.layout.theme?.name);
@@ -550,7 +557,9 @@ function ColorTools({
   const defaults =
     kind === "node"
       ? { fill: theme.nodeFill, outline: theme.nodeStroke }
-      : { fill: theme.clusterFill, outline: theme.clusterStroke };
+      : kind === "cluster"
+        ? { fill: theme.clusterFill, outline: theme.clusterStroke }
+        : { fill: theme.edge, outline: theme.edge };
 
   const channel = (key: "fill" | "outline") => ({
     shown: (key === "fill" ? first.style?.fill : first.style?.stroke) ?? defaults[key],
@@ -561,8 +570,14 @@ function ColorTools({
 
   return (
     <Group icon="layout" label="colour">
-      <ColorSwatch label="fill" {...channel("fill")} />
-      <ColorSwatch label="outline" {...channel("outline")} />
+      {kind === "edge" ? (
+        <ColorSwatch label="line" {...channel("outline")} />
+      ) : (
+        <>
+          <ColorSwatch label="fill" {...channel("fill")} />
+          <ColorSwatch label="outline" {...channel("outline")} />
+        </>
+      )}
     </Group>
   );
 }
