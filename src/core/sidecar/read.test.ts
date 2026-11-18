@@ -17,6 +17,16 @@ describe("reading a sidecar", () => {
     });
   });
 
+  it("reads a subgraph's pinned size", () => {
+    expect(sidecar.pins!.cluster_core).toEqual({
+      x: 300,
+      y: 200,
+      fingerprint: null,
+      auto: [290, 190],
+      size: [240, 180],
+    });
+  });
+
   it("leaves the optional halves of a pin absent rather than invented", () => {
     expect(sidecar.pins!.cache).toEqual({
       x: 760,

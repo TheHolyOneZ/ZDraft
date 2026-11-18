@@ -4,7 +4,7 @@ import { graphvizAdapter } from "../engines/graphviz";
 import { rectCenter } from "../model/geometry";
 import { isGraph, type GraphScene } from "../model/scene";
 import type { Layout } from "../sidecar/types";
-import { applyPins, migratePin, pinFor, pinnedIds, withoutPin, withPin } from ".";
+import { applyPins, migratePin, pinFor, pinnedIds, sizePinFor, withoutPin, withPin } from ".";
 
 async function layout(source: string): Promise<GraphScene> {
   const result = await graphvizAdapter.layout(source);
@@ -359,5 +359,84 @@ describe("subgraph boxes", () => {
     const bounds = applied.scene.bounds;
 
     expect(bounds.x + bounds.w).toBeGreaterThanOrEqual(moved.rect.x + moved.rect.w);
+  });
+});
+
+describe("a subgraph with a pinned size", () => {
+  const nested = `digraph {
+    subgraph cluster_outer {
+      label="outer";
+      subgraph cluster_inner {
+        label="inner";
+        a; b;
+      }
+      c;
+    }
+    d;
+  }`;
+
+  it("takes the size and place it was pinned at", async () => {
+    const scene = await layout(nested);
+    const applied = applyPins(scene, {
+      pins: { cluster_inner: { x: 400, y: 300, size: [240, 180] } },
+    });
+
+    const inner = applied.scene.clusters.find((c) => c.id === "cluster_inner")!;
+    expect(inner.rect).toEqual({ x: 280, y: 210, w: 240, h: 180 });
+  });
+
+  it("stays put when a node inside it is dragged", async () => {
+    const scene = await layout(nested);
+    const a = scene.nodes.find((n) => n.id === "a")!;
+    const c = rectCenter(a.rect);
+
+    const applied = applyPins(scene, {
+      pins: {
+        cluster_inner: { x: 400, y: 300, size: [240, 180] },
+        a: { x: c.x - 500, y: c.y + 500 },
+      },
+    });
+
+    const inner = applied.scene.clusters.find((cl) => cl.id === "cluster_inner")!;
+    expect(inner.rect).toEqual({ x: 280, y: 210, w: 240, h: 180 });
+  });
+
+  it("is not reported as a pin that lost its node", async () => {
+    const scene = await layout(nested);
+    const applied = applyPins(scene, {
+      pins: { cluster_inner: { x: 400, y: 300, size: [240, 180] } },
+    });
+
+    expect(applied.orphans).toEqual([]);
+    expect(applied.diagnostics).toEqual([]);
+  });
+
+  it("still lets the enclosing subgraph grow around it", async () => {
+    const scene = await layout(nested);
+    const outer = scene.clusters.find((c) => c.id === "cluster_outer")!;
+    const inner = scene.clusters.find((c) => c.id === "cluster_inner")!;
+
+    const applied = applyPins(scene, {
+      pins: {
+        cluster_inner: {
+          x: rectCenter(inner.rect).x,
+          y: rectCenter(inner.rect).y,
+          size: [inner.rect.w + 400, inner.rect.h],
+        },
+      },
+    });
+
+    const grown = applied.scene.clusters.find((c) => c.id === "cluster_outer")!;
+    expect(grown.rect.w).toBeGreaterThan(outer.rect.w + 300);
+  });
+
+  it("records where auto-layout had the box, and its new size", async () => {
+    const scene = await layout(nested);
+    const inner = scene.clusters.find((c) => c.id === "cluster_inner")!;
+    const pin = sizePinFor(inner, { x: 10, y: 20, w: 300.4, h: 199.6 });
+
+    expect(pin).toMatchObject({ x: 160.2, y: 119.8, size: [300, 200] });
+    const auto = rectCenter(inner.rect);
+    expect(pin.auto).toEqual([Math.round(auto.x), Math.round(auto.y)]);
   });
 });

@@ -5,12 +5,20 @@ import { graphvizAdapter } from "../core/engines/graphviz";
 import { mermaidAdapter } from "../core/engines/mermaid";
 import { plantumlAdapter } from "../core/engines/plantuml";
 import type { EngineAdapter } from "../core/engines/types";
-import type { Point } from "../core/model/geometry";
+import type { Point, Rect } from "../core/model/geometry";
 import { rectCenter, snapPoint } from "../core/model/geometry";
 import { detectEol, toLf, withEol, type Eol } from "../core/eol";
 import type { Diagnostic, EngineId, NodeShape, Scene } from "../core/model/scene";
 import { isGraph, nodesIn } from "../core/model/scene";
-import { applyPins, migratePin, pinFor, withoutPins, withPin, type OrphanPin } from "../core/pins";
+import {
+  applyPins,
+  migratePin,
+  pinFor,
+  sizePinFor,
+  withoutPins,
+  withPin,
+  type OrphanPin,
+} from "../core/pins";
 import { overlapDiagnostics } from "../core/overlap";
 import { applyStyles, retargetStyles, withStyle } from "../core/styles";
 import {
@@ -159,6 +167,8 @@ export interface DocumentState {
   resolveConflict(sidecar: Sidecar): Promise<void>;
 
   pinAt(positions: ReadonlyMap<string, Point>, snap?: number): void;
+
+  sizeCluster(id: string, rect: Rect | null): void;
 
   togglePins(ids: readonly string[]): void;
 
@@ -734,13 +744,40 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
       if (!raw || !isGraph(raw)) return;
 
       let next = layout;
+      let nodes = 0;
       for (const [id, at] of positions) {
+        const target = snapSize > 0 ? snapPoint(at, snapSize) : at;
         const node = raw.nodes.find((n) => n.id === id);
-        if (!node) continue;
-        next = withPin(next, id, pinFor(node, snapSize > 0 ? snapPoint(at, snapSize) : at));
+        if (node) {
+          next = withPin(next, id, pinFor(node, target));
+          nodes += 1;
+          continue;
+        }
+
+        const sized = layout.pins?.[id];
+        if (sized?.size && raw.clusters.some((c) => c.id === id)) {
+          next = withPin(next, id, { ...sized, x: target.x, y: target.y });
+        }
       }
 
-      mutateLayout(next, positions.size === 1 ? "Move a node" : `Move ${positions.size} nodes`);
+      mutateLayout(
+        next,
+        nodes === 0 ? "Move a subgraph" : nodes === 1 ? "Move a node" : `Move ${nodes} nodes`,
+      );
+    },
+
+    sizeCluster: (id, rect) => {
+      const { raw, layout } = get();
+      if (!raw || !isGraph(raw)) return;
+      const cluster = raw.clusters.find((c) => c.id === id);
+      if (!cluster) return;
+
+      if (!rect) {
+        if (!layout.pins?.[id]) return;
+        mutateLayout(withoutPins(layout, [id]), "Let a subgraph size itself");
+        return;
+      }
+      mutateLayout(withPin(layout, id, sizePinFor(cluster, rect)), "Resize a subgraph");
     },
 
     releasePins: (ids) =>

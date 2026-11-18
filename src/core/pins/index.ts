@@ -38,6 +38,14 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
   const moved = new Set<string>();
   const diagnostics: Diagnostic[] = [];
   const byId = new Map(scene.nodes.map((n) => [n.id, n]));
+  const clusterIds = new Set(scene.clusters.map((c) => c.id));
+
+  const sized = new Map<string, Rect>();
+  for (const id of pinIds) {
+    const size = pins[id]!.size;
+    if (!clusterIds.has(id) || !size) continue;
+    sized.set(id, sizedRect(pins[id]!, size));
+  }
 
   const nodes: GraphNode[] = scene.nodes.map((node) => {
     const pin = pins[node.id];
@@ -79,7 +87,7 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
   }
 
   for (const id of pinIds) {
-    if (byId.has(id)) continue;
+    if (byId.has(id) || clusterIds.has(id)) continue;
 
     const pin = pins[id]!;
 
@@ -110,7 +118,7 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
     }
   }
 
-  const clusters = refitClusters(scene, nodes, moved);
+  const clusters = refitClusters(scene, nodes, moved, sized);
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
   let edges: GraphEdge[] = rerouteEdges(scene.edges, {
@@ -135,12 +143,21 @@ export function applyPins(scene: GraphScene, layout: Layout | null | undefined):
   };
 }
 
+function sizedRect(pin: Pin, size: readonly [number, number]): Rect {
+  const w = Math.max(size[0], 1);
+  const h = Math.max(size[1], 1);
+  return { x: pin.x - w / 2, y: pin.y - h / 2, w, h };
+}
+
 function refitClusters(
   scene: GraphScene,
   nodes: readonly GraphNode[],
   moved: ReadonlySet<string>,
+  sized: ReadonlyMap<string, Rect>,
 ): Cluster[] {
-  if (scene.clusters.length === 0 || moved.size === 0) return [...scene.clusters];
+  if (scene.clusters.length === 0 || (moved.size === 0 && sized.size === 0)) {
+    return [...scene.clusters];
+  }
 
   const autoNodes = new Map(scene.nodes.map((n) => [n.id, n]));
   const pinnedNodes = new Map(nodes.map((n) => [n.id, n]));
@@ -162,6 +179,12 @@ function refitClusters(
   const result = new Map(scene.clusters.map((c) => [c.id, c]));
 
   for (const cluster of ordered) {
+    const fixed = sized.get(cluster.id);
+    if (fixed) {
+      result.set(cluster.id, { ...cluster, rect: fixed });
+      continue;
+    }
+
     const members = membersOf.get(cluster.id) ?? [];
     const children = childrenOf.get(cluster.id) ?? [];
 
@@ -249,6 +272,18 @@ export function pinFor(node: GraphNode, center: Point): Pin {
     y: center.y,
     fingerprint: node.fingerprint,
     auto: [Math.round(auto.x), Math.round(auto.y)],
+  };
+}
+
+export function sizePinFor(cluster: Cluster, rect: Rect): Pin {
+  const auto = rectCenter(cluster.rect);
+  const center = rectCenter(rect);
+  return {
+    x: center.x,
+    y: center.y,
+    fingerprint: null,
+    auto: [Math.round(auto.x), Math.round(auto.y)],
+    size: [Math.round(rect.w), Math.round(rect.h)],
   };
 }
 

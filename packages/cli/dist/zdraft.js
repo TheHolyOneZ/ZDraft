@@ -2937,6 +2937,13 @@ function applyPins(scene, layout) {
   const moved = /* @__PURE__ */ new Set();
   const diagnostics = [];
   const byId = new Map(scene.nodes.map((n4) => [n4.id, n4]));
+  const clusterIds = new Set(scene.clusters.map((c) => c.id));
+  const sized = /* @__PURE__ */ new Map();
+  for (const id of pinIds) {
+    const size = pins[id].size;
+    if (!clusterIds.has(id) || !size) continue;
+    sized.set(id, sizedRect(pins[id], size));
+  }
   const nodes = scene.nodes.map((node) => {
     const pin = pins[node.id];
     if (!pin) return node;
@@ -2971,7 +2978,7 @@ function applyPins(scene, layout) {
     unpinnedByFingerprint.set(node.fingerprint, list);
   }
   for (const id of pinIds) {
-    if (byId.has(id)) continue;
+    if (byId.has(id) || clusterIds.has(id)) continue;
     const pin = pins[id];
     const candidates = pin.fingerprint ? unpinnedByFingerprint.get(pin.fingerprint) : void 0;
     const migrateTo = candidates?.length === 1 ? candidates[0] : void 0;
@@ -2993,7 +3000,7 @@ function applyPins(scene, layout) {
       );
     }
   }
-  const clusters = refitClusters(scene, nodes, moved);
+  const clusters = refitClusters(scene, nodes, moved, sized);
   const nodeMap = new Map(nodes.map((n4) => [n4.id, n4]));
   let edges = rerouteEdges(scene.edges, {
     nodes: nodeMap,
@@ -3013,8 +3020,15 @@ function applyPins(scene, layout) {
     diagnostics
   };
 }
-function refitClusters(scene, nodes, moved) {
-  if (scene.clusters.length === 0 || moved.size === 0) return [...scene.clusters];
+function sizedRect(pin, size) {
+  const w = Math.max(size[0], 1);
+  const h = Math.max(size[1], 1);
+  return { x: pin.x - w / 2, y: pin.y - h / 2, w, h };
+}
+function refitClusters(scene, nodes, moved, sized) {
+  if (scene.clusters.length === 0 || moved.size === 0 && sized.size === 0) {
+    return [...scene.clusters];
+  }
   const autoNodes = new Map(scene.nodes.map((n4) => [n4.id, n4]));
   const pinnedNodes = new Map(nodes.map((n4) => [n4.id, n4]));
   const membersOf = /* @__PURE__ */ new Map();
@@ -3031,6 +3045,11 @@ function refitClusters(scene, nodes, moved) {
   const ordered = [...scene.clusters].sort((a, b) => depthOf(b, byId) - depthOf(a, byId));
   const result = new Map(scene.clusters.map((c) => [c.id, c]));
   for (const cluster of ordered) {
+    const fixed = sized.get(cluster.id);
+    if (fixed) {
+      result.set(cluster.id, { ...cluster, rect: fixed });
+      continue;
+    }
     const members = membersOf.get(cluster.id) ?? [];
     const children = childrenOf.get(cluster.id) ?? [];
     const auto = [];
@@ -3881,11 +3900,13 @@ function readPin(value) {
   const x = num(table.x);
   const y = num(table.y);
   if (x === null || y === null) return null;
+  const size = point(table.size);
   return {
     x,
     y,
     fingerprint: str(table.fingerprint) ?? null,
-    auto: point(table.auto)
+    auto: point(table.auto),
+    ...size && size[0] > 0 && size[1] > 0 ? { size } : {}
   };
 }
 function readEdge(value) {

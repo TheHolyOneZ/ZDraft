@@ -20,6 +20,9 @@ pub struct Pin {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto: Option<[f64; 2]>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<[f64; 2]>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
@@ -310,6 +313,12 @@ fn write_layout(table: &mut Table, layout: &Layout) {
                     entry.remove("auto");
                 }
             }
+            match pin.size {
+                Some(size) => entry["size"] = value(point_array(size)),
+                None => {
+                    entry.remove("size");
+                }
+            }
         }
     }
 
@@ -496,6 +505,7 @@ mod tests {
             y,
             fingerprint: None,
             auto: None,
+            size: None,
         }
     }
 
@@ -928,6 +938,43 @@ y = 288
 
         assert!(!without.contains("styles"), "{without}");
         assert!(side.is_empty());
+    }
+
+    #[test]
+    fn a_subgraph_pin_keeps_its_size() {
+        let mut side = Sidecar::new();
+        side.root.pins.insert(
+            "cluster_core".into(),
+            Pin {
+                size: Some([240.4, 179.6]),
+                ..pin(300.0, 200.0)
+            },
+        );
+
+        let text = to_toml_string(&side, None);
+        assert!(text.contains("size = [240, 180]"), "{text}");
+
+        let back = parse(&text, "a.toml").unwrap();
+        assert_eq!(back.root.pins["cluster_core"].size, Some([240.0, 180.0]));
+    }
+
+    #[test]
+    fn releasing_a_size_removes_only_that_line() {
+        let mut side = Sidecar::new();
+        side.root.pins.insert(
+            "core".into(),
+            Pin {
+                size: Some([200.0, 100.0]),
+                ..pin(10.0, 20.0)
+            },
+        );
+        let with = to_toml_string(&side, None);
+
+        side.root.pins.get_mut("core").unwrap().size = None;
+        let without = to_toml_string(&side, Some(&with));
+
+        assert!(!without.contains("size"), "{without}");
+        assert!(without.contains("x = 10"), "{without}");
     }
 
     #[test]

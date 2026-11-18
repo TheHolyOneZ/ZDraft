@@ -204,6 +204,10 @@ ghost to snap the node back.**
 
 - Nodes track the cursor **1:1**, with no spring and no lag.
 - Drag a **subgraph** to move everything inside it.
+- **Resize a subgraph** by dragging the handle on its bottom-right corner. From
+  then on it keeps that size and place, however you move what is inside it;
+  dragging the subgraph moves the box along with its contents. Double-click the
+  handle, or use the arrow in the bottom bar, to let it size itself again.
 - **Arrow keys** nudge by 1 px, `Shift` for 10 — never snapped to the grid.
 - **`Alt`** while dragging ignores the grid.
 - **`P`** pins or releases the selection.
@@ -271,6 +275,15 @@ the moment you pinned it, and `fingerprint` is what the node looked like then.
 ZDraft uses `auto` to tell you when the layout has since moved a long way and
 the pin may be fighting it, and `fingerprint` to recognise a pinned node you
 renamed.
+
+A subgraph you resized is pinned the same way, with its size added:
+
+```toml
+[pins.cluster_core]
+x = 300
+y = 200
+size = [240, 180]
+```
 
 Colours sit in their own table, so colouring a node never pins it:
 

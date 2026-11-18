@@ -232,6 +232,13 @@ export function PropertiesBar() {
           )}
         </Group>
 
+        {only && (
+          <>
+            <div className="h-4 w-px" style={{ background: "var(--border)" }} />
+            <ClusterSize cluster={only} />
+          </>
+        )}
+
         <div className="h-4 w-px" style={{ background: "var(--border)" }} />
 
         <ColorTools targets={clusters} kind="cluster" />
@@ -536,6 +543,38 @@ const ALIGNMENTS: Array<{ edge: AlignEdge; icon: React.ReactNode; title: string 
   },
   { edge: "bottom", icon: <AlignEndHorizontal size={13} strokeWidth={1.75} />, title: "Align bottoms" },
 ];
+
+function ClusterSize({ cluster }: { cluster: Cluster }) {
+  const fixed = useDocumentStore((s) => Boolean(s.layout.pins?.[cluster.id]?.size));
+  const sizeCluster = useDocumentStore((s) => s.sizeCluster);
+
+  return (
+    <Group icon="layout" label="size">
+      <span className="tnum" style={{ color: "var(--text-2)" }}>
+        {Math.round(cluster.rect.w)} × {Math.round(cluster.rect.h)}
+      </span>
+      {fixed ? (
+        <>
+          <span
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium"
+            style={{ background: "var(--pin-soft)", color: "var(--pin)" }}
+          >
+            <MapPin size={11} strokeWidth={2} />
+            fixed
+          </span>
+          <IconButton
+            icon={<RotateCcw size={12} strokeWidth={1.75} />}
+            onClick={() => sizeCluster(cluster.id, null)}
+            title="Let it size itself around what is inside again"
+            size={20}
+          />
+        </>
+      ) : (
+        <span style={{ color: "var(--text-3)" }}>auto — drag the corner to fix it</span>
+      )}
+    </Group>
+  );
+}
 
 function ColorTools({
   targets,

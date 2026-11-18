@@ -6,6 +6,7 @@ import {
   isGraph,
   isPassthrough,
   isSequence,
+  clustersWithin,
   nodesIn,
   type GraphScene,
   type SequenceScene,
@@ -38,6 +39,7 @@ import { CanvasControls } from "./CanvasControls";
 import { Minimap } from "./Minimap";
 import {
   ClusterLayer,
+  ClusterResizeHandles,
   DiffLayer,
   EdgeLayer,
   EdgeSelection,
@@ -64,6 +66,17 @@ interface PanState {
   startScreen: Point;
   startViewport: Viewport;
 }
+
+interface ResizeState {
+  pointerId: number;
+  id: string;
+  startWorld: Point;
+  origin: Rect;
+  rect: Rect;
+  moved: boolean;
+}
+
+const MIN_CLUSTER = { w: 60, h: 40 };
 
 interface DragState {
   pointerId: number;
@@ -153,6 +166,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   const setHovered = useDocumentStore((s) => s.setHovered);
   const setDragging = useDocumentStore((s) => s.setDragging);
   const pinAt = useDocumentStore((s) => s.pinAt);
+  const sizeCluster = useDocumentStore((s) => s.sizeCluster);
   const path = useDocumentStore((s) => s.path);
   const diffMode = useDocumentStore((s) => s.diffMode);
   const headScene = useDocumentStore((s) => s.headScene);
@@ -193,6 +207,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   const [labelDrag, setLabelDrag] = useState<LabelDrag | null>(null);
   const [lifelineDrag, setLifelineDrag] = useState<LifelineDrag | null>(null);
   const [gapDrag, setGapDrag] = useState<GapDrag | null>(null);
+  const [resize, setResize] = useState<ResizeState | null>(null);
 
   const panRef = useRef<PanState | null>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -201,6 +216,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   const labelRef = useRef<LabelDrag | null>(null);
   const lifelineRef = useRef<LifelineDrag | null>(null);
   const gapRef = useRef<GapDrag | null>(null);
+  const resizeRef = useRef<ResizeState | null>(null);
   const viewportRef = useRef(viewport);
   viewportRef.current = viewport;
 
@@ -313,6 +329,14 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
           const c = rectCenter(node.rect);
           next.set(node.id, { x: c.x + delta.x * step, y: c.y + delta.y * step });
         }
+        const sizedPins = useDocumentStore.getState().layout.pins;
+        for (const id of selection) {
+          for (const cluster of clustersWithin(current, id)) {
+            if (!sizedPins?.[cluster.id]?.size) continue;
+            const c = rectCenter(cluster.rect);
+            next.set(cluster.id, { x: c.x + delta.x * step, y: c.y + delta.y * step });
+          }
+        }
         if (next.size === 0) return;
 
         pinAt(next, 0);
@@ -384,6 +408,11 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
   const annotationIdAt = (target: EventTarget | null): string | null => {
     if (!(target instanceof Element)) return null;
     return target.closest("[data-annotation]")?.getAttribute("data-annotation") ?? null;
+  };
+
+  const resizeIdAt = (target: EventTarget | null): string | null => {
+    if (!(target instanceof Element)) return null;
+    return target.closest("[data-cluster-resize]")?.getAttribute("data-cluster-resize") ?? null;
   };
 
   const clusterIdAt = (target: EventTarget | null): string | null => {
@@ -474,6 +503,26 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       };
       waypointRef.current = state;
       setWaypointDrag(state);
+      return;
+    }
+
+    const resizeId = resizeIdAt(e.target);
+    const resizing = resizeId && scene && isGraph(scene)
+      ? scene.clusters.find((c) => c.id === resizeId)
+      : undefined;
+    if (resizing) {
+      e.preventDefault();
+      capture.setPointerCapture?.(e.pointerId);
+      const state: ResizeState = {
+        pointerId: e.pointerId,
+        id: resizing.id,
+        startWorld: screenToWorld(viewport, at),
+        origin: resizing.rect,
+        rect: resizing.rect,
+        moved: false,
+      };
+      resizeRef.current = state;
+      setResize(state);
       return;
     }
 
@@ -607,6 +656,12 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
         if (node) origins.set(id, rectCenter(node.rect));
       }
 
+      if (clusterId) {
+        for (const cluster of clustersWithin(scene, clusterId)) {
+          if (layout.pins?.[cluster.id]?.size) origins.set(cluster.id, rectCenter(cluster.rect));
+        }
+      }
+
       if (origins.size === 0) return;
 
       capture.setPointerCapture?.(e.pointerId);
@@ -724,6 +779,33 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       return;
     }
 
+    const sizing = resizeRef.current;
+    if (sizing?.pointerId === e.pointerId) {
+      const world = screenToWorld(viewportRef.current, at);
+      const dx = world.x - sizing.startWorld.x;
+      const dy = world.y - sizing.startWorld.y;
+
+      const corner = {
+        x: sizing.origin.x + sizing.origin.w + dx,
+        y: sizing.origin.y + sizing.origin.h + dy,
+      };
+      const snapped = e.altKey || gridSnap <= 0 ? corner : snapPoint(corner, gridSnap);
+
+      const next: ResizeState = {
+        ...sizing,
+        rect: {
+          x: sizing.origin.x,
+          y: sizing.origin.y,
+          w: Math.max(MIN_CLUSTER.w, snapped.x - sizing.origin.x),
+          h: Math.max(MIN_CLUSTER.h, snapped.y - sizing.origin.y),
+        },
+        moved: sizing.moved || Math.hypot(dx, dy) > 2,
+      };
+      resizeRef.current = next;
+      setResize(next);
+      return;
+    }
+
     const dragging = dragRef.current;
     if (dragging?.pointerId === e.pointerId) {
       const world = screenToWorld(viewportRef.current, at);
@@ -837,6 +919,14 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
       return;
     }
 
+    const sizing = resizeRef.current;
+    if (sizing?.pointerId === e.pointerId) {
+      resizeRef.current = null;
+      setResize(null);
+      if (sizing.moved) sizeCluster(sizing.id, sizing.rect);
+      return;
+    }
+
     const dragging = dragRef.current;
     if (dragging?.pointerId === e.pointerId) {
       dragRef.current = null;
@@ -871,11 +961,16 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     const nodeMove = drag?.moved ? drag : null;
     const wpMove = waypointDrag?.moved ? waypointDrag : null;
     const labelMove = labelDrag?.moved ? labelDrag : null;
-    if ((!nodeMove && !wpMove && !labelMove) || !raw || !isGraph(raw)) return base;
+    const sizeMove = resize?.moved ? resize : null;
+    if ((!nodeMove && !wpMove && !labelMove && !sizeMove) || !raw || !isGraph(raw)) return base;
 
     const pins = { ...(layout.pins ?? {}) };
     for (const [id, at] of nodeMove?.current ?? []) {
       pins[id] = { ...(pins[id] ?? {}), x: at.x, y: at.y };
+    }
+    if (sizeMove) {
+      const { x, y, w, h } = sizeMove.rect;
+      pins[sizeMove.id] = { ...(pins[sizeMove.id] ?? {}), x: x + w / 2, y: y + h / 2, size: [w, h] };
     }
 
     const edges = { ...(layout.edges ?? {}) };
@@ -893,7 +988,7 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
     }
 
     return applyStyles(applyPins(raw, { ...layout, pins, edges }).scene, layout.styles);
-  }, [scene, drag, waypointDrag, labelDrag, raw, layout]);
+  }, [scene, drag, waypointDrag, labelDrag, resize, raw, layout]);
 
   const diff = useMemo(() => {
     if (!diffMode || !headScene || !shown) return EMPTY_DIFF;
@@ -990,6 +1085,13 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
           return;
         }
 
+        const sizedId = resizeIdAt(under) ?? resizeIdAt(e.target);
+        if (sizedId) {
+          e.preventDefault();
+          sizeCluster(sizedId, null);
+          return;
+        }
+
         const labelEdge = edgeLabelIdAt(under) ?? edgeLabelIdAt(e.target);
         if (labelEdge) {
           e.preventDefault();
@@ -1080,6 +1182,12 @@ export function Canvas({ theme }: { theme: DiagramTheme }) {
                 draggingIds={draggingIds}
               />
               <SelectionLayer scene={shown} selection={selection} />
+              <ClusterResizeHandles
+                scene={shown}
+                selection={selection}
+                zoom={viewport.zoom}
+                sized={layout.pins}
+              />
 
               <WaypointEditor
                 scene={shown}

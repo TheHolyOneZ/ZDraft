@@ -6,6 +6,7 @@ import { shapeGeometry } from "../../core/render/shapes";
 import { labelBlock, type TextLine } from "../../core/render/text";
 import type { Rect } from "../../core/model/geometry";
 import type { GraphEdge, GraphNode, GraphScene } from "../../core/model/scene";
+import type { Pin } from "../../core/sidecar/types";
 import type { SceneDiff } from "../../core/diff";
 import type { DiagramTheme } from "../../core/theme";
 
@@ -435,6 +436,59 @@ export const GhostLayer = memo(function GhostLayer({
                 data-ghost={id}
               />
             </g>
+          </g>
+        );
+      })}
+    </g>
+  );
+});
+
+export const ClusterResizeHandles = memo(function ClusterResizeHandles({
+  scene,
+  selection,
+  zoom,
+  sized,
+}: {
+  scene: GraphScene;
+  selection: ReadonlySet<string>;
+  zoom: number;
+  sized?: Record<string, Pin>;
+}) {
+  const clusters = scene.clusters.filter((c) => selection.has(c.id));
+  if (clusters.length === 0) return null;
+
+  const grip = 9 / zoom;
+  const hit = 20 / zoom;
+
+  return (
+    <g data-chrome="cluster-resize">
+      {clusters.map((cluster) => {
+        const x = cluster.rect.x + cluster.rect.w;
+        const y = cluster.rect.y + cluster.rect.h;
+        const fixed = Boolean(sized?.[cluster.id]?.size);
+
+        return (
+          <g
+            key={cluster.id}
+            data-cluster-resize={cluster.id}
+            style={{ cursor: "nwse-resize" }}
+          >
+            <title>
+              {fixed
+                ? "Drag to resize · double-click to let it size itself again"
+                : "Drag to fix this subgraph's size"}
+            </title>
+            <rect x={x - hit / 2} y={y - hit / 2} width={hit} height={hit} fill="transparent" />
+            <rect
+              x={x - grip / 2}
+              y={y - grip / 2}
+              width={grip}
+              height={grip}
+              rx={1.5 / zoom}
+              fill={fixed ? "var(--pin)" : "var(--accent)"}
+              stroke="var(--canvas-bg)"
+              strokeWidth={1.5 / zoom}
+            />
           </g>
         );
       })}

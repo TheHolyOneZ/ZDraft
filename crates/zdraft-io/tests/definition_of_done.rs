@@ -39,6 +39,7 @@ fn the_definition_of_done() {
                 y: *y,
                 fingerprint: Some(format!("node:Service:{id}")),
                 auto: None,
+                size: None,
             },
         );
     }
@@ -100,6 +101,7 @@ fn deleting_the_sidecar_returns_pure_auto_layout() {
             y: 2.0,
             fingerprint: None,
             auto: None,
+            size: None,
         },
     );
     write_atomic(&path, &to_toml_string(&sidecar, None)).unwrap();
@@ -125,6 +127,7 @@ fn a_second_drag_rewrites_only_the_lines_that_moved() {
                 y,
                 fingerprint: None,
                 auto: None,
+                size: None,
             },
         );
     }
@@ -178,6 +181,7 @@ fn the_writer_still_produces_the_fixture_the_cli_reads() {
             y: 288.0,
             fingerprint: Some("box:API:0".into()),
             auto: Some([120.0, 40.0]),
+            size: None,
         },
     );
     side.root.pins.insert(
@@ -187,6 +191,17 @@ fn the_writer_still_produces_the_fixture_the_cli_reads() {
             y: 210.0,
             fingerprint: None,
             auto: None,
+            size: None,
+        },
+    );
+    side.root.pins.insert(
+        "cluster_core".into(),
+        Pin {
+            x: 300.0,
+            y: 200.0,
+            fingerprint: None,
+            auto: Some([290.0, 190.0]),
+            size: Some([240.0, 180.0]),
         },
     );
     side.root.edges.insert(

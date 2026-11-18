@@ -4,6 +4,25 @@ Every release of ZDraft, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] — 2026-11-18
+
+### Added
+
+- **Resizable subgraphs** ([#6]). Select a subgraph and drag the handle on its
+  bottom-right corner to give it the size you want. From then on it keeps that
+  size and place: moving a node inside it, or out of it, no longer makes the
+  box grow or shrink around it. Dragging the subgraph itself, or nudging it
+  with the arrow keys, moves the box along with everything inside.
+- The size is a pin like any other, stored in the layout file as
+  `[pins.<subgraph>]` with `x`, `y` and a new `size = [w, h]`, never in your
+  source. It shows in the Pins list, is undone with `Ctrl+Z`, and is released
+  by **Release all pins** like the rest.
+- The bottom bar shows a selected subgraph's size and whether it is fixed or
+  automatic. The arrow beside it, or a double-click on the corner handle, lets
+  the subgraph size itself around its contents again.
+- A subgraph around a resized one still grows to hold it, and the fixed size
+  appears in every export and in the command-line renderer.
+
 ## [0.4.0] — 2026-11-11
 
 ### Added
@@ -117,6 +136,8 @@ First public release.
 [#3]: https://github.com/TheHolyOneZ/ZDraft/issues/3
 [#4]: https://github.com/TheHolyOneZ/ZDraft/issues/4
 [#5]: https://github.com/TheHolyOneZ/ZDraft/issues/5
+[#6]: https://github.com/TheHolyOneZ/ZDraft/issues/6
+[0.5.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/TheHolyOneZ/ZDraft/compare/b514f26...v0.2.0

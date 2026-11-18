@@ -66,11 +66,13 @@ function readPin(value: unknown): Pin | null {
   const y = num(table.y);
   if (x === null || y === null) return null;
 
+  const size = point(table.size);
   return {
     x,
     y,
     fingerprint: str(table.fingerprint) ?? null,
     auto: point(table.auto),
+    ...(size && size[0] > 0 && size[1] > 0 ? { size } : {}),
   };
 }
 

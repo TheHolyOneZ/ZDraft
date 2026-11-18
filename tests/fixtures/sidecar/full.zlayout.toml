@@ -10,6 +10,12 @@ auto = [120, 40]
 x = 760
 y = 210
 
+[pins.cluster_core]
+x = 300
+y = 200
+auto = [290, 190]
+size = [240, 180]
+
 [edges."gateway->api"]
 waypoints = [[500, 240], [520, 260]]
 label_offset = [4, -8]

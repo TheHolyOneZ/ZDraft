@@ -248,6 +248,21 @@ export function isPinnable(scene: Scene): boolean {
   return scene.family !== "passthrough";
 }
 
+export function clustersWithin(scene: GraphScene, id: string): Cluster[] {
+  const inside = new Set<string>([id]);
+  for (let pass = 0; pass < scene.clusters.length; pass += 1) {
+    let grew = false;
+    for (const cluster of scene.clusters) {
+      if (cluster.parent && inside.has(cluster.parent) && !inside.has(cluster.id)) {
+        inside.add(cluster.id);
+        grew = true;
+      }
+    }
+    if (!grew) break;
+  }
+  return scene.clusters.filter((c) => inside.has(c.id));
+}
+
 export function nodesIn(scene: GraphScene, selection: ReadonlySet<string>): GraphNode[] {
   if (selection.size === 0) return [];
 
