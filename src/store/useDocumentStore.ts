@@ -49,7 +49,7 @@ import { useHistoryStore } from "./useHistoryStore";
 import { useSettingsStore } from "./useSettingsStore";
 import { toast, useToastStore } from "./useToastStore";
 import { useWorkspaceStore } from "./useWorkspaceStore";
-import { joinPath } from "../lib/path";
+import { baseName, joinPath, samePath } from "../lib/path";
 
 const ADAPTERS: Partial<Record<EngineId, EngineAdapter>> = {
   graphviz: graphvizAdapter,
@@ -145,6 +145,10 @@ export interface DocumentState {
   ): Promise<string | null>;
 
   saveSource(): Promise<void>;
+
+  saveAs(target: string): Promise<void>;
+
+  saveCopy(from: string, to: string): Promise<void>;
 
   confirmLeave(): Promise<boolean>;
 
@@ -291,17 +295,22 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
     useWorkspaceStore.getState().refresh();
   };
 
-  const writeSidecar = (): Promise<void> => {
-    const { path, layout, activeBlock, sidecar: current } = get();
-    if (!path || !isTauri()) return Promise.resolve();
-
-    const sidecar: Sidecar = activeBlock
+  const composedSidecar = (): Sidecar => {
+    const { layout, activeBlock, sidecar: current } = get();
+    return activeBlock
       ? {
           ...current,
           version: 1,
           blocks: { ...current.blocks, [activeBlock]: layout },
         }
       : { version: 1, ...layout, blocks: current.blocks };
+  };
+
+  const writeSidecar = (): Promise<void> => {
+    const { path } = get();
+    if (!path || !isTauri()) return Promise.resolve();
+
+    const sidecar = composedSidecar();
     return api.writeLayout(path, sidecar).then(
       () => {
         set({ layoutDirty: false });
@@ -585,6 +594,55 @@ export const useDocumentStore = create<DocumentState>()((set, get) => {
         saveTimer = null;
         await writeSidecar();
       }
+    },
+
+    saveAs: async (target) => {
+      const { path, source, eol, conflict } = get();
+      if (path && samePath(path, target)) {
+        await get().saveSource();
+        return;
+      }
+      if (conflict) {
+        throw new Error("Resolve the layout conflict first, so the copy gets the layout you chose.");
+      }
+
+      if (saveTimer !== null) window.clearTimeout(saveTimer);
+      saveTimer = null;
+
+      const sidecar = composedSidecar();
+      await api.writeFile(target, withEol(source, eol));
+
+      const original = path ? await api.readFile(path).catch(() => null) : null;
+      if (original?.layoutText) await api.resolveLayoutConflict(target, original.layoutText);
+      else await api.deleteLayout(target);
+      await api.writeLayout(target, sidecar);
+
+      useWorkspaceStore.getState().setLastFile(target);
+      set({
+        path: target,
+        name: baseName(target),
+        sidecar,
+        dirty: false,
+        layoutDirty: false,
+        diffMode: false,
+        headScene: null,
+        headPinned: new Set(),
+        git: null,
+      });
+      sidecarOnDisk = false;
+      void syncTreeBadge(target);
+      useWorkspaceStore.getState().refresh();
+    },
+
+    saveCopy: async (from, to) => {
+      if (samePath(from, to)) return;
+
+      const file = await api.readFile(from);
+      await api.writeFile(to, file.text);
+      if (file.layoutText !== null) await api.resolveLayoutConflict(to, file.layoutText);
+      else await api.deleteLayout(to);
+
+      useWorkspaceStore.getState().refresh();
     },
 
     confirmLeave: async () => {

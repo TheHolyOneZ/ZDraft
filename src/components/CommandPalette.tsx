@@ -17,6 +17,7 @@ import {
   PinOff,
   Play,
   RotateCcw,
+  Save,
   Scan,
   Redo2,
   SlidersHorizontal,
@@ -30,6 +31,7 @@ import { createPortal } from "react-dom";
 
 import { isGraph, nodeText } from "../core/model/scene";
 import { DIAGRAM_THEMES } from "../core/theme";
+import { saveAsDialog } from "../lib/saveAs";
 import { adapterFor, releaseAllPinsWithConfirm, useDocumentStore } from "../store/useDocumentStore";
 import { useHistoryStore } from "../store/useHistoryStore";
 import { useSettingsStore } from "../store/useSettingsStore";
@@ -274,6 +276,13 @@ export function CommandPalette({
                     label="New from a template…"
                     shortcut="Ctrl+Shift+N"
                     onSelect={run(onShowTemplates)}
+                  />
+                  <Item
+                    icon={<Save size={14} strokeWidth={1.75} />}
+                    label="Save as…"
+                    hint="with its layout file"
+                    shortcut="Ctrl+Shift+S"
+                    onSelect={run(() => void saveAsDialog())}
                   />
                   <Item
                     icon={<FolderOpen size={14} strokeWidth={1.75} />}

@@ -23,6 +23,11 @@ const GROUPS: Array<{ title: string; items: Shortcut[] }> = [
         note: "Every box arrives pinned where its author put it.",
       },
       { keys: ["Ctrl", "S"], what: "Save the source" },
+      {
+        keys: ["Ctrl", "⇧", "S"],
+        what: "Save as",
+        note: "The diagram and its layout file, under a new name.",
+      },
       { keys: ["Ctrl", "E"], what: "Export" },
       { keys: ["Ctrl", "K"], what: "Command palette" },
       { keys: ["Ctrl", ","], what: "Settings" },

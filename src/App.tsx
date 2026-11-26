@@ -27,6 +27,7 @@ import { edgeAt, idAt } from "./core/locate/types";
 import type { SourceRange } from "./core/model/scene";
 import type { AnnotationKind } from "./core/sidecar/types";
 import { themeByName } from "./core/theme";
+import { saveAsDialog } from "./lib/saveAs";
 import { api, appWindow, isTauri } from "./lib/tauri";
 import { adapterFor, useDocumentStore } from "./store/useDocumentStore";
 import { useHistoryStore } from "./store/useHistoryStore";
@@ -275,6 +276,9 @@ export default function App() {
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "o") {
         e.preventDefault();
         setImportOpen(true);
+      } else if (mod && e.shiftKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void saveAsDialog();
       } else if (mod && e.key.toLowerCase() === "s") {
         e.preventDefault();
         void saveSource();

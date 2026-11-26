@@ -14,6 +14,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { baseName } from "../lib/path";
+import { saveAsDialog } from "../lib/saveAs";
 import { api, isTauri, type FolderEntry } from "../lib/tauri";
 import { confirm } from "../store/useConfirmStore";
 import { useDocumentStore } from "../store/useDocumentStore";
@@ -274,6 +275,7 @@ function Entry({ entry, depth }: { entry: FolderEntry; depth: number }) {
         onClose={menu.close}
         items={entryMenu({
           entry,
+          active,
           openFile,
           push,
           refresh: () => useWorkspaceStore.getState().refresh(),
@@ -291,12 +293,14 @@ function Entry({ entry, depth }: { entry: FolderEntry; depth: number }) {
 
 function entryMenu({
   entry,
+  active,
   openFile,
   push,
   refresh,
   reopen,
 }: {
   entry: FolderEntry;
+  active: boolean;
   openFile(path: string): Promise<void>;
   push: ReturnType<typeof useToastStore.getState>["push"];
   refresh(): void;
@@ -307,6 +311,12 @@ function entryMenu({
 
   if (openable) {
     items.push({ id: "open", label: "Open", onSelect: () => void openFile(entry.path) });
+    items.push({
+      id: "save-as",
+      label: "Save as…",
+      shortcut: active ? "Ctrl+Shift+S" : undefined,
+      onSelect: () => void saveAsDialog(entry.path),
+    });
   }
 
   items.push({

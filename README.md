@@ -107,6 +107,13 @@ Switch to another file, start a new one, or close the window with unsaved edits
 and ZDraft asks first — **Save**, **Don't save** or **Cancel** — rather than
 quietly dropping them.
 
+**Save as** (`Ctrl+Shift+S`, the command palette, or a file's right-click menu)
+writes the diagram and its layout file under a new name, and carries on in the
+copy. From the open file it takes what is on screen, unsaved edits included;
+from any other file in the list it copies both files exactly as they are on
+disk. The ending stays the same — `.mmd` stays `.mmd` — because that is how
+ZDraft knows which engine a file belongs to.
+
 Pointed at an empty folder, ZDraft offers to create the first file rather than
 showing you an empty grid.
 
@@ -640,6 +647,7 @@ typefaces that travel inside the installer.
 | `Ctrl` `⇧` `N` | New from a template |
 | `Ctrl` `⇧` `O` | Import from draw.io or Excalidraw |
 | `Ctrl` `S` | Save the source, and any layout changes still waiting |
+| `Ctrl` `⇧` `S` | Save as — the diagram and its layout file, under a new name |
 | `Ctrl` `E` | Export |
 | `Ctrl` `K` | Command palette |
 | `Ctrl` `,` | Settings |

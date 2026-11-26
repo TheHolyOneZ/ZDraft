@@ -4,6 +4,22 @@ Every release of ZDraft, newest first. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] — 2026-11-26
+
+### Added
+
+- **Save as** ([#7]). `Ctrl+Shift+S`, the command palette, or **Save as…** in a
+  file's right-click menu writes the diagram and its layout file under a new
+  name, and ZDraft carries on in the copy. The original is left exactly as it
+  was last saved.
+- From the open file, the copy takes what is on screen, unsaved edits and
+  layout changes included. From any other file in the list, it copies both
+  files exactly as they are on disk.
+- Comments you wrote in the layout file come along with the copy.
+- The new name keeps the original's ending, which is how ZDraft knows the
+  engine: leave it off and it is added for you; change it and ZDraft says why
+  it will not.
+
 ## [0.5.0] — 2026-11-18
 
 ### Added
@@ -137,6 +153,8 @@ First public release.
 [#4]: https://github.com/TheHolyOneZ/ZDraft/issues/4
 [#5]: https://github.com/TheHolyOneZ/ZDraft/issues/5
 [#6]: https://github.com/TheHolyOneZ/ZDraft/issues/6
+[#7]: https://github.com/TheHolyOneZ/ZDraft/issues/7
+[0.6.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/TheHolyOneZ/ZDraft/compare/v0.2.0...v0.3.0
